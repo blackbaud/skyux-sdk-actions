@@ -1,10 +1,35 @@
-name: 'Your name here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'Blackbaud-SteveBrush - SKY UX Libraries Action'
+description: 'Do not use.'
+author: 'Blackbaud-SteveBrush'
+branding:
+  icon: 'box'
+  color: 'gray-dark'
 inputs:
-  myInput:              # change this
-    description: 'input description here'
-    default: 'default value if applicable'
+  browser-stack-access-key:
+    description: 'The BrowserStack access key.'
+    required: true
+  browser-stack-project:
+    description: 'The BrowserStack project name. The value is arbitrary and used to identify the appropriate logs.'
+    required: false
+  browser-stack-username:
+    description: 'The BrowserStack username.'
+    required: true
+  personal-access-token:
+    description: 'The GitHub personal access token used to commit visual test results.'
+    required: true
+  npm-token:
+    description: 'The NPM token used to publish libraries.'
+    required: true
+  slack-webhook:
+    description: 'The Slack webhook used to push notifications.'
+    required: false
+  visual-baselines-branch:
+    description: 'The git branch to commit new baseline screenshots after a successful visual test.'
+    required: false
+  working-directory:
+    description: 'Run the action in a different subdirectory.'
+    default: './'
+    required: false
 runs:
   using: 'node12'
   main: 'dist/index.js'

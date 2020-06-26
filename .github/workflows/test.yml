@@ -7,17 +7,32 @@ on: # rebuild any PRs and main branch changes
       - 'releases/*'
 
 jobs:
-  build: # make sure build/ci work properly
+  coverage: # make sure build/ci work properly
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - run: |
-        npm install
-        npm run all
-  test: # make sure the action works on a clean machine without building
+        npm ci
+        npm run build
+        npm run pack
+        npm test
+        bash <(curl -s https://codecov.io/bash)
+  e2e: # make sure the action works on a clean machine without building
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - uses: ./
-      with: 
-        milliseconds: 1000
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: '10.x'
+    - name: Clone sample project
+      run: git clone https://github.com/blackbaud/skyux-sdk-template-library --branch 4.x.x-test-github-actions --single-branch
+    - name: Run action
+      uses: ./
+      with:
+        browser-stack-access-key: ${{ secrets.BROWSER_STACK_ACCESS_KEY }}
+        browser-stack-username: ${{ secrets.BROWSER_STACK_USERNAME }}
+        npm-token: ${{ secrets.NPM_TOKEN }}
+        personal-access-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        slack-webhook: ${{ secrets.SLACK_WEBHOOK }}
+        visual-baselines-branch: 4.x.x-test-github-actions
+        working-directory: ./skyux-sdk-template-library
