@@ -1,5 +1,5 @@
 {
-  "name": "skyux-libraries-action",
+  "name": "@skyux-sdk/actions",
   "version": "1.0.0",
   "description": "GitHub actions for SKY UX libraries.",
   "main": "lib/main.js",

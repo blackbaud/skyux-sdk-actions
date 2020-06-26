@@ -1,6 +1,6 @@
-name: 'Blackbaud-SteveBrush - SKY UX Libraries Action'
-description: 'Do not use.'
-author: 'Blackbaud-SteveBrush'
+name: 'SKY UX GitHub Actions'
+description: 'GitHub Action for SKY UX libraries.'
+author: 'Blackbaud'
 branding:
   icon: 'box'
   color: 'gray-dark'
@@ -31,5 +31,5 @@ inputs:
     default: './'
     required: false
 runs:
-  using: 'node12'
+  using: 'node10'
   main: 'dist/index.js'
