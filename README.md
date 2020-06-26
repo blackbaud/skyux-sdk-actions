@@ -11,3 +11,9 @@
     personal-access-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
     slack-webhook: ${{ secrets.SLACK_WEBHOOK }}
 ```
+
+## Build
+
+```
+npm run build && npm run pack
+```
