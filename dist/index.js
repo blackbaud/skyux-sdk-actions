@@ -1193,66 +1193,6 @@ exports.httpErrorWithOriginal = httpErrorWithOriginal;
 
 /***/ }),
 
-/***/ 71:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-"use strict";
-
-
-const path = __webpack_require__(622);
-const which = __webpack_require__(814);
-const getPathKey = __webpack_require__(39);
-
-function resolveCommandAttempt(parsed, withoutPathExt) {
-    const env = parsed.options.env || process.env;
-    const cwd = process.cwd();
-    const hasCustomCwd = parsed.options.cwd != null;
-    // Worker threads do not have process.chdir()
-    const shouldSwitchCwd = hasCustomCwd && process.chdir !== undefined && !process.chdir.disabled;
-
-    // If a custom `cwd` was specified, we need to change the process cwd
-    // because `which` will do stat calls but does not support a custom cwd
-    if (shouldSwitchCwd) {
-        try {
-            process.chdir(parsed.options.cwd);
-        } catch (err) {
-            /* Empty */
-        }
-    }
-
-    let resolved;
-
-    try {
-        resolved = which.sync(parsed.command, {
-            path: env[getPathKey({ env })],
-            pathExt: withoutPathExt ? path.delimiter : undefined,
-        });
-    } catch (e) {
-        /* Empty */
-    } finally {
-        if (shouldSwitchCwd) {
-            process.chdir(cwd);
-        }
-    }
-
-    // If we successfully resolved, ensure that an absolute path is returned
-    // Note that when a custom `cwd` was used, we need to resolve to an absolute path based on it
-    if (resolved) {
-        resolved = path.resolve(hasCustomCwd ? parsed.options.cwd : '', resolved);
-    }
-
-    return resolved;
-}
-
-function resolveCommand(parsed) {
-    return resolveCommandAttempt(parsed) || resolveCommandAttempt(parsed, true);
-}
-
-module.exports = resolveCommand;
-
-
-/***/ }),
-
 /***/ 72:
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
@@ -1496,8 +1436,8 @@ const core = __importStar(__webpack_require__(470));
 const fs = __importStar(__webpack_require__(226));
 const path = __importStar(__webpack_require__(622));
 const notify_slack_1 = __webpack_require__(564);
-const utils_1 = __webpack_require__(611);
 const spawn_1 = __webpack_require__(820);
+const utils_1 = __webpack_require__(611);
 function npmPublish() {
     return __awaiter(this, void 0, void 0, function* () {
         const packageJsonPath = path.resolve(process.cwd(), core.getInput('working-directory'), 'package.json');
@@ -3537,6 +3477,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.directoryHasChanges = void 0;
 const spawn_1 = __webpack_require__(820);
+/**
+ * Checks if a specified directory has git changes.
+ * @param dir The directory to check.
+ */
 function directoryHasChanges(dir) {
     return __awaiter(this, void 0, void 0, function* () {
         const output = yield spawn_1.spawn('git', ['status', dir, '--porcelain']);
@@ -6320,7 +6264,7 @@ exports.endpoint = endpoint;
 
 
 const fs = __webpack_require__(747);
-const shebangCommand = __webpack_require__(452);
+const shebangCommand = __webpack_require__(866);
 
 function readShebang(command) {
     // Read the first 150 bytes from the file
@@ -7222,7 +7166,7 @@ function cloneRepoAsAdmin(gitUrl, branch, directory) {
 function commitBaselineScreenshots(repository, buildId) {
     return __awaiter(this, void 0, void 0, function* () {
         const branch = core.getInput('visual-baselines-branch') || 'master';
-        const accessToken = core.getInput('personal-access-token');
+        const accessToken = core.getInput('github-token');
         const workingDirectory = core.getInput('working-directory');
         const repoUrl = `https://${accessToken}@github.com/${repository}.git`;
         yield cloneRepoAsAdmin(repoUrl, branch, TEMP_DIR);
@@ -7242,7 +7186,7 @@ function commitBaselineScreenshots(repository, buildId) {
 function commitFailureScreenshots(buildId) {
     return __awaiter(this, void 0, void 0, function* () {
         const branch = buildId || 'master';
-        const accessToken = core.getInput('personal-access-token');
+        const accessToken = core.getInput('github-token');
         const workingDirectory = core.getInput('working-directory');
         const repoUrl = `https://${accessToken}@github.com/blackbaud/skyux-visual-test-results.git`;
         yield cloneRepoAsAdmin(repoUrl, 'master', TEMP_DIR);
@@ -7673,33 +7617,6 @@ Octokit.plugins = [];
 
 exports.Octokit = Octokit;
 //# sourceMappingURL=index.js.map
-
-
-/***/ }),
-
-/***/ 452:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-"use strict";
-
-const shebangRegex = __webpack_require__(816);
-
-module.exports = (string = '') => {
-	const match = string.match(shebangRegex);
-
-	if (!match) {
-		return null;
-	}
-
-	const [path, argument] = match[0].replace(/#! ?/, '').split(' ');
-	const binary = path.split('/').pop();
-
-	if (binary === 'env') {
-		return argument;
-	}
-
-	return argument ? `${binary} ${argument}` : binary;
-};
 
 
 /***/ }),
@@ -10159,52 +10076,62 @@ rimraf.sync = rimrafSync
 /***/ }),
 
 /***/ 489:
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
+/***/ (function(module, __unusedexports, __webpack_require__) {
 
 "use strict";
 
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.getApiBaseUrl = exports.getProxyAgent = exports.getAuthString = void 0;
-const httpClient = __importStar(__webpack_require__(539));
-function getAuthString(token, options) {
-    if (!token && !options.auth) {
-        throw new Error('Parameter token or opts.auth is required');
+
+const path = __webpack_require__(622);
+const which = __webpack_require__(814);
+const getPathKey = __webpack_require__(39);
+
+function resolveCommandAttempt(parsed, withoutPathExt) {
+    const env = parsed.options.env || process.env;
+    const cwd = process.cwd();
+    const hasCustomCwd = parsed.options.cwd != null;
+    // Worker threads do not have process.chdir()
+    const shouldSwitchCwd = hasCustomCwd && process.chdir !== undefined && !process.chdir.disabled;
+
+    // If a custom `cwd` was specified, we need to change the process cwd
+    // because `which` will do stat calls but does not support a custom cwd
+    if (shouldSwitchCwd) {
+        try {
+            process.chdir(parsed.options.cwd);
+        } catch (err) {
+            /* Empty */
+        }
     }
-    else if (token && options.auth) {
-        throw new Error('Parameters token and opts.auth may not both be specified');
+
+    let resolved;
+
+    try {
+        resolved = which.sync(parsed.command, {
+            path: env[getPathKey({ env })],
+            pathExt: withoutPathExt ? path.delimiter : undefined,
+        });
+    } catch (e) {
+        /* Empty */
+    } finally {
+        if (shouldSwitchCwd) {
+            process.chdir(cwd);
+        }
     }
-    return typeof options.auth === 'string' ? options.auth : `token ${token}`;
+
+    // If we successfully resolved, ensure that an absolute path is returned
+    // Note that when a custom `cwd` was used, we need to resolve to an absolute path based on it
+    if (resolved) {
+        resolved = path.resolve(hasCustomCwd ? parsed.options.cwd : '', resolved);
+    }
+
+    return resolved;
 }
-exports.getAuthString = getAuthString;
-function getProxyAgent(destinationUrl) {
-    const hc = new httpClient.HttpClient();
-    return hc.getAgent(destinationUrl);
+
+function resolveCommand(parsed) {
+    return resolveCommandAttempt(parsed) || resolveCommandAttempt(parsed, true);
 }
-exports.getProxyAgent = getProxyAgent;
-function getApiBaseUrl() {
-    return process.env['GITHUB_API_URL'] || 'https://api.github.com';
-}
-exports.getApiBaseUrl = getApiBaseUrl;
-//# sourceMappingURL=utils.js.map
+
+module.exports = resolveCommand;
+
 
 /***/ }),
 
@@ -10409,7 +10336,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getOctokitOptions = exports.GitHub = exports.context = void 0;
 const Context = __importStar(__webpack_require__(262));
-const Utils = __importStar(__webpack_require__(489));
+const Utils = __importStar(__webpack_require__(939));
 // octokit + plugins
 const core_1 = __webpack_require__(448);
 const plugin_rest_endpoint_methods_1 = __webpack_require__(842);
@@ -10448,7 +10375,7 @@ exports.getOctokitOptions = getOctokitOptions;
 
 var register = __webpack_require__(280)
 var addHook = __webpack_require__(510)
-var removeHook = __webpack_require__(866)
+var removeHook = __webpack_require__(763)
 
 // bind with array of arguments: https://stackoverflow.com/a/21792913
 var bind = Function.bind
@@ -11620,7 +11547,7 @@ module.exports = opts => {
 
 
 const path = __webpack_require__(622);
-const resolveCommand = __webpack_require__(71);
+const resolveCommand = __webpack_require__(489);
 const escape = __webpack_require__(462);
 const readShebang = __webpack_require__(389);
 
@@ -17220,6 +17147,30 @@ module.exports = require("zlib");
 
 /***/ }),
 
+/***/ 763:
+/***/ (function(module) {
+
+module.exports = removeHook
+
+function removeHook (state, name, method) {
+  if (!state.registry[name]) {
+    return
+  }
+
+  var index = state.registry[name]
+    .map(function (registered) { return registered.orig })
+    .indexOf(method)
+
+  if (index === -1) {
+    return
+  }
+
+  state.registry[name].splice(index, 1)
+}
+
+
+/***/ }),
+
 /***/ 768:
 /***/ (function(module) {
 
@@ -17673,8 +17624,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.spawn = void 0;
 const core = __importStar(__webpack_require__(470));
-const cross_spawn_1 = __webpack_require__(20);
 const path = __importStar(__webpack_require__(622));
+const cross_spawn_1 = __webpack_require__(20);
 function spawn(command, args = [], spawnOptions) {
     return __awaiter(this, void 0, void 0, function* () {
         const defaults = {
@@ -19809,25 +19760,28 @@ module.exports = (
 /***/ }),
 
 /***/ 866:
-/***/ (function(module) {
+/***/ (function(module, __unusedexports, __webpack_require__) {
 
-module.exports = removeHook
+"use strict";
 
-function removeHook (state, name, method) {
-  if (!state.registry[name]) {
-    return
-  }
+const shebangRegex = __webpack_require__(816);
 
-  var index = state.registry[name]
-    .map(function (registered) { return registered.orig })
-    .indexOf(method)
+module.exports = (string = '') => {
+	const match = string.match(shebangRegex);
 
-  if (index === -1) {
-    return
-  }
+	if (!match) {
+		return null;
+	}
 
-  state.registry[name].splice(index, 1)
-}
+	const [path, argument] = match[0].replace(/#! ?/, '').split(' ');
+	const binary = path.split('/').pop();
+
+	if (binary === 'env') {
+		return argument;
+	}
+
+	return argument ? `${binary} ${argument}` : binary;
+};
 
 
 /***/ }),
@@ -20586,6 +20540,56 @@ module.exports = {
 /***/ (function(module) {
 
 module.exports = require("net");
+
+/***/ }),
+
+/***/ 939:
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getApiBaseUrl = exports.getProxyAgent = exports.getAuthString = void 0;
+const httpClient = __importStar(__webpack_require__(539));
+function getAuthString(token, options) {
+    if (!token && !options.auth) {
+        throw new Error('Parameter token or opts.auth is required');
+    }
+    else if (token && options.auth) {
+        throw new Error('Parameters token and opts.auth may not both be specified');
+    }
+    return typeof options.auth === 'string' ? options.auth : `token ${token}`;
+}
+exports.getAuthString = getAuthString;
+function getProxyAgent(destinationUrl) {
+    const hc = new httpClient.HttpClient();
+    return hc.getAgent(destinationUrl);
+}
+exports.getProxyAgent = getProxyAgent;
+function getApiBaseUrl() {
+    return process.env['GITHUB_API_URL'] || 'https://api.github.com';
+}
+exports.getApiBaseUrl = getApiBaseUrl;
+//# sourceMappingURL=utils.js.map
 
 /***/ }),
 

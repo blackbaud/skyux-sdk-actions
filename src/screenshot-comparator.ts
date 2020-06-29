@@ -23,7 +23,7 @@ async function cloneRepoAsAdmin(gitUrl: string, branch: string, directory: strin
 
 async function commitBaselineScreenshots(repository: string, buildId: string) {
   const branch = core.getInput('visual-baselines-branch') || 'master';
-  const accessToken = core.getInput('personal-access-token');
+  const accessToken = core.getInput('github-token');
   const workingDirectory = core.getInput('working-directory');
   const repoUrl = `https://${accessToken}@github.com/${repository}.git`;
 
@@ -52,7 +52,7 @@ async function commitBaselineScreenshots(repository: string, buildId: string) {
 async function commitFailureScreenshots(buildId: string) {
   const branch = buildId || 'master';
 
-  const accessToken = core.getInput('personal-access-token');
+  const accessToken = core.getInput('github-token');
   const workingDirectory = core.getInput('working-directory');
   const repoUrl = `https://${accessToken}@github.com/blackbaud/skyux-visual-test-results.git`;
 

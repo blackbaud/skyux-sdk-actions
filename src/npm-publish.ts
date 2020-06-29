@@ -3,8 +3,8 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 
 import { notifySlack } from './notify-slack';
-import { getTag } from './utils';
 import { spawn } from './spawn';
+import { getTag } from './utils';
 
 export async function npmPublish() {
 
@@ -23,7 +23,6 @@ export async function npmPublish() {
   core.info(`Preparing to publish ${packageName}@${version} to NPM...`);
 
   await fs.ensureFile(npmFilePath);
-
   fs.writeFileSync(npmFilePath, `//registry.npmjs.org/:_authToken=${npmToken}`);
 
   try {

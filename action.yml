@@ -14,7 +14,7 @@ inputs:
   browser-stack-username:
     description: 'The BrowserStack username.'
     required: true
-  personal-access-token:
+  github-token:
     description: 'The GitHub personal access token used to commit visual test results.'
     required: true
   npm-token:

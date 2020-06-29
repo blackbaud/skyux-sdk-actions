@@ -2,6 +2,10 @@ import {
   spawn
 } from './spawn';
 
+/**
+ * Checks if a specified directory has git changes.
+ * @param dir The directory to check.
+ */
 export async function directoryHasChanges(dir: string) {
 
   const output = await spawn('git', ['status', dir, '--porcelain']);

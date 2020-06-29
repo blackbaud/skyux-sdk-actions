@@ -32,7 +32,7 @@ jobs:
         browser-stack-access-key: ${{ secrets.BROWSER_STACK_ACCESS_KEY }}
         browser-stack-username: ${{ secrets.BROWSER_STACK_USERNAME }}
         npm-token: ${{ secrets.NPM_TOKEN }}
-        personal-access-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
         slack-webhook: ${{ secrets.SLACK_WEBHOOK }}
         visual-baselines-branch: 4.x.x-test-github-actions
         working-directory: ./skyux-sdk-template-library

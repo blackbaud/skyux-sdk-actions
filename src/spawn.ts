@@ -1,9 +1,16 @@
 import * as core from '@actions/core';
-import { spawn as crossSpawn } from 'cross-spawn';
-import * as path from 'path';
 import * as child_process from 'child_process';
+import * as path from 'path';
 
-export async function spawn(command: string, args: string[] = [], spawnOptions?: child_process.SpawnOptions): Promise<string> {
+import {
+  spawn as crossSpawn
+} from 'cross-spawn';
+
+export async function spawn(
+  command: string,
+  args: string[] = [],
+  spawnOptions?: child_process.SpawnOptions
+): Promise<string> {
 
   const defaults: child_process.SpawnOptions = {
     stdio: 'pipe',
