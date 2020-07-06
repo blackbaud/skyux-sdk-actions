@@ -15,10 +15,8 @@ import {
 } from './utils';
 
 export async function npmPublish() {
-  // Using path.* + package.json on samme line causes weird problems
-  // https://github.com/vercel/ncc/issues/444
-  const packageJsonDir = path.join(process.cwd(), core.getInput('working-directory'));
-  const packageJsonPath = path.join(packageJsonDir, 'package.json');
+  const distPath = path.join(process.cwd(), core.getInput('working-directory'), 'dist');
+  const packageJsonPath = path.join(distPath, 'package.json');
 
   const packageJson = fs.readJsonSync(packageJsonPath);
   const packageName = packageJson.name;
@@ -31,13 +29,13 @@ export async function npmPublish() {
   const repository = process.env.GITHUB_REPOSITORY;
   const changelogUrl = `https://github.com/${repository}/blob/${version}/CHANGELOG.md`;
 
-  core.info(`Preparing to publish ${packageName}@${version} to NPM...`);
+  core.info(`Preparing to publish ${packageName}@${version} to NPM from ${distPath}...`);
 
   await fs.ensureFile(npmFilePath);
   fs.writeFileSync(npmFilePath, `//registry.npmjs.org/:_authToken=${npmToken}`);
 
   try {
-    await spawn('npm', ['publish', '--access', 'public', '--tag', npmTag]);
+    await spawn('npm', ['publish', '--access', 'public', '--tag', npmTag], { cwd: distPath });
     const successMessage = `Successfully published ${packageName}@${version} to NPM.`;
     core.info(successMessage);
     await notifySlack(`${successMessage}\n${changelogUrl}`);

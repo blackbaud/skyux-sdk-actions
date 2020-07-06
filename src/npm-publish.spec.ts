@@ -61,7 +61,11 @@ describe('npmPublish', () => {
 
     expect(infoSpy).toHaveBeenCalledWith('Successfully published foo-package@1.2.3 to NPM.');
     expect(slackSpy).toHaveBeenCalledWith('Successfully published foo-package@1.2.3 to NPM.\nhttps://github.com/org/repo/blob/1.2.3/CHANGELOG.md');
-    expect(spawnSpy).toHaveBeenCalledWith('npm', ['publish', '--access', 'public', '--tag', 'latest']);
+    expect(spawnSpy).toHaveBeenCalledWith(
+      'npm',
+      ['publish', '--access', 'public', '--tag', 'latest'],
+      { cwd: path.join(process.cwd(), core.getInput('working-directory'), 'dist') }
+    );
 
     done();
   });
@@ -72,7 +76,11 @@ describe('npmPublish', () => {
 
     await npmPublish();
 
-    expect(spawnSpy).toHaveBeenCalledWith('npm', ['publish', '--access', 'public', '--tag', 'next']);
+    expect(spawnSpy).toHaveBeenCalledWith(
+      'npm',
+      ['publish', '--access', 'public', '--tag', 'next'],
+      { cwd: path.join(process.cwd(), core.getInput('working-directory'), 'dist') }
+    );
 
     done();
   });

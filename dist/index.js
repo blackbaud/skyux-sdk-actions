@@ -1708,10 +1708,8 @@ const spawn_1 = __webpack_require__(820);
 const utils_1 = __webpack_require__(611);
 function npmPublish() {
     return __awaiter(this, void 0, void 0, function* () {
-        // Using path.* + package.json on samme line causes weird problems
-        // https://github.com/vercel/ncc/issues/444
-        const packageJsonDir = path.join(process.cwd(), core.getInput('working-directory'));
-        const packageJsonPath = path.join(packageJsonDir, 'package.json');
+        const distPath = path.join(process.cwd(), core.getInput('working-directory'), 'dist');
+        const packageJsonPath = path.join(distPath, 'package.json');
         const packageJson = fs.readJsonSync(packageJsonPath);
         const packageName = packageJson.name;
         const version = packageJson.version;
@@ -1720,11 +1718,11 @@ function npmPublish() {
         const npmToken = core.getInput('npm-token');
         const repository = process.env.GITHUB_REPOSITORY;
         const changelogUrl = `https://github.com/${repository}/blob/${version}/CHANGELOG.md`;
-        core.info(`Preparing to publish ${packageName}@${version} to NPM...`);
+        core.info(`Preparing to publish ${packageName}@${version} to NPM from ${distPath}...`);
         yield fs.ensureFile(npmFilePath);
         fs.writeFileSync(npmFilePath, `//registry.npmjs.org/:_authToken=${npmToken}`);
         try {
-            yield spawn_1.spawn('npm', ['publish', '--access', 'public', '--tag', npmTag]);
+            yield spawn_1.spawn('npm', ['publish', '--access', 'public', '--tag', npmTag], { cwd: distPath });
             const successMessage = `Successfully published ${packageName}@${version} to NPM.`;
             core.info(successMessage);
             yield notify_slack_1.notifySlack(`${successMessage}\n${changelogUrl}`);
