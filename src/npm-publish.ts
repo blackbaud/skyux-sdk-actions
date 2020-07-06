@@ -15,8 +15,11 @@ import {
 } from './utils';
 
 export async function npmPublish() {
+  // Using path.* + package.json on samme line causes weird problems
+  // https://github.com/vercel/ncc/issues/444
+  const packageJsonDir = path.join(process.cwd(), core.getInput('working-directory'));
+  const packageJsonPath = path.join(packageJsonDir, 'package.json');
 
-  const packageJsonPath = path.resolve(process.cwd(), core.getInput('working-directory'), 'package.json');
   const packageJson = fs.readJsonSync(packageJsonPath);
   const packageName = packageJson.name;
   const version = packageJson.version;
