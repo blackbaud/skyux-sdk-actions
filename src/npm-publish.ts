@@ -23,7 +23,7 @@ export async function npmPublish() {
   const version = packageJson.version;
 
   const npmTag = (getTag().indexOf('-') > -1) ? 'next' : 'latest';
-  const npmFilePath = path.resolve(process.cwd(), '.npmrc');
+  const npmFilePath = path.join(distPath, '.npmrc');
   const npmToken = core.getInput('npm-token');
 
   const repository = process.env.GITHUB_REPOSITORY;

@@ -55,7 +55,7 @@ describe('npmPublish', () => {
     await npmPublish();
 
     expect(writeSpy).toHaveBeenCalledWith(
-      `${path.resolve(process.cwd(), '.npmrc')}`,
+      `${path.join(process.cwd(), core.getInput('working-directory'), 'dist', '.npmrc')}`,
       '//registry.npmjs.org/:_authToken=MOCK_TOKEN'
     );
 
