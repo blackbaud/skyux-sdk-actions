@@ -59,8 +59,8 @@ describe('npmPublish', () => {
       '//registry.npmjs.org/:_authToken=MOCK_TOKEN'
     );
 
-    expect(infoSpy).toHaveBeenCalledWith('Successfully published foo-package@1.2.3 to NPM.');
-    expect(slackSpy).toHaveBeenCalledWith('Successfully published foo-package@1.2.3 to NPM.\nhttps://github.com/org/repo/blob/1.2.3/CHANGELOG.md');
+    expect(infoSpy).toHaveBeenCalledWith('Successfully published `foo-package@1.2.3` to NPM.');
+    expect(slackSpy).toHaveBeenCalledWith('Successfully published `foo-package@1.2.3` to NPM.\nhttps://github.com/org/repo/blob/1.2.3/CHANGELOG.md');
     expect(spawnSpy).toHaveBeenCalledWith(
       'npm',
       ['publish', '--access', 'public', '--tag', 'latest'],
@@ -89,8 +89,8 @@ describe('npmPublish', () => {
     spawnSpy.and.throwError('Something bad happened.');
     await npmPublish();
     expect(failedLogSpy).toHaveBeenCalledWith('Something bad happened.');
-    expect(failedLogSpy).toHaveBeenCalledWith('foo-package@1.2.3 failed to publish to NPM.');
-    expect(slackSpy).toHaveBeenCalledWith('foo-package@1.2.3 failed to publish to NPM.');
+    expect(failedLogSpy).toHaveBeenCalledWith('`foo-package@1.2.3` failed to publish to NPM.');
+    expect(slackSpy).toHaveBeenCalledWith('`foo-package@1.2.3` failed to publish to NPM.');
     done();
   });
 
