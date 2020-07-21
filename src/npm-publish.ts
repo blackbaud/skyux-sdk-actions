@@ -36,11 +36,11 @@ export async function npmPublish() {
 
   try {
     await spawn('npm', ['publish', '--access', 'public', '--tag', npmTag], { cwd: distPath });
-    const successMessage = `Successfully published ${packageName}@${version} to NPM.`;
+    const successMessage = `Successfully published \`${packageName}@${version}\` to NPM.`;
     core.info(successMessage);
     await notifySlack(`${successMessage}\n${changelogUrl}`);
   } catch (err) {
-    const errorMessage = `${packageName}@${version} failed to publish to NPM.`;
+    const errorMessage = `\`${packageName}@${version}\` failed to publish to NPM.`;
     core.setFailed(err.message);
     core.setFailed(errorMessage);
     await notifySlack(errorMessage);
