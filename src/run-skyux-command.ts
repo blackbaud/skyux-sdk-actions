@@ -12,7 +12,7 @@ export function runSkyUxCommand(command: string, args?: string[]): Promise<strin
 `);
 
   return spawn('npx', [
-    '-p', '@skyux-sdk/cli@next',
+    '-p', '@skyux-sdk/cli',
     'skyux', command,
     '--logFormat', 'none',
     '--platform', 'gh-actions',
