@@ -5,9 +5,12 @@ import {
 } from './npm-publish';
 
 import {
-  checkNewBaselineScreenshots,
-  checkNewFailureScreenshots
-} from './screenshot-comparator';
+  runSkyUxCommand
+} from './run-skyux-command';
+
+import {
+  runTestSuite
+} from './run-test-suite';
 
 import {
   spawn
@@ -20,22 +23,6 @@ import {
 
 // Generate a unique build name to be used by BrowserStack.
 const BUILD_ID = `${process.env.GITHUB_REPOSITORY?.split('/')[1]}-${process.env.GITHUB_EVENT_NAME}-${process.env.GITHUB_RUN_ID}-${Math.random().toString().slice(2,7)}`;
-
-function runSkyUxCommand(command: string, args?: string[]): Promise<string> {
-  core.info(`
-=====================================================
-> Running SKY UX command: '${command}'
-=====================================================
-`);
-
-  return spawn('npx', [
-    '-p', '@skyux-sdk/cli@next',
-    'skyux', command,
-    '--logFormat', 'none',
-    '--platform', 'gh-actions',
-    ...args || ''
-  ]);
-}
 
 async function installCerts(): Promise<void> {
   try {
@@ -59,41 +46,6 @@ async function build() {
     await runSkyUxCommand('build');
   } catch (err) {
     core.setFailed('Build failed.');
-  }
-}
-
-async function coverage() {
-  core.exportVariable('BROWSER_STACK_BUILD_ID', `${BUILD_ID}-coverage`);
-
-  try {
-    await runSkyUxCommand('test', ['--coverage', 'library']);
-  } catch (err) {
-    core.setFailed('Code coverage failed.');
-  }
-}
-
-async function visual() {
-  core.exportVariable('BROWSER_STACK_BUILD_ID', `${BUILD_ID}-visual`);
-
-  const repository = process.env.GITHUB_REPOSITORY || '';
-  try {
-    await runSkyUxCommand('e2e');
-    if (isPush()) {
-      await checkNewBaselineScreenshots(repository, BUILD_ID);
-    }
-  } catch (err) {
-    if (isPush()) {
-      await checkNewFailureScreenshots(BUILD_ID);
-    }
-    core.setFailed('End-to-end tests failed.');
-  }
-}
-
-async function buildLibrary() {
-  try {
-    await runSkyUxCommand('build-public-library');
-  } catch (err) {
-    core.setFailed('Library build failed.');
   }
 }
 
@@ -122,10 +74,8 @@ async function run(): Promise<void> {
 
   await install();
   await installCerts();
-  await coverage();
   await build();
-  await visual();
-  await buildLibrary();
+  await runTestSuite(BUILD_ID);
 
   if (isTag()) {
     await publishLibrary();
