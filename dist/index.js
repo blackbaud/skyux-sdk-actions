@@ -2805,6 +2805,7 @@ function buildLibrary() {
             yield runSkyUxCommand('build-public-library');
             const afterBuildPublicLibrarySuccess = core.getInput('after-build-public-library-success');
             if (afterBuildPublicLibrarySuccess) {
+                core.info(`Running 'after-build-public-library-success' script: ${afterBuildPublicLibrarySuccess}`);
                 yield spawn_1.spawn('node', [afterBuildPublicLibrarySuccess]);
             }
         }

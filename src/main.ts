@@ -94,6 +94,7 @@ async function buildLibrary() {
     await runSkyUxCommand('build-public-library');
     const afterBuildPublicLibrarySuccess = core.getInput('after-build-public-library-success');
     if (afterBuildPublicLibrarySuccess) {
+      core.info(`Running 'after-build-public-library-success' script: ${afterBuildPublicLibrarySuccess}`);
       await spawn('node', [afterBuildPublicLibrarySuccess]);
     }
   } catch (err) {
