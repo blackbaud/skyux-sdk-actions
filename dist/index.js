@@ -2803,11 +2803,7 @@ function buildLibrary() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             yield runSkyUxCommand('build-public-library');
-            const afterBuildPublicLibrarySuccess = core.getInput('after-build-public-library-success');
-            if (afterBuildPublicLibrarySuccess) {
-                core.info(`Running 'after-build-public-library-success' script: ${afterBuildPublicLibrarySuccess}`);
-                yield spawn_1.spawn('node', [afterBuildPublicLibrarySuccess]);
-            }
+            yield runLifecycleHook('after-build-public-library-success');
         }
         catch (err) {
             core.setFailed('Library build failed.');
@@ -2817,6 +2813,15 @@ function buildLibrary() {
 function publishLibrary() {
     return __awaiter(this, void 0, void 0, function* () {
         npm_publish_1.npmPublish();
+    });
+}
+function runLifecycleHook(name) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const script = core.getInput(name);
+        if (script) {
+            core.info(`Running '${name}' script: ${script}`);
+            return spawn_1.spawn('node', [script]);
+        }
     });
 }
 function run() {
@@ -2838,6 +2843,7 @@ function run() {
         core.exportVariable('BROWSER_STACK_PROJECT', core.getInput('browser-stack-project') || process.env.GITHUB_REPOSITORY);
         yield install();
         yield installCerts();
+        yield runLifecycleHook('before-script');
         yield build();
         // Don't run tests for tags.
         if (utils_1.isTag()) {

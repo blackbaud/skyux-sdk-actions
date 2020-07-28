@@ -36,4 +36,5 @@ jobs:
         slack-webhook: ${{ secrets.SLACK_WEBHOOK }}
         visual-baselines-branch: 4.x.x-test-github-actions
         working-directory: ./skyux-sdk-template-library
-        after-build-public-library-success: ./scripts/after-build-public-library-success.js
+        hook-after-build-public-library-success: ./scripts/after-build-public-library-success.js
+        hook-before-script: ./scripts/before-script.js

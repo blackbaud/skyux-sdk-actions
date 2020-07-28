@@ -92,11 +92,7 @@ async function visual() {
 async function buildLibrary() {
   try {
     await runSkyUxCommand('build-public-library');
-    const afterBuildPublicLibrarySuccess = core.getInput('after-build-public-library-success');
-    if (afterBuildPublicLibrarySuccess) {
-      core.info(`Running 'after-build-public-library-success' script: ${afterBuildPublicLibrarySuccess}`);
-      await spawn('node', [afterBuildPublicLibrarySuccess]);
-    }
+    await runLifecycleHook('after-build-public-library-success');
   } catch (err) {
     core.setFailed('Library build failed.');
   }
@@ -104,6 +100,14 @@ async function buildLibrary() {
 
 async function publishLibrary() {
   npmPublish();
+}
+
+async function runLifecycleHook(name: string) {
+  const script = core.getInput(name);
+  if (script) {
+    core.info(`Running '${name}' script: ${script}`);
+    return spawn('node', [script]);
+  }
 }
 
 async function run(): Promise<void> {
@@ -127,6 +131,7 @@ async function run(): Promise<void> {
 
   await install();
   await installCerts();
+  await runLifecycleHook('before-script');
   await build();
 
   // Don't run tests for tags.
