@@ -122,13 +122,16 @@ async function run(): Promise<void> {
 
   await install();
   await installCerts();
-  await coverage();
   await build();
-  await visual();
-  await buildLibrary();
 
+  // Don't run tests for tags.
   if (isTag()) {
+    await buildLibrary();
     await publishLibrary();
+  } else {
+    await coverage();
+    await visual();
+    await buildLibrary();
   }
 }
 
