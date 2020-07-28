@@ -2719,6 +2719,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __webpack_require__(470);
+const fs = __webpack_require__(226);
+const path = __webpack_require__(622);
 const npm_publish_1 = __webpack_require__(96);
 const screenshot_comparator_1 = __webpack_require__(453);
 const spawn_1 = __webpack_require__(820);
@@ -2803,6 +2805,10 @@ function buildLibrary() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             yield runSkyUxCommand('build-public-library');
+            const afterBuildPublicLibrarySuccess = core.getInput('after-build-public-library-success');
+            if (afterBuildPublicLibrarySuccess) {
+                yield spawn_1.spawn('node', [afterBuildPublicLibrarySuccess]);
+            }
         }
         catch (err) {
             core.setFailed('Library build failed.');
@@ -2813,6 +2819,11 @@ function publishLibrary() {
     return __awaiter(this, void 0, void 0, function* () {
         npm_publish_1.npmPublish();
     });
+}
+function getPackageJsonContents() {
+    const rootPath = path.join(process.cwd(), core.getInput('working-directory'));
+    const packageJsonPath = path.join(rootPath, 'package.json');
+    return fs.readJson(packageJsonPath);
 }
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
