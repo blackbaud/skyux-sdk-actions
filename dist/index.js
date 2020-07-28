@@ -2719,17 +2719,40 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __webpack_require__(470);
+const fs = __webpack_require__(226);
+const path = __webpack_require__(622);
 const npm_publish_1 = __webpack_require__(96);
-const run_skyux_command_1 = __webpack_require__(495);
-const run_test_suite_1 = __webpack_require__(216);
+const screenshot_comparator_1 = __webpack_require__(453);
 const spawn_1 = __webpack_require__(820);
 const utils_1 = __webpack_require__(611);
 // Generate a unique build name to be used by BrowserStack.
 const BUILD_ID = `${(_a = process.env.GITHUB_REPOSITORY) === null || _a === void 0 ? void 0 : _a.split('/')[1]}-${process.env.GITHUB_EVENT_NAME}-${process.env.GITHUB_RUN_ID}-${Math.random().toString().slice(2, 7)}`;
+function runSkyUxCommand(command, args) {
+    core.info(`
+=====================================================
+> Running SKY UX command: '${command}'
+=====================================================
+`);
+    return spawn_1.spawn('npx', [
+        '-p', '@skyux-sdk/cli@next',
+        'skyux', command,
+        '--logFormat', 'none',
+        '--platform', 'gh-actions',
+        ...args || ''
+    ]);
+}
+function runPackageScript(scriptName) {
+    core.info(`
+=================================================================
+> Custom script found. Running \`npm run ${scriptName}\`...
+=================================================================
+`);
+    return spawn_1.spawn('npm', ['run', scriptName]);
+}
 function installCerts() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            yield run_skyux_command_1.runSkyUxCommand('certs', ['install']);
+            yield runSkyUxCommand('certs', ['install']);
         }
         catch (err) {
             core.setFailed('SSL certificates installation failed.');
@@ -2750,10 +2773,49 @@ function install() {
 function build() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            yield run_skyux_command_1.runSkyUxCommand('build');
+            yield runSkyUxCommand('build');
         }
         catch (err) {
             core.setFailed('Build failed.');
+        }
+    });
+}
+function coverage() {
+    return __awaiter(this, void 0, void 0, function* () {
+        core.exportVariable('BROWSER_STACK_BUILD_ID', `${BUILD_ID}-coverage`);
+        try {
+            yield runSkyUxCommand('test', ['--coverage', 'library']);
+        }
+        catch (err) {
+            core.setFailed('Code coverage failed.');
+        }
+    });
+}
+function visual() {
+    return __awaiter(this, void 0, void 0, function* () {
+        core.exportVariable('BROWSER_STACK_BUILD_ID', `${BUILD_ID}-visual`);
+        const repository = process.env.GITHUB_REPOSITORY || '';
+        try {
+            yield runSkyUxCommand('e2e');
+            if (utils_1.isPush()) {
+                yield screenshot_comparator_1.checkNewBaselineScreenshots(repository, BUILD_ID);
+            }
+        }
+        catch (err) {
+            if (utils_1.isPush()) {
+                yield screenshot_comparator_1.checkNewFailureScreenshots(BUILD_ID);
+            }
+            core.setFailed('End-to-end tests failed.');
+        }
+    });
+}
+function buildLibrary() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            yield runSkyUxCommand('build-public-library');
+        }
+        catch (err) {
+            core.setFailed('Library build failed.');
         }
     });
 }
@@ -2761,6 +2823,11 @@ function publishLibrary() {
     return __awaiter(this, void 0, void 0, function* () {
         npm_publish_1.npmPublish();
     });
+}
+function getPackageJsonContents() {
+    const rootPath = path.join(process.cwd(), core.getInput('working-directory'));
+    const packageJsonPath = path.join(rootPath, 'package.json');
+    return fs.readJson(packageJsonPath);
 }
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -2775,6 +2842,10 @@ function run() {
                 process.exit(0);
             }
         }
+        const packageJson = yield getPackageJsonContents();
+        const hasCustomTestCommand = (packageJson.scripts['test:ci'] !== undefined);
+        const hasCustomBuildLibraryCommand = (packageJson.scripts['build-public-library:ci'] !== undefined);
+        const hasCustomE2ECommand = (packageJson.scripts['e2e:ci'] !== undefined);
         // Set environment variables so that BrowserStack launcher can read them.
         core.exportVariable('BROWSER_STACK_ACCESS_KEY', core.getInput('browser-stack-access-key'));
         core.exportVariable('BROWSER_STACK_USERNAME', core.getInput('browser-stack-username'));
@@ -2782,9 +2853,33 @@ function run() {
         yield install();
         yield installCerts();
         yield build();
-        yield run_test_suite_1.runTestSuite(BUILD_ID);
+        if (hasCustomTestCommand) {
+            yield runPackageScript('test:ci');
+        }
+        else {
+            yield coverage();
+        }
+        if (hasCustomE2ECommand) {
+            yield runPackageScript('e2e:ci');
+        }
+        else {
+            yield visual();
+        }
+        if (hasCustomBuildLibraryCommand) {
+            yield runPackageScript('build-public-library:ci');
+        }
+        else {
+            yield buildLibrary();
+        }
+        // Don't run tests for tags.
         if (utils_1.isTag()) {
+            yield buildLibrary();
             yield publishLibrary();
+        }
+        else {
+            yield coverage();
+            yield visual();
+            yield buildLibrary();
         }
     });
 }
@@ -2797,108 +2892,6 @@ run();
 /***/ (function(module) {
 
 module.exports = require("https");
-
-/***/ }),
-
-/***/ 216:
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
-
-"use strict";
-
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.runTestSuite = void 0;
-const core = __webpack_require__(470);
-const fs = __webpack_require__(226);
-const path = __webpack_require__(622);
-const run_skyux_command_1 = __webpack_require__(495);
-const screenshot_comparator_1 = __webpack_require__(453);
-const spawn_1 = __webpack_require__(820);
-const utils_1 = __webpack_require__(611);
-function coverage(buildId) {
-    return __awaiter(this, void 0, void 0, function* () {
-        core.exportVariable('BROWSER_STACK_BUILD_ID', `${buildId}-coverage`);
-        try {
-            yield run_skyux_command_1.runSkyUxCommand('test', ['--coverage', 'library']);
-        }
-        catch (err) {
-            core.setFailed('Code coverage failed.');
-        }
-    });
-}
-function visual(buildId) {
-    return __awaiter(this, void 0, void 0, function* () {
-        core.exportVariable('BROWSER_STACK_BUILD_ID', `${buildId}-visual`);
-        const repository = process.env.GITHUB_REPOSITORY || '';
-        try {
-            yield run_skyux_command_1.runSkyUxCommand('e2e');
-            if (utils_1.isPush()) {
-                yield screenshot_comparator_1.checkNewBaselineScreenshots(repository, buildId);
-            }
-        }
-        catch (err) {
-            if (utils_1.isPush()) {
-                yield screenshot_comparator_1.checkNewFailureScreenshots(buildId);
-            }
-            core.setFailed('End-to-end tests failed.');
-        }
-    });
-}
-function buildLibrary() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            yield run_skyux_command_1.runSkyUxCommand('build-public-library');
-        }
-        catch (err) {
-            core.setFailed('Library build failed.');
-        }
-    });
-}
-function getPackageJsonContents() {
-    const rootPath = path.join(process.cwd(), core.getInput('working-directory'));
-    const packageJsonPath = path.join(rootPath, 'package.json');
-    return fs.readJson(packageJsonPath);
-}
-function runPackageScript(scriptName) {
-    core.info(`Custom script found. Running \`npm run ${scriptName}\`...`);
-    return spawn_1.spawn('npm', ['run', scriptName]);
-}
-function runTestSuite(buildId) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const packageJson = yield getPackageJsonContents();
-        const hasCustomTestCommand = (packageJson.scripts['test:ci'] !== undefined);
-        const hasCustomBuildLibraryCommand = (packageJson.scripts['build-public-library:ci'] !== undefined);
-        const hasCustomE2ECommand = (packageJson.scripts['e2e:ci'] !== undefined);
-        if (hasCustomTestCommand) {
-            yield runPackageScript('test:ci');
-        }
-        else {
-            yield coverage(buildId);
-        }
-        if (hasCustomE2ECommand) {
-            yield runPackageScript('e2e:ci');
-        }
-        else {
-            yield visual(buildId);
-        }
-        if (hasCustomBuildLibraryCommand) {
-            yield runPackageScript('build-public-library:ci');
-        }
-        else {
-            yield buildLibrary();
-        }
-    });
-}
-exports.runTestSuite = runTestSuite;
-
 
 /***/ }),
 
@@ -9142,34 +9135,6 @@ function resolveCommand(parsed) {
 }
 
 module.exports = resolveCommand;
-
-
-/***/ }),
-
-/***/ 495:
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.runSkyUxCommand = void 0;
-const core = __webpack_require__(470);
-const spawn_1 = __webpack_require__(820);
-function runSkyUxCommand(command, args) {
-    core.info(`
-=====================================================
-> Running SKY UX command: '${command}'
-=====================================================
-`);
-    return spawn_1.spawn('npx', [
-        '-p', '@skyux-sdk/cli',
-        'skyux', command,
-        '--logFormat', 'none',
-        '--platform', 'gh-actions',
-        ...args || ''
-    ]);
-}
-exports.runSkyUxCommand = runSkyUxCommand;
 
 
 /***/ }),

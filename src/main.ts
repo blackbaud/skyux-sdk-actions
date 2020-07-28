@@ -1,16 +1,15 @@
 import * as core from '@actions/core';
+import * as fs from 'fs-extra';
+import * as path from 'path';
 
 import {
   npmPublish
 } from './npm-publish';
 
 import {
-  runSkyUxCommand
-} from './run-skyux-command';
-
-import {
-  runTestSuite
-} from './run-test-suite';
+  checkNewBaselineScreenshots,
+  checkNewFailureScreenshots
+} from './screenshot-comparator';
 
 import {
   spawn
@@ -23,6 +22,31 @@ import {
 
 // Generate a unique build name to be used by BrowserStack.
 const BUILD_ID = `${process.env.GITHUB_REPOSITORY?.split('/')[1]}-${process.env.GITHUB_EVENT_NAME}-${process.env.GITHUB_RUN_ID}-${Math.random().toString().slice(2,7)}`;
+
+function runSkyUxCommand(command: string, args?: string[]): Promise<string> {
+  core.info(`
+=====================================================
+> Running SKY UX command: '${command}'
+=====================================================
+`);
+
+  return spawn('npx', [
+    '-p', '@skyux-sdk/cli@next',
+    'skyux', command,
+    '--logFormat', 'none',
+    '--platform', 'gh-actions',
+    ...args || ''
+  ]);
+}
+
+function runPackageScript(scriptName: string) {
+  core.info(`
+=================================================================
+> Custom script found. Running \`npm run ${scriptName}\`...
+=================================================================
+`);
+  return spawn('npm', ['run', scriptName]);
+}
 
 async function installCerts(): Promise<void> {
   try {
@@ -49,8 +73,49 @@ async function build() {
   }
 }
 
+async function coverage() {
+  core.exportVariable('BROWSER_STACK_BUILD_ID', `${BUILD_ID}-coverage`);
+
+  try {
+    await runSkyUxCommand('test', ['--coverage', 'library']);
+  } catch (err) {
+    core.setFailed('Code coverage failed.');
+  }
+}
+
+async function visual() {
+  core.exportVariable('BROWSER_STACK_BUILD_ID', `${BUILD_ID}-visual`);
+
+  const repository = process.env.GITHUB_REPOSITORY || '';
+  try {
+    await runSkyUxCommand('e2e');
+    if (isPush()) {
+      await checkNewBaselineScreenshots(repository, BUILD_ID);
+    }
+  } catch (err) {
+    if (isPush()) {
+      await checkNewFailureScreenshots(BUILD_ID);
+    }
+    core.setFailed('End-to-end tests failed.');
+  }
+}
+
+async function buildLibrary() {
+  try {
+    await runSkyUxCommand('build-public-library');
+  } catch (err) {
+    core.setFailed('Library build failed.');
+  }
+}
+
 async function publishLibrary() {
   npmPublish();
+}
+
+function getPackageJsonContents() {
+  const rootPath = path.join(process.cwd(), core.getInput('working-directory'));
+  const packageJsonPath = path.join(rootPath, 'package.json');
+  return fs.readJson(packageJsonPath);
 }
 
 async function run(): Promise<void> {
@@ -67,6 +132,11 @@ async function run(): Promise<void> {
     }
   }
 
+  const packageJson = await getPackageJsonContents();
+  const hasCustomTestCommand = (packageJson.scripts['test:ci'] !== undefined);
+  const hasCustomBuildLibraryCommand = (packageJson.scripts['build-public-library:ci'] !== undefined);
+  const hasCustomE2ECommand = (packageJson.scripts['e2e:ci'] !== undefined);
+
   // Set environment variables so that BrowserStack launcher can read them.
   core.exportVariable('BROWSER_STACK_ACCESS_KEY', core.getInput('browser-stack-access-key'));
   core.exportVariable('BROWSER_STACK_USERNAME', core.getInput('browser-stack-username'));
@@ -75,10 +145,33 @@ async function run(): Promise<void> {
   await install();
   await installCerts();
   await build();
-  await runTestSuite(BUILD_ID);
 
+  if (hasCustomTestCommand) {
+    await runPackageScript('test:ci');
+  } else {
+    await coverage();
+  }
+
+  if (hasCustomE2ECommand) {
+    await runPackageScript('e2e:ci');
+  } else {
+    await visual();
+  }
+
+  if (hasCustomBuildLibraryCommand) {
+    await runPackageScript('build-public-library:ci');
+  } else {
+    await buildLibrary();
+  }
+
+  // Don't run tests for tags.
   if (isTag()) {
+    await buildLibrary();
     await publishLibrary();
+  } else {
+    await coverage();
+    await visual();
+    await buildLibrary();
   }
 }
 
