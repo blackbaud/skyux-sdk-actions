@@ -2825,6 +2825,7 @@ function runLifecycleHook(name) {
             core.info(`Running '${name}' script: ${fullPath}`);
             const script = require(fullPath);
             yield script.runAsync();
+            core.info(`Lifecycle hook '${name}' successfully executed.`);
         }
     });
 }

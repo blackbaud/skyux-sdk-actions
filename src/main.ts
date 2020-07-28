@@ -111,6 +111,7 @@ async function runLifecycleHook(name: string) {
     core.info(`Running '${name}' script: ${fullPath}`);
     const script = require(fullPath);
     await script.runAsync();
+    core.info(`Lifecycle hook '${name}' successfully executed.`);
   }
 }
 
