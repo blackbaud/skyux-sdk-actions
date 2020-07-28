@@ -107,12 +107,6 @@ async function publishLibrary() {
   npmPublish();
 }
 
-function getPackageJsonContents() {
-  const rootPath = path.join(process.cwd(), core.getInput('working-directory'));
-  const packageJsonPath = path.join(rootPath, 'package.json');
-  return fs.readJson(packageJsonPath);
-}
-
 async function run(): Promise<void> {
   if (isPush()) {
     // Get the last commit message.
