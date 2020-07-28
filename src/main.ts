@@ -16,7 +16,8 @@ import {
 
 import {
   isPush,
-  isTag
+  isTag,
+  isPullRequest
 } from './utils';
 
 // Generate a unique build name to be used by BrowserStack.
@@ -86,7 +87,7 @@ async function visual() {
       await checkNewBaselineScreenshots(repository, BUILD_ID);
     }
   } catch (err) {
-    if (isPush()) {
+    if (isPullRequest()) {
       await checkNewFailureScreenshots(BUILD_ID);
     }
     core.setFailed('End-to-end tests failed.');

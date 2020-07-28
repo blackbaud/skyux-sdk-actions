@@ -2796,7 +2796,7 @@ function visual() {
             }
         }
         catch (err) {
-            if (utils_1.isPush()) {
+            if (utils_1.isPullRequest()) {
                 yield screenshot_comparator_1.checkNewFailureScreenshots(BUILD_ID);
             }
             core.setFailed('End-to-end tests failed.');
