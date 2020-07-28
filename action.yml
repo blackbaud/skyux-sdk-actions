@@ -30,6 +30,9 @@ inputs:
     description: 'Run the action in a different subdirectory.'
     default: './'
     required: false
+  after-build-public-library-success:
+    description: 'The path to a Node.js script to run after the SKY UX library is successfully built.'
+    required: false
 runs:
   using: 'node12'
   main: 'dist/index.js'

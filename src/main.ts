@@ -1,4 +1,6 @@
 import * as core from '@actions/core';
+import * as fs from 'fs-extra';
+import * as path from 'path';
 
 import {
   npmPublish
@@ -92,6 +94,10 @@ async function visual() {
 async function buildLibrary() {
   try {
     await runSkyUxCommand('build-public-library');
+    const afterBuildPublicLibrarySuccess = core.getInput('after-build-public-library-success');
+    if (afterBuildPublicLibrarySuccess) {
+      await spawn('node', [afterBuildPublicLibrarySuccess]);
+    }
   } catch (err) {
     core.setFailed('Library build failed.');
   }
@@ -99,6 +105,12 @@ async function buildLibrary() {
 
 async function publishLibrary() {
   npmPublish();
+}
+
+function getPackageJsonContents() {
+  const rootPath = path.join(process.cwd(), core.getInput('working-directory'));
+  const packageJsonPath = path.join(rootPath, 'package.json');
+  return fs.readJson(packageJsonPath);
 }
 
 async function run(): Promise<void> {
