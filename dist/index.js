@@ -2733,7 +2733,7 @@ function runSkyUxCommand(command, args) {
 =====================================================
 `);
     return spawn_1.spawn('npx', [
-        '-p', '@skyux-sdk/cli@next',
+        '-p', '@skyux-sdk/cli',
         'skyux', command,
         '--logFormat', 'none',
         '--platform', 'gh-actions',
