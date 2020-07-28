@@ -108,7 +108,7 @@ async function runLifecycleHook(name: string) {
   if (scriptPath) {
     const basePath = path.join(process.cwd(), core.getInput('working-directory'));
     const fullPath = path.join(basePath, scriptPath);
-    core.info(`Running '${name}' script: ${fullPath}`);
+    core.info(`Running '${name}' lifecycle hook: ${fullPath}`);
     const script = require(fullPath);
     await script.runAsync();
     core.info(`Lifecycle hook '${name}' successfully executed.`);
