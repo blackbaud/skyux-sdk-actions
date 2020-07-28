@@ -2764,6 +2764,7 @@ function install() {
 function build() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            yield runLifecycleHook('hook-before-script');
             yield runSkyUxCommand('build');
         }
         catch (err) {
@@ -2775,6 +2776,7 @@ function coverage() {
     return __awaiter(this, void 0, void 0, function* () {
         core.exportVariable('BROWSER_STACK_BUILD_ID', `${BUILD_ID}-coverage`);
         try {
+            yield runLifecycleHook('hook-before-script');
             yield runSkyUxCommand('test', ['--coverage', 'library']);
         }
         catch (err) {
@@ -2787,6 +2789,7 @@ function visual() {
         core.exportVariable('BROWSER_STACK_BUILD_ID', `${BUILD_ID}-visual`);
         const repository = process.env.GITHUB_REPOSITORY || '';
         try {
+            yield runLifecycleHook('hook-before-script');
             yield runSkyUxCommand('e2e');
             if (utils_1.isPush()) {
                 yield screenshot_comparator_1.checkNewBaselineScreenshots(repository, BUILD_ID);
@@ -2803,6 +2806,7 @@ function visual() {
 function buildLibrary() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            yield runLifecycleHook('hook-before-script');
             yield runSkyUxCommand('build-public-library');
             yield runLifecycleHook('hook-after-build-public-library-success');
         }
@@ -2848,7 +2852,6 @@ function run() {
         core.exportVariable('BROWSER_STACK_PROJECT', core.getInput('browser-stack-project') || process.env.GITHUB_REPOSITORY);
         yield install();
         yield installCerts();
-        yield runLifecycleHook('hook-before-script');
         yield build();
         // Don't run tests for tags.
         if (utils_1.isTag()) {

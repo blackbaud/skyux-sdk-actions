@@ -57,6 +57,7 @@ async function install(): Promise<void> {
 
 async function build() {
   try {
+    await runLifecycleHook('hook-before-script');
     await runSkyUxCommand('build');
   } catch (err) {
     core.setFailed('Build failed.');
@@ -67,6 +68,7 @@ async function coverage() {
   core.exportVariable('BROWSER_STACK_BUILD_ID', `${BUILD_ID}-coverage`);
 
   try {
+    await runLifecycleHook('hook-before-script');
     await runSkyUxCommand('test', ['--coverage', 'library']);
   } catch (err) {
     core.setFailed('Code coverage failed.');
@@ -78,6 +80,7 @@ async function visual() {
 
   const repository = process.env.GITHUB_REPOSITORY || '';
   try {
+    await runLifecycleHook('hook-before-script');
     await runSkyUxCommand('e2e');
     if (isPush()) {
       await checkNewBaselineScreenshots(repository, BUILD_ID);
@@ -92,6 +95,7 @@ async function visual() {
 
 async function buildLibrary() {
   try {
+    await runLifecycleHook('hook-before-script');
     await runSkyUxCommand('build-public-library');
     await runLifecycleHook('hook-after-build-public-library-success');
   } catch (err) {
@@ -136,7 +140,6 @@ async function run(): Promise<void> {
 
   await install();
   await installCerts();
-  await runLifecycleHook('hook-before-script');
   await build();
 
   // Don't run tests for tags.
