@@ -2719,6 +2719,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __webpack_require__(470);
+const path = __webpack_require__(622);
 const npm_publish_1 = __webpack_require__(96);
 const screenshot_comparator_1 = __webpack_require__(453);
 const spawn_1 = __webpack_require__(820);
@@ -2816,11 +2817,16 @@ function publishLibrary() {
     });
 }
 function runLifecycleHook(name) {
-    const script = core.getInput(name);
-    if (script) {
-        core.info(`Running '${name}' script: ${script}`);
-        return spawn_1.spawn('node', [script]);
-    }
+    return __awaiter(this, void 0, void 0, function* () {
+        const scriptPath = core.getInput(name);
+        if (scriptPath) {
+            const basePath = path.join(process.cwd(), core.getInput('working-directory'));
+            const fullPath = path.join(basePath, scriptPath);
+            core.info(`Running '${name}' script: ${fullPath}`);
+            const script = require(fullPath);
+            yield script.runAsync();
+        }
+    });
 }
 function run() {
     return __awaiter(this, void 0, void 0, function* () {

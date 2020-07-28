@@ -1,4 +1,5 @@
 import * as core from '@actions/core';
+import * as path from 'path';
 
 import {
   npmPublish
@@ -102,11 +103,14 @@ async function publishLibrary() {
   npmPublish();
 }
 
-function runLifecycleHook(name: string) {
-  const script = core.getInput(name);
-  if (script) {
-    core.info(`Running '${name}' script: ${script}`);
-    return spawn('node', [script]);
+async function runLifecycleHook(name: string) {
+  const scriptPath = core.getInput(name);
+  if (scriptPath) {
+    const basePath = path.join(process.cwd(), core.getInput('working-directory'));
+    const fullPath = path.join(basePath, scriptPath);
+    core.info(`Running '${name}' script: ${fullPath}`);
+    const script = require(fullPath);
+    await script.runAsync();
   }
 }
 
