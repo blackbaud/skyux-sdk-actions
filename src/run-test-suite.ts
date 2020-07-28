@@ -61,7 +61,11 @@ function getPackageJsonContents() {
 }
 
 function runPackageScript(scriptName: string) {
-  core.info(`Custom script found. Running \`npm run ${scriptName}\`...`);
+  core.info(`
+=================================================================
+> Custom script found. Running \`npm run ${scriptName}\`...
+=================================================================
+`);
   return spawn('npm', ['run', scriptName]);
 }
 
