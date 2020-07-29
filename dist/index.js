@@ -610,14 +610,14 @@ function npmPublish() {
         yield fs.ensureFile(npmFilePath);
         fs.writeFileSync(npmFilePath, `//registry.npmjs.org/:_authToken=${npmToken}`);
         try {
-            yield spawn_1.spawn('npm', [
+            const output = yield spawn_1.spawn('npm', [
                 'publish', '--access', 'public',
                 '--tag', npmTag,
                 '--dry-run'
             ], {
-                cwd: distPath,
-                stdio: 'inherit'
+                cwd: distPath
             });
+            core.info(output);
             const successMessage = `Successfully published \`${packageName}@${version}\` to NPM.`;
             core.info(successMessage);
             // await notifySlack(`${successMessage}\n${changelogUrl}`);
