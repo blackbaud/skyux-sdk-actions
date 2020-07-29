@@ -35,15 +35,14 @@ export async function npmPublish() {
   fs.writeFileSync(npmFilePath, `//registry.npmjs.org/:_authToken=${npmToken}`);
 
   try {
-    const output = await spawn('npm', [
+    await spawn('npm', [
       'publish', '--access', 'public',
       '--tag', npmTag,
       '--dry-run'
     ], {
-      cwd: distPath
+      cwd: distPath,
+      stdio: 'inherit'
     });
-
-    core.info(output);
 
     const successMessage = `Successfully published \`${packageName}@${version}\` to NPM.`;
     core.info(successMessage);
