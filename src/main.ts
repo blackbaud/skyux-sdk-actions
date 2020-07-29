@@ -15,9 +15,9 @@ import {
 } from './spawn';
 
 import {
+  isPullRequest,
   isPush,
-  isTag,
-  isPullRequest
+  isTag
 } from './utils';
 
 // Generate a unique build name to be used by BrowserStack.
@@ -37,6 +37,28 @@ function runSkyUxCommand(command: string, args?: string[]): Promise<string> {
     '--platform', 'gh-actions',
     ...args || ''
   ]);
+}
+
+/**
+ * Runs lifecycle hook Node.js scripts. The script must export an async function named `runAsync`.
+ * @example
+ * ```
+ * module.exports = {
+ *   runAsync: async () => {}
+ * };
+ * ```
+ * @param name The name of the lifecycle hook to call. See the `action.yml` file at the project root for possible options.
+ */
+async function runLifecycleHook(name: string) {
+  const scriptPath = core.getInput(name);
+  if (scriptPath) {
+    const basePath = path.join(process.cwd(), core.getInput('working-directory'));
+    const fullPath = path.join(basePath, scriptPath);
+    core.info(`Running '${name}' lifecycle hook: ${fullPath}`);
+    const script = require(fullPath);
+    await script.runAsync();
+    core.info(`Lifecycle hook '${name}' successfully executed.`);
+  }
 }
 
 async function installCerts(): Promise<void> {
@@ -67,7 +89,6 @@ async function build() {
 
 async function coverage() {
   core.exportVariable('BROWSER_STACK_BUILD_ID', `${BUILD_ID}-coverage`);
-
   try {
     await runLifecycleHook('hook-before-script');
     await runSkyUxCommand('test', ['--coverage', 'library']);
@@ -78,7 +99,6 @@ async function coverage() {
 
 async function visual() {
   core.exportVariable('BROWSER_STACK_BUILD_ID', `${BUILD_ID}-visual`);
-
   const repository = process.env.GITHUB_REPOSITORY || '';
   try {
     await runLifecycleHook('hook-before-script');
@@ -106,18 +126,6 @@ async function buildLibrary() {
 
 async function publishLibrary() {
   npmPublish();
-}
-
-async function runLifecycleHook(name: string) {
-  const scriptPath = core.getInput(name);
-  if (scriptPath) {
-    const basePath = path.join(process.cwd(), core.getInput('working-directory'));
-    const fullPath = path.join(basePath, scriptPath);
-    core.info(`Running '${name}' lifecycle hook: ${fullPath}`);
-    const script = require(fullPath);
-    await script.runAsync();
-    core.info(`Lifecycle hook '${name}' successfully executed.`);
-  }
 }
 
 async function run(): Promise<void> {

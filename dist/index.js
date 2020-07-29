@@ -2740,6 +2740,29 @@ function runSkyUxCommand(command, args) {
         ...args || ''
     ]);
 }
+/**
+ * Runs lifecycle hook Node.js scripts. The script must export an async function named `runAsync`.
+ * @example
+ * ```
+ * module.exports = {
+ *   runAsync: async () => {}
+ * };
+ * ```
+ * @param name The name of the lifecycle hook to call. See the `action.yml` file at the project root for possible options.
+ */
+function runLifecycleHook(name) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const scriptPath = core.getInput(name);
+        if (scriptPath) {
+            const basePath = path.join(process.cwd(), core.getInput('working-directory'));
+            const fullPath = path.join(basePath, scriptPath);
+            core.info(`Running '${name}' lifecycle hook: ${fullPath}`);
+            const script = require(fullPath);
+            yield script.runAsync();
+            core.info(`Lifecycle hook '${name}' successfully executed.`);
+        }
+    });
+}
 function installCerts() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -2818,19 +2841,6 @@ function buildLibrary() {
 function publishLibrary() {
     return __awaiter(this, void 0, void 0, function* () {
         npm_publish_1.npmPublish();
-    });
-}
-function runLifecycleHook(name) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const scriptPath = core.getInput(name);
-        if (scriptPath) {
-            const basePath = path.join(process.cwd(), core.getInput('working-directory'));
-            const fullPath = path.join(basePath, scriptPath);
-            core.info(`Running '${name}' lifecycle hook: ${fullPath}`);
-            const script = require(fullPath);
-            yield script.runAsync();
-            core.info(`Lifecycle hook '${name}' successfully executed.`);
-        }
     });
 }
 function run() {
