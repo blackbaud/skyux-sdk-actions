@@ -34,24 +34,35 @@ export async function npmPublish() {
   await fs.ensureFile(npmFilePath);
   fs.writeFileSync(npmFilePath, `//registry.npmjs.org/:_authToken=${npmToken}`);
 
+  const npmArgs = [
+    'publish', '--access', 'public',
+    '--tag', npmTag
+  ];
+
+  const isDryRun = (core.getInput('npm-dry-run') === 'true');
+
+  if (isDryRun) {
+    npmArgs.push('--dry-run');
+  }
+
   try {
-    await spawn('npm', [
-      'publish', '--access', 'public',
-      '--tag', npmTag,
-      '--dry-run'
-    ], {
+    await spawn('npm', npmArgs, {
       cwd: distPath,
       stdio: 'inherit'
     });
 
     const successMessage = `Successfully published \`${packageName}@${version}\` to NPM.`;
     core.info(successMessage);
-    // await notifySlack(`${successMessage}\n${changelogUrl}`);
+    if (!isDryRun) {
+      await notifySlack(`${successMessage}\n${changelogUrl}`);
+    }
   } catch (err) {
     const errorMessage = `\`${packageName}@${version}\` failed to publish to NPM.`;
     core.setFailed(err.message);
     core.setFailed(errorMessage);
-    // await notifySlack(errorMessage);
+    if (!isDryRun) {
+      await notifySlack(errorMessage);
+    }
   }
 
   fs.removeSync(npmFilePath);

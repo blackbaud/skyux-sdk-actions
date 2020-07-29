@@ -31,6 +31,7 @@ jobs:
       with:
         browser-stack-access-key: ${{ secrets.BROWSER_STACK_ACCESS_KEY }}
         browser-stack-username: ${{ secrets.BROWSER_STACK_USERNAME }}
+        npm-dry-run: true
         npm-token: ${{ secrets.NPM_TOKEN }}
         github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
         slack-webhook: ${{ secrets.SLACK_WEBHOOK }}

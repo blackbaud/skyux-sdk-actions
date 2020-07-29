@@ -17,6 +17,10 @@ inputs:
   github-token:
     description: 'The GitHub personal access token used to commit visual test results.'
     required: true
+  npm-dry-run:
+    description: 'Passes the `--dry-run` flag to `npm publish` for testing purposes.'
+    default: 'false'
+    required: false
   npm-token:
     description: 'The NPM token used to publish libraries.'
     required: true
