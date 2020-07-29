@@ -1834,7 +1834,6 @@ function visual() {
 function buildLibrary() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            yield runLifecycleHook('hook-before-script');
             yield runSkyUxCommand('build-public-library');
             yield runLifecycleHook('hook-after-build-public-library-success');
         }
