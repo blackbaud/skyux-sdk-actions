@@ -1866,13 +1866,13 @@ function run() {
         core.exportVariable('BROWSER_STACK_PROJECT', core.getInput('browser-stack-project') || process.env.GITHUB_REPOSITORY);
         yield install();
         yield installCerts();
-        yield build();
         // Don't run tests for tags.
         if (utils_1.isTag()) {
             yield buildLibrary();
             yield publishLibrary();
         }
         else {
+            yield build();
             yield coverage();
             yield visual();
             yield buildLibrary();
