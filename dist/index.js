@@ -14718,6 +14718,7 @@ function spawn(command, args, spawnOptions) {
             stdio: 'pipe',
             cwd: path.resolve(process.cwd(), core.getInput('working-directory'))
         };
+        core.info(`Running child process: ${command} ${args.join(' ')}...`);
         const childProcess = cross_spawn_1.spawn(command, args, Object.assign(Object.assign({}, defaults), spawnOptions));
         return new Promise((resolve, reject) => {
             let output = '';

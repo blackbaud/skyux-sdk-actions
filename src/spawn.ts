@@ -13,6 +13,8 @@ export async function spawn(command: string, args: string[], spawnOptions?: chil
     cwd: path.resolve(process.cwd(), core.getInput('working-directory'))
   };
 
+  core.info(`Running child process: ${command} ${args.join(' ')}...`);
+
   const childProcess = crossSpawn(command, args, {...defaults, ...spawnOptions});
 
   return new Promise((resolve, reject) => {
