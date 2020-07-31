@@ -66,6 +66,7 @@ async function installCerts(): Promise<void> {
     await runSkyUxCommand('certs', ['install']);
   } catch (err) {
     core.setFailed('SSL certificates installation failed.');
+    process.exit(1);
   }
 }
 
@@ -75,6 +76,7 @@ async function install(): Promise<void> {
     await spawn('npm', ['install', '--no-save', '--no-package-lock', 'blackbaud/skyux-sdk-builder-config']);
   } catch (err) {
     core.setFailed('Packages installation failed.');
+    process.exit(1);
   }
 }
 
@@ -84,6 +86,7 @@ async function build() {
     await runSkyUxCommand('build');
   } catch (err) {
     core.setFailed('Build failed.');
+    process.exit(1);
   }
 }
 
@@ -94,6 +97,7 @@ async function coverage() {
     await runSkyUxCommand('test', ['--coverage', 'library']);
   } catch (err) {
     core.setFailed('Code coverage failed.');
+    process.exit(1);
   }
 }
 
@@ -111,6 +115,7 @@ async function visual() {
       await checkNewFailureScreenshots(BUILD_ID);
     }
     core.setFailed('End-to-end tests failed.');
+    process.exit(1);
   }
 }
 
@@ -120,6 +125,7 @@ async function buildLibrary() {
     await runLifecycleHook('hook-after-build-public-library-success');
   } catch (err) {
     core.setFailed('Library build failed.');
+    process.exit(1);
   }
 }
 

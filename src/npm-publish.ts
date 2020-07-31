@@ -63,6 +63,7 @@ export async function npmPublish() {
     if (!isDryRun) {
       await notifySlack(errorMessage);
     }
+    process.exit(1);
   }
 
   fs.removeSync(npmFilePath);

@@ -1493,6 +1493,7 @@ function npmPublish() {
             if (!isDryRun) {
                 yield notify_slack_1.notifySlack(errorMessage);
             }
+            process.exit(1);
         }
         fs.removeSync(npmFilePath);
     });
@@ -2785,6 +2786,7 @@ function installCerts() {
         }
         catch (err) {
             core.setFailed('SSL certificates installation failed.');
+            process.exit(1);
         }
     });
 }
@@ -2796,6 +2798,7 @@ function install() {
         }
         catch (err) {
             core.setFailed('Packages installation failed.');
+            process.exit(1);
         }
     });
 }
@@ -2807,6 +2810,7 @@ function build() {
         }
         catch (err) {
             core.setFailed('Build failed.');
+            process.exit(1);
         }
     });
 }
@@ -2819,6 +2823,7 @@ function coverage() {
         }
         catch (err) {
             core.setFailed('Code coverage failed.');
+            process.exit(1);
         }
     });
 }
@@ -2838,6 +2843,7 @@ function visual() {
                 yield screenshot_comparator_1.checkNewFailureScreenshots(BUILD_ID);
             }
             core.setFailed('End-to-end tests failed.');
+            process.exit(1);
         }
     });
 }
@@ -2849,6 +2855,7 @@ function buildLibrary() {
         }
         catch (err) {
             core.setFailed('Library build failed.');
+            process.exit(1);
         }
     });
 }
@@ -6687,6 +6694,7 @@ function commitFailureScreenshots(buildId) {
         yield spawn_1.spawn('git', ['push', '--force', '--quiet', 'origin', branch], config);
         const url = repoUrl.split('@')[1].replace('.git', '');
         core.setFailed(`SKY UX visual test failure!\nScreenshots may be viewed at: https://${url}/tree/${branch}`);
+        process.exit(1);
     });
 }
 /**
