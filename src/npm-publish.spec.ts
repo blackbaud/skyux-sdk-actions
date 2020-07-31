@@ -21,6 +21,8 @@ describe('npmPublish', () => {
   beforeEach(() => {
     process.env.GITHUB_REPOSITORY = 'org/repo';
 
+    spyOn(process, 'exit');
+
     mockNpmDryRun = 'false';
 
     spyOn(core, 'getInput').and.callFake((key: string) => {

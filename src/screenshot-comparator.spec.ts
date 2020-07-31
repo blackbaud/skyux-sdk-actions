@@ -19,6 +19,7 @@ describe('screenshot comparator', () => {
   beforeEach(() => {
     spyOn(rimraf, 'sync');
     spyOn(fs, 'copy');
+    spyOn(process, 'exit');
     visualBaselinesBranch = '';
     spyOn(core, 'getInput').and.callFake((key: string) => {
       switch (key) {
