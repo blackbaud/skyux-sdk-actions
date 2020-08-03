@@ -73,7 +73,7 @@ async function installCerts(): Promise<void> {
 async function install(): Promise<void> {
   try {
     await spawn('npm', ['ci']);
-    await spawn('npm', ['install', '--no-save', '--no-package-lock', 'blackbaud/skyux-sdk-builder-config']);
+    await spawn('npm', ['install', '--no-save', '--no-package-lock', 'blackbaud/skyux-sdk-builder-config#read-pipeline-settings']);
   } catch (err) {
     core.setFailed('Packages installation failed.');
     process.exit(1);
