@@ -13,6 +13,10 @@
 ```
 See the `actions.yml` file for all available inputs.
 
+### Preventing the action from running for specific commits
+
+You may append `[ci skip]` to the commit message (or pull request title when squash-merging) to instruct the action to skip all steps. Git tags will still release, however.
+
 ## Build
 
 ```
