@@ -16,14 +16,14 @@
   "author": "Blackbaud, Inc.",
   "license": "MIT",
   "dependencies": {
-    "@actions/core": "1.2.5",
+    "@actions/core": "1.2.6",
     "@actions/github": "4.0.0",
     "@slack/webhook": "5.0.3"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "1.0.1",
     "@types/cross-spawn": "6.0.2",
-    "@types/fs-extra": "9.0.1",
+    "@types/fs-extra": "9.0.2",
     "@types/jasmine": "3.5.14",
     "@types/rimraf": "3.0.0",
     "@zeit/ncc": "0.22.3",
