@@ -2913,34 +2913,27 @@ function publishLibrary() {
         npm_publish_1.npmPublish();
     });
 }
-/**
- * Get the last commit message.
- * @see https://stackoverflow.com/a/7293026/6178885
- */
-function getLastCommitMessage() {
-    return spawn_1.spawn('git', ['log', '-1', '--pretty=%B', '--oneline'], {
-        cwd: process.cwd()
-    });
-}
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         if (utils_1.isPush()) {
-            const message = yield getLastCommitMessage();
+            // Get the last commit message.
+            // See: https://stackoverflow.com/a/7293026/6178885
+            const message = yield spawn_1.spawn('git', ['log', '-1', '--pretty=%B', '--oneline'], {
+                cwd: process.cwd()
+            });
             if (message.indexOf('[ci skip]') > -1) {
                 core.info('Found "[ci skip]" in last commit message. Aborting build and test run.');
                 process.exit(0);
             }
         }
+        // Set environment variables so that BrowserStack launcher can read them.
+        core.exportVariable('BROWSER_STACK_ACCESS_KEY', core.getInput('browser-stack-access-key'));
+        core.exportVariable('BROWSER_STACK_USERNAME', core.getInput('browser-stack-username'));
+        core.exportVariable('BROWSER_STACK_PROJECT', core.getInput('browser-stack-project') || process.env.GITHUB_REPOSITORY);
         let configKey = "gh-actions" /* GitHubActions */;
-        const browserStackAccessKey = core.getInput('browser-stack-access-key');
-        if (browserStackAccessKey) {
-            // Set environment variables so that BrowserStack launcher can read them.
-            core.exportVariable('BROWSER_STACK_ACCESS_KEY', browserStackAccessKey);
-            core.exportVariable('BROWSER_STACK_USERNAME', core.getInput('browser-stack-username'));
-            core.exportVariable('BROWSER_STACK_PROJECT', core.getInput('browser-stack-project') || process.env.GITHUB_REPOSITORY);
-        }
-        else {
-            core.warning('BrowserStack credentials could not be found. Tests will run through the local instance of ChromeHeadless.');
+        if (!core.getInput('browser-stack-access-key')) {
+            core.warning('BrowserStack credentials could not be found. ' +
+                'Tests will run through the local instance of ChromeHeadless.');
             configKey = "none" /* None */;
         }
         yield install();

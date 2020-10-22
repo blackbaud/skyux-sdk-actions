@@ -125,36 +125,31 @@ async function publishLibrary() {
   npmPublish();
 }
 
-/**
- * Get the last commit message.
- * @see https://stackoverflow.com/a/7293026/6178885
- */
-function getLastCommitMessage(): Promise<string> {
-  return spawn('git', ['log', '-1', '--pretty=%B', '--oneline'], {
-    cwd: process.cwd()
-  });
-}
-
 async function run(): Promise<void> {
   if (isPush()) {
+    // Get the last commit message.
+    // See: https://stackoverflow.com/a/7293026/6178885
+    const message = await spawn('git', ['log', '-1', '--pretty=%B', '--oneline'], {
+      cwd: process.cwd()
+    });
 
-    const message = await getLastCommitMessage();
     if (message.indexOf('[ci skip]') > -1) {
       core.info('Found "[ci skip]" in last commit message. Aborting build and test run.');
       process.exit(0);
     }
   }
 
-  let configKey = SkyUxCIPlatformConfig.GitHubActions;
+  // Set environment variables so that BrowserStack launcher can read them.
+  core.exportVariable('BROWSER_STACK_ACCESS_KEY', core.getInput('browser-stack-access-key'));
+  core.exportVariable('BROWSER_STACK_USERNAME', core.getInput('browser-stack-username'));
+  core.exportVariable('BROWSER_STACK_PROJECT', core.getInput('browser-stack-project') || process.env.GITHUB_REPOSITORY);
 
-  const browserStackAccessKey = core.getInput('browser-stack-access-key');
-  if (browserStackAccessKey) {
-    // Set environment variables so that BrowserStack launcher can read them.
-    core.exportVariable('BROWSER_STACK_ACCESS_KEY', browserStackAccessKey);
-    core.exportVariable('BROWSER_STACK_USERNAME', core.getInput('browser-stack-username'));
-    core.exportVariable('BROWSER_STACK_PROJECT', core.getInput('browser-stack-project') || process.env.GITHUB_REPOSITORY);
-  } else {
-    core.warning('BrowserStack credentials could not be found. Tests will run through the local instance of ChromeHeadless.');
+  let configKey = SkyUxCIPlatformConfig.GitHubActions;
+  if (!core.getInput('browser-stack-access-key')) {
+    core.warning(
+      'BrowserStack credentials could not be found. ' +
+      'Tests will run through the local instance of ChromeHeadless.'
+    );
     configKey = SkyUxCIPlatformConfig.None;
   }
 
