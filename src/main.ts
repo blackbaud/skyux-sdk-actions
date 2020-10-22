@@ -2,8 +2,16 @@ import * as core from '@actions/core';
 import * as path from 'path';
 
 import {
+  SkyUxCIPlatformConfig
+} from './ci-platform-config';
+
+import {
   npmPublish
 } from './npm-publish';
+
+import {
+  runSkyUxCommand
+} from './run-skyux-command';
 
 import {
   checkNewBaselineScreenshots,
@@ -22,22 +30,6 @@ import {
 
 // Generate a unique build name to be used by BrowserStack.
 const BUILD_ID = `${process.env.GITHUB_REPOSITORY?.split('/')[1]}-${process.env.GITHUB_EVENT_NAME}-${process.env.GITHUB_RUN_ID}-${Math.random().toString().slice(2,7)}`;
-
-function runSkyUxCommand(command: string, args?: string[]): Promise<string> {
-  core.info(`
-=====================================================
-> Running SKY UX command: '${command}'
-=====================================================
-`);
-
-  return spawn('npx', [
-    '-p', '@skyux-sdk/cli',
-    'skyux', command,
-    '--logFormat', 'none',
-    '--platform', 'gh-actions',
-    ...args || ''
-  ]);
-}
 
 /**
  * Runs lifecycle hook Node.js scripts. The script must export an async function named `runAsync`.
@@ -90,23 +82,23 @@ async function build() {
   }
 }
 
-async function coverage() {
+async function coverage(configKey: SkyUxCIPlatformConfig) {
   core.exportVariable('BROWSER_STACK_BUILD_ID', `${BUILD_ID}-coverage`);
   try {
     await runLifecycleHook('hook-before-script');
-    await runSkyUxCommand('test', ['--coverage', 'library']);
+    await runSkyUxCommand('test', ['--coverage', 'library'], configKey);
   } catch (err) {
     core.setFailed('Code coverage failed.');
     process.exit(1);
   }
 }
 
-async function visual() {
+async function visual(configKey: SkyUxCIPlatformConfig) {
   core.exportVariable('BROWSER_STACK_BUILD_ID', `${BUILD_ID}-visual`);
   const repository = process.env.GITHUB_REPOSITORY || '';
   try {
     await runLifecycleHook('hook-before-script');
-    await runSkyUxCommand('e2e');
+    await runSkyUxCommand('e2e', [], configKey);
     if (isPush()) {
       await checkNewBaselineScreenshots(repository, BUILD_ID);
     }
@@ -152,6 +144,15 @@ async function run(): Promise<void> {
   core.exportVariable('BROWSER_STACK_USERNAME', core.getInput('browser-stack-username'));
   core.exportVariable('BROWSER_STACK_PROJECT', core.getInput('browser-stack-project') || process.env.GITHUB_REPOSITORY);
 
+  let configKey = SkyUxCIPlatformConfig.GitHubActions;
+  if (!core.getInput('browser-stack-access-key')) {
+    core.warning(
+      'BrowserStack credentials could not be found. ' +
+      'Tests will run through the local instance of ChromeHeadless.'
+    );
+    configKey = SkyUxCIPlatformConfig.None;
+  }
+
   await install();
   await installCerts();
 
@@ -161,8 +162,8 @@ async function run(): Promise<void> {
     await publishLibrary();
   } else {
     await build();
-    await coverage();
-    await visual();
+    await coverage(configKey);
+    await visual(configKey);
     await buildLibrary();
   }
 }
