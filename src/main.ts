@@ -130,7 +130,8 @@ async function checkCodeFormat() {
   const packageJson = fs.readJsonSync(path.join(core.getInput('working-directory'), 'package.json'));
   console.log('EH?', packageJson.devDependencies);
   if (packageJson.devDependencies['@skyux-sdk/builder-code-formatter']) {
-    await runSkyUxCommand('format', ['--check']);
+    // await runSkyUxCommand('format', ['--check']);
+    await spawn('skyux', ['format', '--check']);
   }
 }
 
