@@ -2517,8 +2517,7 @@ function publishLibrary() {
 }
 function checkCodeFormat() {
     return __awaiter(this, void 0, void 0, function* () {
-        const packageJson = fs.readJsonSync(__webpack_require__.ab + "package.json");
-        console.log('Eh?', packageJson.devDependencies);
+        const packageJson = fs.readJsonSync(path.join(core.getInput('working-directory'), 'package.json'));
         if (packageJson.devDependencies['@skyux-sdk/builder-code-formatter']) {
             yield run_skyux_command_1.runSkyUxCommand('skyux', ['format', '--check']);
         }
