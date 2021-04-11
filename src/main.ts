@@ -128,11 +128,8 @@ async function publishLibrary() {
 
 async function checkCodeFormat() {
   const packageJson = fs.readJsonSync(path.join(core.getInput('working-directory'), 'package.json'));
-  console.log('EH?', packageJson.devDependencies);
   if (packageJson.devDependencies['@skyux-sdk/builder-code-formatter']) {
-    // await runSkyUxCommand('format', ['--check']);
-    await spawn('npm', ['i', '-g', '@skyux-sdk/cli']);
-    await spawn('skyux', ['format', '--check']);
+    await runSkyUxCommand('format', ['--check']);
   }
 }
 

@@ -2518,11 +2518,8 @@ function publishLibrary() {
 function checkCodeFormat() {
     return __awaiter(this, void 0, void 0, function* () {
         const packageJson = fs.readJsonSync(path.join(core.getInput('working-directory'), 'package.json'));
-        console.log('EH?', packageJson.devDependencies);
         if (packageJson.devDependencies['@skyux-sdk/builder-code-formatter']) {
-            // await runSkyUxCommand('format', ['--check']);
-            yield spawn_1.spawn('npm', ['i', '-g', '@skyux-sdk/cli']);
-            yield spawn_1.spawn('skyux', ['format', '--check']);
+            yield run_skyux_command_1.runSkyUxCommand('format', ['--check']);
         }
     });
 }
