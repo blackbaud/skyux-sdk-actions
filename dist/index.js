@@ -2546,9 +2546,9 @@ function run() {
                 'Tests will run through the local instance of ChromeHeadless.');
             configKey = "none" /* None */;
         }
-        yield checkCodeFormat();
         yield install();
         yield installCerts();
+        yield checkCodeFormat();
         // Don't run tests for tags.
         if (utils_1.isTag()) {
             yield buildLibrary();

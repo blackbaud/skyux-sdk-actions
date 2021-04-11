@@ -127,7 +127,9 @@ async function publishLibrary() {
 }
 
 async function checkCodeFormat() {
-  const packageJson = fs.readJsonSync(path.join(core.getInput('working-directory'), 'package.json'));
+  const packageJson = fs.readJsonSync(
+    path.join(core.getInput('working-directory'), 'package.json')
+  );
   if (packageJson.devDependencies['@skyux-sdk/builder-code-formatter']) {
     await runSkyUxCommand('format', ['--check']);
   }
@@ -161,10 +163,9 @@ async function run(): Promise<void> {
     configKey = SkyUxCIPlatformConfig.None;
   }
 
-  await checkCodeFormat();
-
   await install();
   await installCerts();
+  await checkCodeFormat();
 
   // Don't run tests for tags.
   if (isTag()) {
