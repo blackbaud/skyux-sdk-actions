@@ -2521,7 +2521,7 @@ function checkCodeFormat() {
         console.log('EH?', packageJson.devDependencies);
         if (packageJson.devDependencies['@skyux-sdk/builder-code-formatter']) {
             // await runSkyUxCommand('format', ['--check']);
-            yield spawn_1.spawn('skyux', ['format', '--check']);
+            yield spawn_1.spawn('npx', ['-p', '@skyux-sdk/cli', 'skyux', 'format', '--check']);
         }
     });
 }
