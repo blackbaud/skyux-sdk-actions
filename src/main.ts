@@ -1,6 +1,6 @@
-import core from '@actions/core';
-import path from 'path';
-import fs from 'fs-extra';
+import * as core from '@actions/core';
+import * as path from 'path';
+import * as fs from 'fs-extra';
 
 import {
   SkyUxCIPlatformConfig
