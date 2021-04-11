@@ -1,5 +1,6 @@
-import * as core from '@actions/core';
-import * as path from 'path';
+import core from '@actions/core';
+import path from 'path';
+import fs from 'fs-extra';
 
 import {
   SkyUxCIPlatformConfig
@@ -125,6 +126,15 @@ async function publishLibrary() {
   npmPublish();
 }
 
+async function checkCodeFormat() {
+  const packageJson = fs.readJsonSync(path.join(process.cwd(), 'package.json'));
+  if (packageJson.devDependencies['@skyux-sdk/builder-code-formatter']) {
+    await spawn('skyux', ['format', '--check'], {
+      cwd: process.cwd()
+    });
+  }
+}
+
 async function run(): Promise<void> {
   if (isPush()) {
     // Get the last commit message.
@@ -152,6 +162,8 @@ async function run(): Promise<void> {
     );
     configKey = SkyUxCIPlatformConfig.None;
   }
+
+  await checkCodeFormat();
 
   await install();
   await installCerts();
