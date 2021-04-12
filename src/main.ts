@@ -131,7 +131,13 @@ async function checkCodeFormat() {
     path.join(core.getInput('working-directory'), 'package.json')
   );
   if (packageJson.devDependencies['@skyux-sdk/builder-code-formatter']) {
-    await runSkyUxCommand('format', ['--check']);
+    try {
+      await runSkyUxCommand('format', ['--check']);
+    } catch (err) {
+      core.setFailed(err.message);
+      process.exit(1);
+    }
+
   }
 }
 

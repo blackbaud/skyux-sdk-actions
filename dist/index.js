@@ -2519,7 +2519,13 @@ function checkCodeFormat() {
     return __awaiter(this, void 0, void 0, function* () {
         const packageJson = fs.readJsonSync(path.join(core.getInput('working-directory'), 'package.json'));
         if (packageJson.devDependencies['@skyux-sdk/builder-code-formatter']) {
-            yield run_skyux_command_1.runSkyUxCommand('format', ['--check']);
+            try {
+                yield run_skyux_command_1.runSkyUxCommand('format', ['--check']);
+            }
+            catch (err) {
+                core.setFailed(err.message);
+                process.exit(1);
+            }
         }
     });
 }
