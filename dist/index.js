@@ -2523,7 +2523,8 @@ function checkCodeFormat() {
                 yield run_skyux_command_1.runSkyUxCommand('format', ['--check']);
             }
             catch (err) {
-                core.setFailed(err.message);
+                console.error(err);
+                core.setFailed('Library source code is not formatted correctly. Did you run `skyux format`?');
                 process.exit(1);
             }
         }
