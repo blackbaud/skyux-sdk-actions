@@ -65,7 +65,13 @@ async function installCerts(): Promise<void> {
 
 async function install(): Promise<void> {
   try {
-    await spawn('npm', ['ci']);
+    const packageLock = path.join(process.cwd(), core.getInput('working-directory'), 'package-lock.json');
+    if (fs.existsSync(packageLock)) {
+      await spawn('npm', ['ci']);
+    } else {
+      await spawn('npm', ['install']);
+    }
+
     await spawn('npm', ['install', '--no-save', '--no-package-lock', 'blackbaud/skyux-sdk-builder-config']);
   } catch (err) {
     core.setFailed('Packages installation failed.');
