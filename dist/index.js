@@ -2526,7 +2526,7 @@ function checkCodeFormat() {
         const packageJson = fs.readJsonSync(path.join(core.getInput('working-directory'), 'package.json'));
         if (packageJson.devDependencies['@skyux-sdk/builder-code-formatter']) {
             try {
-                yield run_skyux_command_1.runSkyUxCommand('format', ['--check']);
+                yield run_skyux_command_1.runSkyUxCommand('format-check');
             }
             catch (err) {
                 console.error(err);

@@ -138,7 +138,7 @@ async function checkCodeFormat() {
   );
   if (packageJson.devDependencies['@skyux-sdk/builder-code-formatter']) {
     try {
-      await runSkyUxCommand('format', ['--check']);
+      await runSkyUxCommand('format-check');
     } catch (err) {
       console.error(err);
       core.setFailed('Library source code is not formatted correctly. Did you run `skyux format`?');
