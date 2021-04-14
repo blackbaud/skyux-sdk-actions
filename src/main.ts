@@ -1,5 +1,6 @@
 import * as core from '@actions/core';
 import * as path from 'path';
+import * as fs from 'fs-extra';
 
 import {
   SkyUxCIPlatformConfig
@@ -64,7 +65,13 @@ async function installCerts(): Promise<void> {
 
 async function install(): Promise<void> {
   try {
-    await spawn('npm', ['ci']);
+    const packageLock = path.join(process.cwd(), core.getInput('working-directory'), 'package-lock.json');
+    if (fs.existsSync(packageLock)) {
+      await spawn('npm', ['ci']);
+    } else {
+      await spawn('npm', ['install']);
+    }
+
     await spawn('npm', ['install', '--no-save', '--no-package-lock', 'blackbaud/skyux-sdk-builder-config']);
   } catch (err) {
     core.setFailed('Packages installation failed.');
@@ -125,6 +132,21 @@ async function publishLibrary() {
   npmPublish();
 }
 
+async function checkCodeFormat() {
+  const packageJson = fs.readJsonSync(
+    path.join(core.getInput('working-directory'), 'package.json')
+  );
+  if (packageJson.devDependencies['@skyux-sdk/builder-code-formatter']) {
+    try {
+      await runSkyUxCommand('format-check');
+    } catch (err) {
+      console.error(err);
+      core.setFailed('Library source code is not formatted correctly. Did you run `skyux format`?');
+      process.exit(1);
+    }
+  }
+}
+
 async function run(): Promise<void> {
   if (isPush()) {
     // Get the last commit message.
@@ -155,6 +177,7 @@ async function run(): Promise<void> {
 
   await install();
   await installCerts();
+  await checkCodeFormat();
 
   // Don't run tests for tags.
   if (isTag()) {

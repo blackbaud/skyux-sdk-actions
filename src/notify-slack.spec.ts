@@ -11,10 +11,10 @@ describe('notifySlack', () => {
   it('should notify Slack', async (done: DoneFn) => {
     const message = 'Some message.';
     spyOn(core, 'getInput').and.returnValue('https://webhook');
-    spyOn(slack, 'IncomingWebhook').and.callFake(
-      function (url: string, defaults = {}): any {
+    spyOnProperty(slack, 'IncomingWebhook').and.returnValue(
+      function () {
         return {
-          send: (payload: any) => {
+          send(payload: any) {
             expect(payload.text).toEqual(message);
           }
         };
