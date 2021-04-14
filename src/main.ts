@@ -144,7 +144,6 @@ async function checkCodeFormat() {
       core.setFailed('Library source code is not formatted correctly. Did you run `skyux format`?');
       process.exit(1);
     }
-
   }
 }
 

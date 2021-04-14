@@ -22,7 +22,6 @@ describe('notifySlack', () => {
     );
 
     const infoStub = spyOn(core, 'info');
-
     await notifySlack(message);
     expect(infoStub).toHaveBeenCalledWith('Notifying Slack.');
     done();
