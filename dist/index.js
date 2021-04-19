@@ -2838,10 +2838,10 @@ function run() {
             yield publishLibrary();
         }
         else {
-            // await build();
+            yield buildLibrary();
+            yield build();
             yield coverage(configKey);
             yield visual(configKey);
-            yield buildLibrary();
         }
     });
 }
