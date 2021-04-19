@@ -2838,7 +2838,7 @@ function run() {
             yield publishLibrary();
         }
         else {
-            yield build();
+            // await build();
             yield buildLibrary();
             yield coverage(configKey);
             yield visual(configKey);
