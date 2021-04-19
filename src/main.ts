@@ -185,9 +185,9 @@ async function run(): Promise<void> {
     await publishLibrary();
   } else {
     // await build();
-    await buildLibrary();
     await coverage(configKey);
     await visual(configKey);
+    await buildLibrary();
   }
 }
 

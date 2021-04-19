@@ -2839,9 +2839,9 @@ function run() {
         }
         else {
             // await build();
-            yield buildLibrary();
             yield coverage(configKey);
             yield visual(configKey);
+            yield buildLibrary();
         }
     });
 }
