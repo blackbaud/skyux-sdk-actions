@@ -58,7 +58,7 @@ async function installCerts(): Promise<void> {
   try {
     await runSkyUxCommand('certs', ['install']);
   } catch (err) {
-    console.error(err);
+    console.log('ERROR:', err);
     core.setFailed('SSL certificates installation failed.');
     process.exit(1);
   }
@@ -75,7 +75,7 @@ async function install(): Promise<void> {
 
     await spawn('npm', ['install', '--no-save', '--no-package-lock', 'blackbaud/skyux-sdk-builder-config']);
   } catch (err) {
-    console.error(err);
+    console.log('ERROR:', err);
     core.setFailed('Packages installation failed.');
     process.exit(1);
   }
@@ -86,7 +86,7 @@ async function build() {
     await runLifecycleHook('hook-before-script');
     await runSkyUxCommand('build');
   } catch (err) {
-    console.error(err);
+    console.log('ERROR:', err);
     core.setFailed('Build failed.');
     process.exit(1);
   }
@@ -98,7 +98,7 @@ async function coverage(configKey: SkyUxCIPlatformConfig) {
     await runLifecycleHook('hook-before-script');
     await runSkyUxCommand('test', ['--coverage', 'library'], configKey);
   } catch (err) {
-    console.error(err);
+    console.log('ERROR:', err);
     core.setFailed('Code coverage failed.');
     process.exit(1);
   }
@@ -117,7 +117,7 @@ async function visual(configKey: SkyUxCIPlatformConfig) {
     if (isPullRequest()) {
       await checkNewFailureScreenshots(BUILD_ID);
     }
-    console.error(err);
+    console.log('ERROR:', err);
     core.setFailed('End-to-end tests failed.');
     process.exit(1);
   }
@@ -128,7 +128,7 @@ async function buildLibrary() {
     await runSkyUxCommand('build-public-library');
     await runLifecycleHook('hook-after-build-public-library-success');
   } catch (err) {
-    console.error(err);
+    console.log('ERROR:', err);
     core.setFailed('Library build failed.');
     process.exit(1);
   }
@@ -146,7 +146,7 @@ async function checkCodeFormat() {
     try {
       await runSkyUxCommand('format-check');
     } catch (err) {
-      console.error(err);
+      console.log('ERROR:', err);
       core.setFailed('Library source code is not formatted correctly. Did you run `skyux format`?');
       process.exit(1);
     }
