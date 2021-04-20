@@ -2783,6 +2783,7 @@ function visual(configKey) {
 function buildLibrary() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            yield runLifecycleHook('hook-before-script');
             yield run_skyux_command_1.runSkyUxCommand('build-public-library');
             yield runLifecycleHook('hook-after-build-public-library-success');
         }
