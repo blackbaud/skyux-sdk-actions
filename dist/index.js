@@ -2715,6 +2715,7 @@ function installCerts() {
 function install() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            yield spawn_1.spawn('npm', ['install', '--global', '@skyux-sdk/cli']);
             const packageLock = path.join(process.cwd(), core.getInput('working-directory'), 'package-lock.json');
             if (fs.existsSync(packageLock)) {
                 yield spawn_1.spawn('npm', ['ci']);
@@ -7821,9 +7822,8 @@ function runSkyUxCommand(command, args = [], platform = "gh-actions" /* GitHubAc
     else {
         args.push('--platform', platform);
     }
-    return spawn_1.spawn('npx', [
-        '-p', '@skyux-sdk/cli',
-        'skyux', command,
+    return spawn_1.spawn('skyux', [
+        command,
         '--logFormat', 'none',
         ...args
     ]);

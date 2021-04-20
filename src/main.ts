@@ -66,6 +66,8 @@ async function installCerts(): Promise<void> {
 
 async function install(): Promise<void> {
   try {
+    await spawn('npm', ['install', '--global', '@skyux-sdk/cli']);
+
     const packageLock = path.join(process.cwd(), core.getInput('working-directory'), 'package-lock.json');
     if (fs.existsSync(packageLock)) {
       await spawn('npm', ['ci']);
