@@ -127,6 +127,7 @@ async function visual(configKey: SkyUxCIPlatformConfig) {
 
 async function buildLibrary() {
   try {
+    await runLifecycleHook('hook-before-script');
     await runSkyUxCommand('build-public-library');
     await runLifecycleHook('hook-after-build-public-library-success');
   } catch (err) {
