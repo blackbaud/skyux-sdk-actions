@@ -2706,7 +2706,7 @@ function installCerts() {
             yield run_skyux_command_1.runSkyUxCommand('certs', ['install']);
         }
         catch (err) {
-            console.log('ERROR:', err);
+            console.log('[SKY UX ERROR]:', err);
             core.setFailed('SSL certificates installation failed.');
             process.exit(1);
         }
@@ -2726,7 +2726,7 @@ function install() {
             yield spawn_1.spawn('npm', ['install', '--no-save', '--no-package-lock', 'blackbaud/skyux-sdk-builder-config']);
         }
         catch (err) {
-            console.log('ERROR:', err);
+            console.log('[SKY UX ERROR]:', err);
             core.setFailed('Packages installation failed.');
             process.exit(1);
         }
@@ -2739,7 +2739,7 @@ function build() {
             yield run_skyux_command_1.runSkyUxCommand('build');
         }
         catch (err) {
-            console.log('ERROR:', err);
+            console.log('[SKY UX ERROR]:', err);
             core.setFailed('Build failed.');
             process.exit(1);
         }
@@ -2753,7 +2753,7 @@ function coverage(configKey) {
             yield run_skyux_command_1.runSkyUxCommand('test', ['--coverage', 'library'], configKey);
         }
         catch (err) {
-            console.log('ERROR:', err);
+            console.log('[SKY UX ERROR]:', err);
             core.setFailed('Code coverage failed.');
             process.exit(1);
         }
@@ -2774,7 +2774,7 @@ function visual(configKey) {
             if (utils_1.isPullRequest()) {
                 yield screenshot_comparator_1.checkNewFailureScreenshots(BUILD_ID);
             }
-            console.log('ERROR:', err);
+            console.log('[SKY UX ERROR]:', err);
             core.setFailed('End-to-end tests failed.');
             process.exit(1);
         }
@@ -2787,7 +2787,7 @@ function buildLibrary() {
             yield runLifecycleHook('hook-after-build-public-library-success');
         }
         catch (err) {
-            console.log('ERROR:', err);
+            console.log('[SKY UX ERROR]:', err);
             core.setFailed('Library build failed.');
             process.exit(1);
         }
@@ -2806,7 +2806,7 @@ function checkCodeFormat() {
                 yield run_skyux_command_1.runSkyUxCommand('format-check');
             }
             catch (err) {
-                console.log('ERROR:', err);
+                console.log('[SKY UX ERROR]:', err);
                 core.setFailed('Library source code is not formatted correctly. Did you run `skyux format`?');
                 process.exit(1);
             }
