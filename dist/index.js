@@ -7821,8 +7821,9 @@ function runSkyUxCommand(command, args = [], platform = "gh-actions" /* GitHubAc
     else {
         args.push('--platform', platform);
     }
-    return spawn_1.spawn('skyux', [
-        command,
+    return spawn_1.spawn('npx', [
+        '-p', '@skyux-sdk/cli',
+        'skyux', command,
         '--logFormat', 'none',
         ...args
     ]);
