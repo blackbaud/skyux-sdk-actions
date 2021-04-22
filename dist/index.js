@@ -2715,7 +2715,6 @@ function installCerts() {
 function install() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            yield spawn_1.spawn('npm', ['install', '--global', '@skyux-sdk/cli']);
             const packageLock = path.join(process.cwd(), core.getInput('working-directory'), 'package-lock.json');
             if (fs.existsSync(packageLock)) {
                 yield spawn_1.spawn('npm', ['ci']);
@@ -2783,7 +2782,6 @@ function visual(configKey) {
 function buildLibrary() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            yield runLifecycleHook('hook-before-script');
             yield run_skyux_command_1.runSkyUxCommand('build-public-library');
             yield runLifecycleHook('hook-after-build-public-library-success');
         }
@@ -2846,10 +2844,10 @@ function run() {
             yield publishLibrary();
         }
         else {
-            yield buildLibrary();
             yield build();
             yield coverage(configKey);
             yield visual(configKey);
+            yield buildLibrary();
         }
     });
 }
@@ -7823,8 +7821,9 @@ function runSkyUxCommand(command, args = [], platform = "gh-actions" /* GitHubAc
     else {
         args.push('--platform', platform);
     }
-    return spawn_1.spawn('skyux', [
-        command,
+    return spawn_1.spawn('npx', [
+        '-p', '@skyux-sdk/cli',
+        'skyux', command,
         '--logFormat', 'none',
         ...args
     ]);

@@ -33,8 +33,9 @@ export function runSkyUxCommand(
     args.push('--platform', platform);
   }
 
-  return spawn('skyux', [
-    command,
+  return spawn('npx', [
+    '-p', '@skyux-sdk/cli',
+    'skyux', command,
     '--logFormat', 'none',
     ...args
   ]);

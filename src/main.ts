@@ -66,8 +66,6 @@ async function installCerts(): Promise<void> {
 
 async function install(): Promise<void> {
   try {
-    await spawn('npm', ['install', '--global', '@skyux-sdk/cli']);
-
     const packageLock = path.join(process.cwd(), core.getInput('working-directory'), 'package-lock.json');
     if (fs.existsSync(packageLock)) {
       await spawn('npm', ['ci']);
@@ -127,7 +125,6 @@ async function visual(configKey: SkyUxCIPlatformConfig) {
 
 async function buildLibrary() {
   try {
-    await runLifecycleHook('hook-before-script');
     await runSkyUxCommand('build-public-library');
     await runLifecycleHook('hook-after-build-public-library-success');
   } catch (err) {
@@ -193,10 +190,10 @@ async function run(): Promise<void> {
     await buildLibrary();
     await publishLibrary();
   } else {
-    await buildLibrary();
     await build();
     await coverage(configKey);
     await visual(configKey);
+    await buildLibrary();
   }
 }
 
