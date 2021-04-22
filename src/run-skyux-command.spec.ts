@@ -1,47 +1,41 @@
+import * as core from '@actions/core';
+
 import {
   SkyUxCIPlatformConfig
 } from './ci-platform-config';
 
 import {
-  runSkyUxCommand
-} from './run-skyux-command';
+  spawn
+} from './spawn';
 
-import * as spawnModule from './spawn';
+/**
+ *
+ * @param command The SKY UX CLI command to execute.
+ * @param args Any command line arguments.
+ * @param platformConfigKey The name of the CI platform config to use.
+ */
+export function runSkyUxCommand(
+  command: string,
+  args: string[] = [],
+  platform = SkyUxCIPlatformConfig.GitHubActions
+): Promise<string> {
 
-describe('Run SKY UX command', () => {
+  core.info(`
+=====================================================
+> Running SKY UX command: '${command}'
+=====================================================
+`);
 
-  let spawnSpy: jasmine.Spy;
+  if (platform === SkyUxCIPlatformConfig.None) {
+    // Run `ChromeHeadless` since it comes pre-installed on the CI machine.
+    args.push('--headless');
+  } else {
+    args.push('--platform', platform);
+  }
 
-  beforeEach(() => {
-    spawnSpy = spyOn(spawnModule, 'spawn');
-  });
-
-  it('should run a SKY UX CLI command', async () => {
-    await runSkyUxCommand('test');
-    expect(spawnSpy).toHaveBeenCalledWith('skyux', [
-      'test',
-      '--logFormat', 'none',
-      '--platform', 'gh-actions'
-    ]);
-  });
-
-  it('should allow passing arguments', async () => {
-    await runSkyUxCommand('test', ['--my-arg', 'foobar']);
-    expect(spawnSpy).toHaveBeenCalledWith('skyux', [
-      'test',
-      '--logFormat', 'none',
-      '--my-arg', 'foobar',
-      '--platform', 'gh-actions'
-    ]);
-  });
-
-  it('should allow unsetting the `platform` argument', async () => {
-    await runSkyUxCommand('test', [], SkyUxCIPlatformConfig.None);
-    expect(spawnSpy).toHaveBeenCalledWith('skyux', [
-      'test',
-      '--logFormat', 'none',
-      '--headless'
-    ]);
-  });
-
-});
+  return spawn('skyux', [
+    command,
+    '--logFormat', 'none',
+    ...args
+  ]);
+}
