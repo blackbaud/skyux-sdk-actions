@@ -4,9 +4,8 @@
   "description": "GitHub actions for SKY UX libraries.",
   "main": "lib/main.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && ncc build",
     "lint": "./node_modules/.bin/tslint --project tsconfig.json",
-    "pack": "ncc build",
     "test": "npm run lint && nyc ts-node node_modules/jasmine/bin/jasmine --config=jasmine.json"
   },
   "repository": {

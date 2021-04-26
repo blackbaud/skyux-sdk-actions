@@ -20,5 +20,5 @@ You may append `[ci skip]` to the commit message (or pull request title when squ
 ## Build
 
 ```
-npm run build && npm run pack
+npm run build
 ```
