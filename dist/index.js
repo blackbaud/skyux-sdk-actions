@@ -2789,7 +2789,6 @@ function buildLibrary() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             yield install(true);
-            yield runLifecycleHook('hook-before-script');
             yield run_skyux_command_1.runSkyUxCommand('build-public-library');
             yield runLifecycleHook('hook-after-build-public-library-success');
         }
@@ -2854,6 +2853,7 @@ function run() {
         }
         yield coverage(configKey);
         const hasE2e = fs.existsSync(path.join(process.cwd(), core.getInput('working-directory'), 'e2e'));
+        // The visual tests run a build, so we don't need to do it again.
         if (hasE2e) {
             yield visual(configKey);
         }

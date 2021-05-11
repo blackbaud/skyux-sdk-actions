@@ -131,7 +131,6 @@ async function visual(configKey: SkyUxCIPlatformConfig) {
 async function buildLibrary() {
   try {
     await install(true);
-    await runLifecycleHook('hook-before-script');
     await runSkyUxCommand('build-public-library');
     await runLifecycleHook('hook-after-build-public-library-success');
   } catch (err) {
@@ -202,6 +201,7 @@ async function run(): Promise<void> {
   await coverage(configKey);
 
   const hasE2e = fs.existsSync(path.join(process.cwd(), core.getInput('working-directory'), 'e2e'));
+  // The visual tests run a build, so we don't need to do it again.
   if (hasE2e) {
     await visual(configKey);
   } else {
