@@ -64,13 +64,18 @@ async function installCerts(): Promise<void> {
   }
 }
 
-async function install(): Promise<void> {
+async function install(clean = false): Promise<void> {
   try {
-    const packageLock = path.join(process.cwd(), core.getInput('working-directory'), 'package-lock.json');
-    if (fs.existsSync(packageLock)) {
-      await spawn('npm', ['ci']);
+    // Delete node_modules and package-lock.json before running `npm install`.
+    if (clean) {
+      await runSkyUxCommand('install');
     } else {
-      await spawn('npm', ['install']);
+      const packageLock = path.join(process.cwd(), core.getInput('working-directory'), 'package-lock.json');
+      if (fs.existsSync(packageLock)) {
+        await spawn('npm', ['ci']);
+      } else {
+        await spawn('npm', ['install']);
+      }
     }
 
     await spawn('npm', ['install', '--no-save', '--no-package-lock', 'blackbaud/skyux-sdk-builder-config']);
@@ -125,6 +130,8 @@ async function visual(configKey: SkyUxCIPlatformConfig) {
 
 async function buildLibrary() {
   try {
+    await install(true);
+    await runLifecycleHook('hook-before-script');
     await runSkyUxCommand('build-public-library');
     await runLifecycleHook('hook-after-build-public-library-success');
   } catch (err) {
@@ -189,12 +196,19 @@ async function run(): Promise<void> {
   if (isTag()) {
     await buildLibrary();
     await publishLibrary();
+    return;
+  }
+
+  await coverage(configKey);
+
+  const hasE2e = fs.existsSync(path.join(process.cwd(), core.getInput('working-directory'), 'e2e'));
+  if (hasE2e) {
+    await visual(configKey);
   } else {
     await build();
-    await coverage(configKey);
-    await visual(configKey);
-    await buildLibrary();
   }
+
+  await buildLibrary();
 }
 
 run();
