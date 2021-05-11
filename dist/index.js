@@ -2712,15 +2712,21 @@ function installCerts() {
         }
     });
 }
-function install() {
+function install(clean = false) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const packageLock = path.join(process.cwd(), core.getInput('working-directory'), 'package-lock.json');
-            if (fs.existsSync(packageLock)) {
-                yield spawn_1.spawn('npm', ['ci']);
+            // Delete node_modules and package-lock.json before running `npm install`.
+            if (clean) {
+                yield run_skyux_command_1.runSkyUxCommand('install');
             }
             else {
-                yield spawn_1.spawn('npm', ['install']);
+                const packageLock = path.join(process.cwd(), core.getInput('working-directory'), 'package-lock.json');
+                if (fs.existsSync(packageLock)) {
+                    yield spawn_1.spawn('npm', ['ci']);
+                }
+                else {
+                    yield spawn_1.spawn('npm', ['install']);
+                }
             }
             yield spawn_1.spawn('npm', ['install', '--no-save', '--no-package-lock', 'blackbaud/skyux-sdk-builder-config']);
         }
@@ -2782,6 +2788,8 @@ function visual(configKey) {
 function buildLibrary() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            yield install(true);
+            yield runLifecycleHook('hook-before-script');
             yield run_skyux_command_1.runSkyUxCommand('build-public-library');
             yield runLifecycleHook('hook-after-build-public-library-success');
         }
@@ -2842,13 +2850,17 @@ function run() {
         if (utils_1.isTag()) {
             yield buildLibrary();
             yield publishLibrary();
+            return;
         }
-        else {
-            yield build();
-            yield coverage(configKey);
-            yield visual(configKey);
-            yield buildLibrary();
-        }
+        // await coverage(configKey);
+        yield build();
+        // const hasE2e = fs.existsSync(path.join(process.cwd(), core.getInput('working-directory'), 'e2e'));
+        // if (hasE2e) {
+        //   await visual(configKey);
+        // } else {
+        //   await build();
+        // }
+        yield buildLibrary();
     });
 }
 run();

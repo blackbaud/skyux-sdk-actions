@@ -199,14 +199,15 @@ async function run(): Promise<void> {
     return;
   }
 
-  await coverage(configKey);
+  // await coverage(configKey);
+  await build();
 
-  const hasE2e = fs.existsSync(path.join(process.cwd(), core.getInput('working-directory'), 'e2e'));
-  if (hasE2e) {
-    await visual(configKey);
-  } else {
-    await build();
-  }
+  // const hasE2e = fs.existsSync(path.join(process.cwd(), core.getInput('working-directory'), 'e2e'));
+  // if (hasE2e) {
+  //   await visual(configKey);
+  // } else {
+  //   await build();
+  // }
 
   await buildLibrary();
 }
