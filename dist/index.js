@@ -2852,14 +2852,14 @@ function run() {
             yield publishLibrary();
             return;
         }
-        // await coverage(configKey);
-        yield build();
-        // const hasE2e = fs.existsSync(path.join(process.cwd(), core.getInput('working-directory'), 'e2e'));
-        // if (hasE2e) {
-        //   await visual(configKey);
-        // } else {
-        //   await build();
-        // }
+        yield coverage(configKey);
+        const hasE2e = fs.existsSync(path.join(process.cwd(), core.getInput('working-directory'), 'e2e'));
+        if (hasE2e) {
+            yield visual(configKey);
+        }
+        else {
+            yield build();
+        }
         yield buildLibrary();
     });
 }
