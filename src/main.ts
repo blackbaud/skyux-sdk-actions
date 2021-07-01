@@ -182,16 +182,16 @@ async function run(): Promise<void> {
   }
 
   await install();
-  await installCerts();
-  await checkCodeFormat();
 
   // Don't run tests for tags.
   if (isTag()) {
     await buildLibrary();
     await publishLibrary();
   } else {
+    await checkCodeFormat();
     await build();
     await coverage(configKey);
+    await installCerts();
     await visual(configKey);
     await buildLibrary();
   }
