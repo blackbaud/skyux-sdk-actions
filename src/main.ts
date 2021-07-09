@@ -28,6 +28,7 @@ import {
   isPush,
   isTag
 } from './utils';
+import { publishSkyuxPackages } from './publish-skyux-packages';
 
 // Generate a unique build name to be used by BrowserStack.
 const BUILD_ID = `${process.env.GITHUB_REPOSITORY?.split('/')[1]}-${process.env.GITHUB_EVENT_NAME}-${process.env.GITHUB_RUN_ID}-${Math.random().toString().slice(2,7)}`;
@@ -138,21 +139,6 @@ async function publishLibrary() {
   npmPublish();
 }
 
-async function checkCodeFormat() {
-  const packageJson = fs.readJsonSync(
-    path.join(core.getInput('working-directory'), 'package.json')
-  );
-  if (packageJson.devDependencies['@skyux-sdk/builder-code-formatter']) {
-    try {
-      await runSkyUxCommand('format-check');
-    } catch (err) {
-      console.error('[SKY UX ERROR]:', err);
-      core.setFailed('Library source code is not formatted correctly. Did you run `skyux format`?');
-      process.exit(1);
-    }
-  }
-}
-
 async function run(): Promise<void> {
   if (isPush()) {
     // Get the last commit message.
@@ -182,16 +168,16 @@ async function run(): Promise<void> {
   }
 
   await install();
+  await installCerts();
 
   // Don't run tests for tags.
   if (isTag()) {
     await buildLibrary();
     await publishLibrary();
+    await publishSkyuxPackages();
   } else {
-    await checkCodeFormat();
     await build();
     await coverage(configKey);
-    await installCerts();
     await visual(configKey);
     await buildLibrary();
   }
