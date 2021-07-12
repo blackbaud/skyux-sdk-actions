@@ -1338,7 +1338,7 @@ function npmPublish() {
         const packageJson = fs.readJsonSync(packageJsonPath);
         const packageName = packageJson.name;
         const version = packageJson.version;
-        const npmTag = (utils_1.getTag().indexOf('-') > -1) ? 'next' : 'latest';
+        const npmTag = utils_1.getTag().indexOf('-') > -1 ? 'next' : 'latest';
         const npmFilePath = path.join(distPath, '.npmrc');
         const npmToken = core.getInput('npm-token');
         const repository = process.env.GITHUB_REPOSITORY;
@@ -1346,18 +1346,15 @@ function npmPublish() {
         core.info(`Preparing to publish ${packageName}@${version} to NPM from ${distPath}...`);
         yield fs.ensureFile(npmFilePath);
         fs.writeFileSync(npmFilePath, `//registry.npmjs.org/:_authToken=${npmToken}`);
-        const npmArgs = [
-            'publish', '--access', 'public',
-            '--tag', npmTag
-        ];
-        const isDryRun = (core.getInput('npm-dry-run') === 'true');
+        const npmArgs = ['publish', '--access', 'public', '--tag', npmTag];
+        const isDryRun = core.getInput('npm-dry-run') === 'true';
         if (isDryRun) {
             npmArgs.push('--dry-run');
         }
         try {
             yield spawn_1.spawn('npm', npmArgs, {
                 cwd: distPath,
-                stdio: 'inherit'
+                stdio: 'inherit',
             });
             const successMessage = `Successfully published \`${packageName}@${version}\` to NPM.`;
             core.info(successMessage);
@@ -2668,8 +2665,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __webpack_require__(470);
-const path = __webpack_require__(622);
 const fs = __webpack_require__(226);
+const path = __webpack_require__(622);
 const npm_publish_1 = __webpack_require__(96);
 const run_skyux_command_1 = __webpack_require__(495);
 const screenshot_comparator_1 = __webpack_require__(453);
@@ -2694,6 +2691,7 @@ function runLifecycleHook(name) {
             const basePath = path.join(process.cwd(), core.getInput('working-directory'));
             const fullPath = path.join(basePath, scriptPath);
             core.info(`Running '${name}' lifecycle hook: ${fullPath}`);
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
             const script = require(fullPath);
             yield script.runAsync();
             core.info(`Lifecycle hook '${name}' successfully executed.`);
@@ -2722,7 +2720,12 @@ function install() {
             else {
                 yield spawn_1.spawn('npm', ['install']);
             }
-            yield spawn_1.spawn('npm', ['install', '--no-save', '--no-package-lock', 'blackbaud/skyux-sdk-builder-config']);
+            yield spawn_1.spawn('npm', [
+                'install',
+                '--no-save',
+                '--no-package-lock',
+                'blackbaud/skyux-sdk-builder-config',
+            ]);
         }
         catch (err) {
             console.error('[SKY UX ERROR]:', err);
@@ -2818,7 +2821,7 @@ function run() {
             // Get the last commit message.
             // See: https://stackoverflow.com/a/7293026/6178885
             const message = yield spawn_1.spawn('git', ['log', '-1', '--pretty=%B', '--oneline'], {
-                cwd: process.cwd()
+                cwd: process.cwd(),
             });
             if (message.indexOf('[ci skip]') > -1) {
                 core.info('Found "[ci skip]" in last commit message. Aborting build and test run.');
@@ -3116,8 +3119,7 @@ function directoryHasChanges(dir) {
         // Modified files are prefixed with 'M'
         // https://git-scm.com/docs/git-status/1.8.1#_output
         // https://stackoverflow.com/a/6978402/6178885
-        return (output.indexOf('??') === 0 ||
-            output.indexOf('M') === 0);
+        return output.indexOf('??') === 0 || output.indexOf('M') === 0;
     });
 }
 exports.directoryHasChanges = directoryHasChanges;
@@ -6634,9 +6636,26 @@ const FAILURE_SCREENSHOT_DIR = 'screenshots-diff';
 const TEMP_DIR = '.skypagesvisualbaselinetemp';
 function cloneRepoAsAdmin(gitUrl, branch, directory) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield spawn_1.spawn('git', ['config', '--global', 'user.email', '"sky-build-user@blackbaud.com"']);
-        yield spawn_1.spawn('git', ['config', '--global', 'user.name', '"Blackbaud Sky Build User"']);
-        yield spawn_1.spawn('git', ['clone', gitUrl, '--branch', branch, '--single-branch', directory]);
+        yield spawn_1.spawn('git', [
+            'config',
+            '--global',
+            'user.email',
+            '"sky-build-user@blackbaud.com"',
+        ]);
+        yield spawn_1.spawn('git', [
+            'config',
+            '--global',
+            'user.name',
+            '"Blackbaud Sky Build User"',
+        ]);
+        yield spawn_1.spawn('git', [
+            'clone',
+            gitUrl,
+            '--branch',
+            branch,
+            '--single-branch',
+            directory,
+        ]);
     });
 }
 function commitBaselineScreenshots(repository, buildId) {
@@ -6650,11 +6669,15 @@ function commitBaselineScreenshots(repository, buildId) {
         yield fs.copy(path.resolve(workingDirectory, BASELINE_SCREENSHOT_DIR), path.resolve(workingDirectory, TEMP_DIR, BASELINE_SCREENSHOT_DIR));
         core.info(`Preparing to commit baseline screenshots to the '${branch}' branch.`);
         const config = {
-            cwd: path.resolve(workingDirectory, TEMP_DIR)
+            cwd: path.resolve(workingDirectory, TEMP_DIR),
         };
         yield spawn_1.spawn('git', ['checkout', branch], config);
         yield spawn_1.spawn('git', ['add', BASELINE_SCREENSHOT_DIR], config);
-        yield spawn_1.spawn('git', ['commit', '--message', `Build #${buildId}: Added new baseline screenshots. [ci skip]`], config);
+        yield spawn_1.spawn('git', [
+            'commit',
+            '--message',
+            `Build #${buildId}: Added new baseline screenshots. [ci skip]`,
+        ], config);
         yield spawn_1.spawn('git', ['push', '--force', '--quiet', 'origin', branch], config);
         core.info('New baseline images saved.');
     });
@@ -6670,11 +6693,15 @@ function commitFailureScreenshots(buildId) {
         yield fs.copy(path.resolve(workingDirectory, FAILURE_SCREENSHOT_DIR), path.resolve(workingDirectory, TEMP_DIR, FAILURE_SCREENSHOT_DIR));
         core.info(`Preparing to commit failure screenshots to the '${branch}' branch.`);
         const config = {
-            cwd: path.resolve(workingDirectory, TEMP_DIR)
+            cwd: path.resolve(workingDirectory, TEMP_DIR),
         };
         yield spawn_1.spawn('git', ['checkout', '-b', branch], config);
         yield spawn_1.spawn('git', ['add', FAILURE_SCREENSHOT_DIR], config);
-        yield spawn_1.spawn('git', ['commit', '--message', `Build #${buildId}: Added new failure screenshots. [ci skip]`], config);
+        yield spawn_1.spawn('git', [
+            'commit',
+            '--message',
+            `Build #${buildId}: Added new failure screenshots. [ci skip]`,
+        ], config);
         yield spawn_1.spawn('git', ['push', '--force', '--quiet', 'origin', branch], config);
         const url = repoUrl.split('@')[1].replace('.git', '');
         core.setFailed(`SKY UX visual test failure!\nScreenshots may be viewed at: https://${url}/tree/${branch}`);
@@ -7822,10 +7849,13 @@ function runSkyUxCommand(command, args = [], platform = "gh-actions" /* GitHubAc
         args.push('--platform', platform);
     }
     return spawn_1.spawn('npx', [
-        '-p', '@skyux-sdk/cli',
-        'skyux', command,
-        '--logFormat', 'none',
-        ...args
+        '-p',
+        '@skyux-sdk/cli',
+        'skyux',
+        command,
+        '--logFormat',
+        'none',
+        ...args,
     ]);
 }
 exports.runSkyUxCommand = runSkyUxCommand;
@@ -9340,7 +9370,7 @@ function notifySlack(message) {
             core.info('Notifying Slack.');
             const webhook = new slack.IncomingWebhook(url);
             yield webhook.send({
-                text: message
+                text: message,
             });
         }
         else {
@@ -11516,15 +11546,15 @@ function getTag() {
 }
 exports.getTag = getTag;
 function isPullRequest() {
-    return (github.context.eventName === 'pull_request');
+    return github.context.eventName === 'pull_request';
 }
 exports.isPullRequest = isPullRequest;
 function isPush() {
-    return (github.context.ref.indexOf('refs/heads/') === 0);
+    return github.context.ref.indexOf('refs/heads/') === 0;
 }
 exports.isPush = isPush;
 function isTag() {
-    return (github.context.ref.indexOf('refs/tags/') === 0);
+    return github.context.ref.indexOf('refs/tags/') === 0;
 }
 exports.isTag = isTag;
 
@@ -15537,13 +15567,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.spawn = void 0;
 const core = __webpack_require__(470);
-const path = __webpack_require__(622);
 const cross_spawn_1 = __webpack_require__(20);
+const path = __webpack_require__(622);
 function spawn(command, args, spawnOptions) {
     return __awaiter(this, void 0, void 0, function* () {
         const defaults = {
             stdio: 'pipe',
-            cwd: path.resolve(process.cwd(), core.getInput('working-directory'))
+            cwd: path.resolve(process.cwd(), core.getInput('working-directory')),
         };
         core.info(`Running child process: ${command} ${args.join(' ')}...`);
         const childProcess = cross_spawn_1.spawn(command, args, Object.assign(Object.assign({}, defaults), spawnOptions));

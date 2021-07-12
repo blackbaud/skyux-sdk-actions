@@ -1,10 +1,9 @@
 import * as core from '@actions/core';
-import * as path from 'path';
-import * as crossSpawn from 'cross-spawn';
 
-import {
-  spawn
-} from './spawn';
+import * as crossSpawn from 'cross-spawn';
+import * as path from 'path';
+
+import { spawn } from './spawn';
 
 describe('spawn', () => {
   let infoSpy: jasmine.Spy;
@@ -18,18 +17,18 @@ describe('spawn', () => {
 
     const output = 'The command output.';
 
-    spyOn(crossSpawn as any, 'spawn').and.callFake((command:string, args: string[], options: any) => {
+    spyOn(crossSpawn as any, 'spawn').and.callFake(() => {
       return {
         stdout: {
           on: (event: string, cb: (data: any) => void) => {
             cb(Buffer.from(output));
-          }
+          },
         },
         on: (event: string, cb: (data: any) => void) => {
           if (event === 'exit') {
             cb(0);
           }
-        }
+        },
       };
     });
     const result = await spawn('foo', ['bar', 'baz']);
@@ -43,21 +42,25 @@ describe('spawn', () => {
 
     let spawnOptionsCalled: any;
 
-    spyOn(crossSpawn as any, 'spawn').and.callFake((command:string, args: string[], options: any) => {
-      spawnOptionsCalled = options;
-      return {
-        stdout: {
-          on: (event: string, cb: (data: any) => void) => cb('')
-        },
-        on: (event: string, cb: (data: any) => void) => {
-          if (event === 'exit') {
-            cb(0);
-          }
-        }
-      };
-    });
+    spyOn(crossSpawn as any, 'spawn').and.callFake(
+      (command: string, args: string[], options: any) => {
+        spawnOptionsCalled = options;
+        return {
+          stdout: {
+            on: (event: string, cb: (data: any) => void) => cb(''),
+          },
+          on: (event: string, cb: (data: any) => void) => {
+            if (event === 'exit') {
+              cb(0);
+            }
+          },
+        };
+      }
+    );
     await spawn('foo', ['bar', 'baz']);
-    expect(spawnOptionsCalled.cwd).toEqual(path.resolve(process.cwd(), 'MOCK_WORKING_DIRECTORY'));
+    expect(spawnOptionsCalled.cwd).toEqual(
+      path.resolve(process.cwd(), 'MOCK_WORKING_DIRECTORY')
+    );
     done();
   });
 
@@ -66,18 +69,18 @@ describe('spawn', () => {
 
     const errorMessage = 'The error message.';
 
-    spyOn(crossSpawn as any, 'spawn').and.callFake((command:string, args: string[], options: any) => {
+    spyOn(crossSpawn as any, 'spawn').and.callFake(() => {
       return {
         stderr: {
           on: (event: string, cb: (data: any) => void) => {
             cb(Buffer.from(errorMessage));
-          }
+          },
         },
         on: (event: string, cb: (data: any) => void) => {
           if (event === 'exit') {
             cb(1);
           }
-        }
+        },
       };
     });
 
@@ -92,7 +95,7 @@ describe('spawn', () => {
 
     const errorMessage = 'The error message.';
 
-    spyOn(crossSpawn as any, 'spawn').and.callFake((command:string, args: string[], options: any) => {
+    spyOn(crossSpawn as any, 'spawn').and.callFake(() => {
       return {
         on: (event: string, cb: (data: any) => void) => {
           if (event === 'error') {
@@ -100,7 +103,7 @@ describe('spawn', () => {
           } else if (event === 'exit') {
             cb(1);
           }
-        }
+        },
       };
     });
 
@@ -109,5 +112,4 @@ describe('spawn', () => {
       done();
     });
   });
-
 });

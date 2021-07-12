@@ -1,12 +1,7 @@
 import * as core from '@actions/core';
 
-import {
-  SkyUxCIPlatformConfig
-} from './ci-platform-config';
-
-import {
-  spawn
-} from './spawn';
+import { SkyUxCIPlatformConfig } from './ci-platform-config';
+import { spawn } from './spawn';
 
 /**
  *
@@ -19,7 +14,6 @@ export function runSkyUxCommand(
   args: string[] = [],
   platform = SkyUxCIPlatformConfig.GitHubActions
 ): Promise<string> {
-
   core.info(`
 =====================================================
 > Running SKY UX command: '${command}'
@@ -34,9 +28,12 @@ export function runSkyUxCommand(
   }
 
   return spawn('npx', [
-    '-p', '@skyux-sdk/cli',
-    'skyux', command,
-    '--logFormat', 'none',
-    ...args
+    '-p',
+    '@skyux-sdk/cli',
+    'skyux',
+    command,
+    '--logFormat',
+    'none',
+    ...args,
   ]);
 }

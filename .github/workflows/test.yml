@@ -1,4 +1,4 @@
-name: "build-test"
+name: 'build-test'
 on: # rebuild any PRs and main branch changes
   pull_request:
   push:
@@ -10,31 +10,31 @@ jobs:
   coverage: # make sure build/ci work properly
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - run: |
-        npm ci
-        npm run build
-        npm test
-        bash <(curl -s https://codecov.io/bash)
+      - uses: actions/checkout@v2
+      - run: |
+          npm ci
+          npm run build
+          npm test
+          bash <(curl -s https://codecov.io/bash)
   e2e: # make sure the action works on a clean machine without building
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v1
-      with:
-        node-version: '12.x'
-    - name: Clone sample project
-      run: git clone https://github.com/blackbaud/skyux-sdk-template-library --branch 4.x.x-test-github-actions --single-branch
-    - name: Run action
-      uses: ./
-      with:
-        browser-stack-access-key: ${{ secrets.BROWSER_STACK_ACCESS_KEY }}
-        browser-stack-username: ${{ secrets.BROWSER_STACK_USERNAME }}
-        npm-dry-run: true
-        npm-token: ${{ secrets.NPM_TOKEN }}
-        github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-        slack-webhook: ${{ secrets.SLACK_WEBHOOK }}
-        visual-baselines-branch: 4.x.x-test-github-actions
-        working-directory: ./skyux-sdk-template-library
-        hook-after-build-public-library-success: ./scripts/after-build-public-library-success.js
-        hook-before-script: ./scripts/before-script.js
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - name: Clone sample project
+        run: git clone https://github.com/blackbaud/skyux-sdk-template-library --branch 4.x.x-test-github-actions --single-branch
+      - name: Run action
+        uses: ./
+        with:
+          browser-stack-access-key: ${{ secrets.BROWSER_STACK_ACCESS_KEY }}
+          browser-stack-username: ${{ secrets.BROWSER_STACK_USERNAME }}
+          npm-dry-run: true
+          npm-token: ${{ secrets.NPM_TOKEN }}
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          slack-webhook: ${{ secrets.SLACK_WEBHOOK }}
+          visual-baselines-branch: 4.x.x-test-github-actions
+          working-directory: ./skyux-sdk-template-library
+          hook-after-build-public-library-success: ./scripts/after-build-public-library-success.js
+          hook-before-script: ./scripts/before-script.js
