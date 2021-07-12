@@ -20,7 +20,7 @@ describe('spawn', () => {
     spyOn(crossSpawn as any, 'spawn').and.callFake(() => {
       return {
         stdout: {
-          on: (event: string, cb: (data: any) => void) => {
+          on: (_event: string, cb: (data: any) => void) => {
             cb(Buffer.from(output));
           },
         },
@@ -43,11 +43,11 @@ describe('spawn', () => {
     let spawnOptionsCalled: any;
 
     spyOn(crossSpawn as any, 'spawn').and.callFake(
-      (command: string, args: string[], options: any) => {
+      (_command: string, _args: string[], options: any) => {
         spawnOptionsCalled = options;
         return {
           stdout: {
-            on: (event: string, cb: (data: any) => void) => cb(''),
+            on: (_event: string, cb: (data: any) => void) => cb(''),
           },
           on: (event: string, cb: (data: any) => void) => {
             if (event === 'exit') {
@@ -72,7 +72,7 @@ describe('spawn', () => {
     spyOn(crossSpawn as any, 'spawn').and.callFake(() => {
       return {
         stderr: {
-          on: (event: string, cb: (data: any) => void) => {
+          on: (_event: string, cb: (data: any) => void) => {
             cb(Buffer.from(errorMessage));
           },
         },

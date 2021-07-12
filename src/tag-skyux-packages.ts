@@ -37,7 +37,7 @@ function updateChangelog(
   const changelogPath = path.join(workingDirectory, 'CHANGELOG.md');
   const changelog = fs.readFileSync(changelogPath).toString();
 
-  const date = new Date().toLocaleString().split(' ')[0];
+  const date = new Date().toLocaleString().split(', ')[0];
 
   const contents = `# ${newVersion} (${date})
 
@@ -88,5 +88,5 @@ export async function tagSkyuxPackages(
 
   // Tag the commit and push to origin.
   await spawn('git', ['tag', newVersion], spawnConfig);
-  await spawn('git', ['push', 'origin', REPO_BRANCH], spawnConfig);
+  await spawn('git', ['push', 'origin', newVersion], spawnConfig);
 }
