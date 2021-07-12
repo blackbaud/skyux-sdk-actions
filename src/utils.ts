@@ -5,13 +5,13 @@ export function getTag(): string {
 }
 
 export function isPullRequest(): boolean {
-  return (github.context.eventName === 'pull_request');
+  return github.context.eventName === 'pull_request';
 }
 
 export function isPush(): boolean {
-  return (github.context.ref.indexOf('refs/heads/') === 0);
+  return github.context.ref.indexOf('refs/heads/') === 0;
 }
 
 export function isTag(): boolean {
-  return (github.context.ref.indexOf('refs/tags/') === 0);
+  return github.context.ref.indexOf('refs/tags/') === 0;
 }

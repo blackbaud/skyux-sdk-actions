@@ -11,6 +11,7 @@
     npm-token: ${{ secrets.NPM_TOKEN }}
     slack-webhook: ${{ secrets.SLACK_WEBHOOK }}
 ```
+
 See the `actions.yml` file for all available inputs.
 
 ### Preventing the action from running for specific commits

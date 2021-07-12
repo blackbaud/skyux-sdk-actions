@@ -1,25 +1,28 @@
 import * as core from '@actions/core';
+
 import * as child_process from 'child_process';
+import { spawn as crossSpawn } from 'cross-spawn';
 import * as path from 'path';
 
-import {
-  spawn as crossSpawn
-} from 'cross-spawn';
-
-export async function spawn(command: string, args: string[], spawnOptions?: child_process.SpawnOptions): Promise<string> {
-
+export async function spawn(
+  command: string,
+  args: string[],
+  spawnOptions?: child_process.SpawnOptions
+): Promise<string> {
   const defaults: child_process.SpawnOptions = {
     stdio: 'pipe',
-    cwd: path.resolve(process.cwd(), core.getInput('working-directory'))
+    cwd: path.resolve(process.cwd(), core.getInput('working-directory')),
   };
 
   core.info(`Running child process: ${command} ${args.join(' ')}...`);
 
-  const childProcess = crossSpawn(command, args, {...defaults, ...spawnOptions});
+  const childProcess = crossSpawn(command, args, {
+    ...defaults,
+    ...spawnOptions,
+  });
 
   return new Promise((resolve, reject) => {
-
-    let output: string = '';
+    let output = '';
     if (childProcess.stdout) {
       childProcess.stdout.on('data', (data) => {
         /*istanbul ignore else*/
@@ -34,7 +37,7 @@ export async function spawn(command: string, args: string[], spawnOptions?: chil
       });
     }
 
-    let errorMessage: string = '';
+    let errorMessage = '';
     if (childProcess.stderr) {
       childProcess.stderr.on('data', (data) => {
         errorMessage += data.toString('utf8');

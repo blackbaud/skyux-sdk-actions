@@ -1,13 +1,12 @@
 import * as core from '@actions/core';
+
 import * as fsExtra from 'fs-extra';
 import * as path from 'path';
+
 import * as notifySlackModule from './notify-slack';
+import { npmPublish } from './npm-publish';
 import * as spawnModule from './spawn';
 import * as utils from './utils';
-
-import {
-  npmPublish
-} from './npm-publish';
 
 describe('npmPublish', () => {
   let infoSpy: jasmine.Spy;
@@ -41,7 +40,7 @@ describe('npmPublish', () => {
 
     spyOn(fsExtra, 'readJsonSync').and.returnValue({
       name: 'foo-package',
-      version: '1.2.3'
+      version: '1.2.3',
     });
     spyOn(fsExtra, 'ensureFile');
     writeSpy = spyOn(fsExtra, 'writeFileSync');
@@ -62,18 +61,31 @@ describe('npmPublish', () => {
     await npmPublish();
 
     expect(writeSpy).toHaveBeenCalledWith(
-      `${path.join(process.cwd(), core.getInput('working-directory'), 'dist', '.npmrc')}`,
+      `${path.join(
+        process.cwd(),
+        core.getInput('working-directory'),
+        'dist',
+        '.npmrc'
+      )}`,
       '//registry.npmjs.org/:_authToken=MOCK_TOKEN'
     );
 
-    expect(infoSpy).toHaveBeenCalledWith('Successfully published `foo-package@1.2.3` to NPM.');
-    expect(slackSpy).toHaveBeenCalledWith('Successfully published `foo-package@1.2.3` to NPM.\nhttps://github.com/org/repo/blob/1.2.3/CHANGELOG.md');
+    expect(infoSpy).toHaveBeenCalledWith(
+      'Successfully published `foo-package@1.2.3` to NPM.'
+    );
+    expect(slackSpy).toHaveBeenCalledWith(
+      'Successfully published `foo-package@1.2.3` to NPM.\nhttps://github.com/org/repo/blob/1.2.3/CHANGELOG.md'
+    );
     expect(spawnSpy).toHaveBeenCalledWith(
       'npm',
       ['publish', '--access', 'public', '--tag', 'latest'],
       {
-        cwd: path.join(process.cwd(), core.getInput('working-directory'), 'dist'),
-        stdio: 'inherit'
+        cwd: path.join(
+          process.cwd(),
+          core.getInput('working-directory'),
+          'dist'
+        ),
+        stdio: 'inherit',
       }
     );
 
@@ -90,8 +102,12 @@ describe('npmPublish', () => {
       'npm',
       ['publish', '--access', 'public', '--tag', 'next'],
       {
-        cwd: path.join(process.cwd(), core.getInput('working-directory'), 'dist'),
-        stdio: 'inherit'
+        cwd: path.join(
+          process.cwd(),
+          core.getInput('working-directory'),
+          'dist'
+        ),
+        stdio: 'inherit',
       }
     );
 
@@ -107,8 +123,12 @@ describe('npmPublish', () => {
       'npm',
       ['publish', '--access', 'public', '--tag', 'latest', '--dry-run'],
       {
-        cwd: path.join(process.cwd(), core.getInput('working-directory'), 'dist'),
-        stdio: 'inherit'
+        cwd: path.join(
+          process.cwd(),
+          core.getInput('working-directory'),
+          'dist'
+        ),
+        stdio: 'inherit',
       }
     );
 
@@ -119,8 +139,12 @@ describe('npmPublish', () => {
     spawnSpy.and.throwError('Something bad happened.');
     await npmPublish();
     expect(failedLogSpy).toHaveBeenCalledWith('Something bad happened.');
-    expect(failedLogSpy).toHaveBeenCalledWith('`foo-package@1.2.3` failed to publish to NPM.');
-    expect(slackSpy).toHaveBeenCalledWith('`foo-package@1.2.3` failed to publish to NPM.');
+    expect(failedLogSpy).toHaveBeenCalledWith(
+      '`foo-package@1.2.3` failed to publish to NPM.'
+    );
+    expect(slackSpy).toHaveBeenCalledWith(
+      '`foo-package@1.2.3` failed to publish to NPM.'
+    );
     done();
   });
 
@@ -129,9 +153,10 @@ describe('npmPublish', () => {
     spawnSpy.and.throwError('Something bad happened.');
     await npmPublish();
     expect(failedLogSpy).toHaveBeenCalledWith('Something bad happened.');
-    expect(failedLogSpy).toHaveBeenCalledWith('`foo-package@1.2.3` failed to publish to NPM.');
+    expect(failedLogSpy).toHaveBeenCalledWith(
+      '`foo-package@1.2.3` failed to publish to NPM.'
+    );
     expect(slackSpy).not.toHaveBeenCalled();
     done();
   });
-
 });
