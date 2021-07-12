@@ -1,115 +1,132 @@
-import * as core from '@actions/core';
-
-import * as crossSpawn from 'cross-spawn';
-import * as path from 'path';
-
-import { spawn } from './spawn';
+import mock from 'mock-require';
+import path from 'path';
 
 describe('spawn', () => {
-  let infoSpy: jasmine.Spy;
+  let coreSpyObj: jasmine.SpyObj<any>;
+  let crossSpawnSpy: jasmine.Spy;
+  let mockChildProcess: any;
+  let mockStdout: string;
+  let mockWorkingDirectory: string;
 
   beforeEach(() => {
-    infoSpy = spyOn(core, 'info');
-  });
+    mockWorkingDirectory = '';
 
-  it('should execute a child process', async (done: DoneFn) => {
-    spyOn(core, 'getInput').and.returnValue('');
+    coreSpyObj = jasmine.createSpyObj('core', ['getInput', 'info']);
 
-    const output = 'The command output.';
-
-    spyOn(crossSpawn as any, 'spawn').and.callFake(() => {
-      return {
-        stdout: {
-          on: (_event: string, cb: (data: any) => void) => {
-            cb(Buffer.from(output));
-          },
-        },
-        on: (event: string, cb: (data: any) => void) => {
-          if (event === 'exit') {
-            cb(0);
-          }
-        },
-      };
+    coreSpyObj.getInput.and.callFake((key: string) => {
+      return key === 'working-directory' ? mockWorkingDirectory : '';
     });
-    const result = await spawn('foo', ['bar', 'baz']);
-    expect(result).toEqual(output);
-    expect(infoSpy).toHaveBeenCalledWith(output);
-    done();
+
+    mockStdout = '';
+    mockChildProcess = {
+      stdout: {
+        on: (_event: string, cb: (data: any) => void) => {
+          cb(Buffer.from(mockStdout));
+        },
+      },
+      on: (event: string, cb: (data: any) => void) => {
+        if (event === 'exit') {
+          cb(0);
+        }
+      },
+    };
+
+    crossSpawnSpy = jasmine.createSpy('spawn').and.callFake(() => {
+      return mockChildProcess;
+    });
+
+    mock('cross-spawn', {
+      spawn: crossSpawnSpy,
+    });
+
+    mock('@actions/core', coreSpyObj);
   });
 
-  it('should allow running in specific directory', async (done: DoneFn) => {
-    spyOn(core, 'getInput').and.returnValue('MOCK_WORKING_DIRECTORY');
+  afterEach(() => {
+    mock.stopAll();
+  });
 
-    let spawnOptionsCalled: any;
+  function getUtil() {
+    return mock.reRequire('./spawn');
+  }
 
-    spyOn(crossSpawn as any, 'spawn').and.callFake(
-      (_command: string, _args: string[], options: any) => {
-        spawnOptionsCalled = options;
-        return {
-          stdout: {
-            on: (_event: string, cb: (data: any) => void) => cb(''),
-          },
-          on: (event: string, cb: (data: any) => void) => {
-            if (event === 'exit') {
-              cb(0);
-            }
-          },
-        };
-      }
-    );
+  it('should execute a child process', async () => {
+    mockStdout = 'The command output.';
+
+    const { spawn } = getUtil();
+
+    const result = await spawn('foo', ['bar', 'baz']);
+
+    expect(crossSpawnSpy).toHaveBeenCalledWith('foo', ['bar', 'baz'], {
+      stdio: 'pipe',
+      cwd: process.cwd(),
+    });
+    expect(result).toEqual(mockStdout);
+    expect(coreSpyObj.info).toHaveBeenCalledWith(mockStdout);
+  });
+
+  it('should allow running in specific directory', async () => {
+    mockWorkingDirectory = 'MOCK_WORKING_DIRECTORY';
+
+    const { spawn } = getUtil();
+
     await spawn('foo', ['bar', 'baz']);
-    expect(spawnOptionsCalled.cwd).toEqual(
-      path.resolve(process.cwd(), 'MOCK_WORKING_DIRECTORY')
-    );
-    done();
+
+    expect(crossSpawnSpy).toHaveBeenCalledWith('foo', ['bar', 'baz'], {
+      stdio: 'pipe',
+      cwd: path.join(process.cwd(), 'MOCK_WORKING_DIRECTORY'),
+    });
   });
 
   it('should output errors from processes', async (done: DoneFn) => {
-    spyOn(core, 'getInput').and.returnValue('');
-
     const errorMessage = 'The error message.';
 
-    spyOn(crossSpawn as any, 'spawn').and.callFake(() => {
-      return {
-        stderr: {
-          on: (_event: string, cb: (data: any) => void) => {
-            cb(Buffer.from(errorMessage));
-          },
-        },
-        on: (event: string, cb: (data: any) => void) => {
-          if (event === 'exit') {
-            cb(1);
-          }
-        },
-      };
-    });
+    delete mockChildProcess.stdout;
 
-    spawn('foo', ['bar', 'baz']).catch((err) => {
-      expect(err).toEqual(errorMessage);
-      done();
-    });
+    mockChildProcess.stderr = {
+      on: (_event: string, cb: (data: any) => void) => {
+        cb(Buffer.from(errorMessage));
+      },
+    };
+
+    mockChildProcess.on = (event: string, cb: (data: any) => void) => {
+      if (event === 'exit') {
+        cb(1);
+      }
+    };
+
+    const { spawn } = getUtil();
+
+    spawn('foo', ['bar', 'baz'])
+      .then(() => {
+        fail('Expected test to throw exception');
+      })
+      .catch((err: any) => {
+        expect(err).toEqual(errorMessage);
+        done();
+      });
   });
 
   it('should output child_process errors', async (done: DoneFn) => {
-    spyOn(core, 'getInput').and.returnValue('');
-
     const errorMessage = 'The error message.';
 
-    spyOn(crossSpawn as any, 'spawn').and.callFake(() => {
-      return {
-        on: (event: string, cb: (data: any) => void) => {
-          if (event === 'error') {
-            cb(errorMessage);
-          } else if (event === 'exit') {
-            cb(1);
-          }
-        },
-      };
-    });
+    mockChildProcess.on = (event: string, cb: (data: any) => void) => {
+      if (event === 'error') {
+        cb(errorMessage);
+      } else if (event === 'exit') {
+        cb(1);
+      }
+    };
 
-    spawn('foo', ['bar', 'baz']).catch((err) => {
-      expect(err).toEqual(errorMessage);
-      done();
-    });
+    const { spawn } = getUtil();
+
+    spawn('foo', ['bar', 'baz'])
+      .then(() => {
+        fail('Expected test to throw exception');
+      })
+      .catch((err: any) => {
+        expect(err).toEqual(errorMessage);
+        done();
+      });
   });
 });
