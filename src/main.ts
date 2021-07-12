@@ -28,7 +28,7 @@ import {
   isPush,
   isTag
 } from './utils';
-import { publishSkyuxPackages } from './publish-skyux-packages';
+import { tagSkyuxPackages } from './tag-skyux-packages';
 
 // Generate a unique build name to be used by BrowserStack.
 const BUILD_ID = `${process.env.GITHUB_REPOSITORY?.split('/')[1]}-${process.env.GITHUB_EVENT_NAME}-${process.env.GITHUB_RUN_ID}-${Math.random().toString().slice(2,7)}`;
@@ -174,7 +174,7 @@ async function run(): Promise<void> {
   if (isTag()) {
     await buildLibrary();
     await publishLibrary();
-    await publishSkyuxPackages();
+    await tagSkyuxPackages();
   } else {
     await build();
     await coverage(configKey);

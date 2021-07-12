@@ -2,6 +2,7 @@ import * as core from '@actions/core';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as rimraf from 'rimraf';
+import { cloneRepoAsAdmin } from './clone-repo-as-admin';
 
 import {
   directoryHasChanges
@@ -14,12 +15,6 @@ import {
 const BASELINE_SCREENSHOT_DIR = 'screenshots-baseline';
 const FAILURE_SCREENSHOT_DIR = 'screenshots-diff';
 const TEMP_DIR = '.skypagesvisualbaselinetemp';
-
-async function cloneRepoAsAdmin(gitUrl: string, branch: string, directory: string) {
-  await spawn('git', ['config', '--global', 'user.email', '"sky-build-user@blackbaud.com"']);
-  await spawn('git', ['config', '--global', 'user.name', '"Blackbaud Sky Build User"']);
-  await spawn('git', ['clone', gitUrl, '--branch', branch, '--single-branch', directory]);
-}
 
 async function commitBaselineScreenshots(repository: string, buildId: string) {
   const branch = core.getInput('visual-baselines-branch') || 'master';
