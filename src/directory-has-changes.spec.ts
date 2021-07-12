@@ -1,11 +1,7 @@
-import {
-  directoryHasChanges
-} from './directory-has-changes';
-
+import { directoryHasChanges } from './directory-has-changes';
 import * as spawnModule from './spawn';
 
 describe('directoryHasChanges', () => {
-
   it('should check if a directory has untracked files', async (done: DoneFn) => {
     spyOn(spawnModule, 'spawn').and.returnValue(Promise.resolve('?? foo'));
     const result = await directoryHasChanges('foo');
@@ -26,5 +22,4 @@ describe('directoryHasChanges', () => {
     expect(result).toEqual(false);
     done();
   });
-
 });
