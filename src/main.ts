@@ -5,6 +5,7 @@ import * as path from 'path';
 
 import { SkyUxCIPlatformConfig } from './ci-platform-config';
 import { npmPublish } from './npm-publish';
+import { PackageMetadata } from './package-metadata';
 import { runSkyUxCommand } from './run-skyux-command';
 import {
   checkNewBaselineScreenshots,
@@ -136,8 +137,8 @@ async function buildLibrary() {
   }
 }
 
-async function publishLibrary() {
-  npmPublish();
+async function publishLibrary(): Promise<PackageMetadata> {
+  return npmPublish();
 }
 
 async function run(): Promise<void> {
@@ -189,8 +190,8 @@ async function run(): Promise<void> {
   // Don't run tests for tags.
   if (isTag()) {
     await buildLibrary();
-    await publishLibrary();
-    await tagSkyuxPackages();
+    const packageMetadata = await publishLibrary();
+    await tagSkyuxPackages(packageMetadata);
   } else {
     await build();
     await coverage(configKey);

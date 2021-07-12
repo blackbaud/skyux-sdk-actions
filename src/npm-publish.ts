@@ -4,10 +4,11 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 
 import { notifySlack } from './notify-slack';
+import { PackageMetadata } from './package-metadata';
 import { spawn } from './spawn';
 import { getTag } from './utils';
 
-export async function npmPublish(): Promise<void> {
+export async function npmPublish(): Promise<PackageMetadata> {
   const distPath = path.join(
     process.cwd(),
     core.getInput('working-directory'),
@@ -63,4 +64,10 @@ export async function npmPublish(): Promise<void> {
   }
 
   fs.removeSync(npmFilePath);
+
+  return {
+    changelogUrl,
+    name: packageName,
+    version: version,
+  };
 }
