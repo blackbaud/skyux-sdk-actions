@@ -5684,8 +5684,8 @@ function updatePackageJson(workingDirectory) {
 function updateChangelog(workingDirectory, newVersion, packageMetadata) {
     const changelogPath = path_1.default.join(workingDirectory, 'CHANGELOG.md');
     const changelog = fs_extra_1.default.readFileSync(changelogPath).toString();
-    const date = new Date().toLocaleString().split(' ')[0];
-    const contents = `# ${newVersion} (${date})
+    const date = new Date();
+    const contents = `# ${newVersion} (${date.getFullYear()}-${date.getMonth()}-${date.getDate()})
 
 - \`${packageMetadata.name}@${packageMetadata.version}\` [Release notes](${packageMetadata.changelogUrl})
 
@@ -5716,7 +5716,7 @@ function tagSkyuxPackages(packageMetadata) {
         yield spawn_1.spawn('git', ['push', 'origin', REPO_BRANCH], spawnConfig);
         // Tag the commit and push to origin.
         yield spawn_1.spawn('git', ['tag', newVersion], spawnConfig);
-        yield spawn_1.spawn('git', ['push', 'origin', REPO_BRANCH], spawnConfig);
+        yield spawn_1.spawn('git', ['push', 'origin', newVersion], spawnConfig);
     });
 }
 exports.tagSkyuxPackages = tagSkyuxPackages;
