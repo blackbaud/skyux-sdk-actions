@@ -79,7 +79,7 @@ function bumpVersion(version: string): string {
 function updateChangelog(
   workingDirectory: string,
   newVersion: string,
-  packageMetadata: PackageMetadata
+  libraryPackage: PackageMetadata
 ): void {
   const changelogPath = path.join(workingDirectory, 'CHANGELOG.md');
   const changelog = fs.readFileSync(changelogPath).toString();
@@ -88,8 +88,8 @@ function updateChangelog(
 
   const contents = `# ${newVersion} (${date.getFullYear()}-${date.getMonth()}-${date.getDate()})
 
-- \`${packageMetadata.name}@${packageMetadata.version}\` [Release notes](${
-    packageMetadata.changelogUrl
+- \`${libraryPackage.name}@${libraryPackage.version}\` [Release notes](${
+    libraryPackage.changelogUrl
   })
 
 ${changelog}`;
@@ -100,13 +100,13 @@ ${changelog}`;
 async function commitAndTag(
   workingDirectory: string,
   packageJson: any,
-  packageMetadata: PackageMetadata
+  libraryPackage: PackageMetadata
 ) {
   const newVersion = bumpVersion(packageJson.version);
   packageJson.version = newVersion;
 
   updatePackageJson(workingDirectory, packageJson);
-  updateChangelog(workingDirectory, newVersion, packageMetadata);
+  updateChangelog(workingDirectory, newVersion, libraryPackage);
 
   const spawnConfig: child_process.SpawnOptions = {
     cwd: workingDirectory,
@@ -161,12 +161,13 @@ function checkoutMajorVersionBranch(
  * '5.0.0-beta.0', etc.). This is done so that each release level is deliberately made available
  * to consumers.
  *
- * @param packageMetadata Metadata describing the recently released SKY UX component library.
+ * @param libraryPackage Metadata describing the recently released SKY UX component library.
  */
 export async function tagSkyuxPackages(
-  packageMetadata: PackageMetadata
+  libraryPackage: PackageMetadata
 ): Promise<void> {
   const accessToken = core.getInput('github-token');
+
   const workingDirectory = path.join(
     core.getInput('working-directory'),
     SKYUX_PACKAGES_REPO_TEMP_DIR
@@ -182,43 +183,55 @@ export async function tagSkyuxPackages(
   );
 
   // Update the CHANGELOG and package.json with a patch/minor version.
-  const packageJson = readPackageJson(workingDirectory);
-  const triggerVersion = packageMetadata.version;
+  let packageJson = readPackageJson(workingDirectory);
 
-  const versionDiff = semver.diff(triggerVersion, packageJson.version);
-  const majorVersion = semver.major(packageJson.version);
-  const libraryMajorVersion = semver.major(packageMetadata.version);
+  const versionDiff = semver.diff(libraryPackage.version, packageJson.version);
+  const prereleaseGroup = semver.parse(packageJson.version)!.prerelease[0];
+
+  const libraryPrereleaseGroup = semver.parse(libraryPackage.version)!
+    .prerelease[0];
+
+  let success = false;
 
   if (
+    versionDiff === null || // versions are exactly the same
     versionDiff === 'minor' ||
     versionDiff === 'patch' ||
-    versionDiff === null // versions are exactly the same
+    (versionDiff === 'prerelease' && prereleaseGroup === libraryPrereleaseGroup)
   ) {
-    await commitAndTag(workingDirectory, packageJson, packageMetadata);
-  } else if (versionDiff === 'major' && libraryMajorVersion < majorVersion) {
-    const result = await checkoutMajorVersionBranch(
-      workingDirectory,
-      libraryMajorVersion
-    );
+    success = true;
+  }
 
-    if (result.includes('did not match any file(s) known to git')) {
-      throw new Error(`Foobar!`);
+  if (versionDiff === 'major') {
+    const majorVersion = semver.major(packageJson.version);
+    const libraryMajorVersion = semver.major(libraryPackage.version);
+
+    // If the library version is a prior major version, attempt to checkout
+    // the respective major version branch (e.g. `5.x.x`).
+    if (libraryMajorVersion < majorVersion) {
+      const result = await checkoutMajorVersionBranch(
+        workingDirectory,
+        libraryMajorVersion
+      );
+
+      // Does the major version branch exist?
+      if (result.includes('did not match any file(s) known to git')) {
+        throw new Error(`Foobar!`);
+      }
+
+      packageJson = readPackageJson(workingDirectory);
+
+      success = true;
     }
+  }
 
-    const checkoutPackageJson = readPackageJson(workingDirectory);
-
-    await commitAndTag(workingDirectory, checkoutPackageJson, packageMetadata);
-  } else if (
-    versionDiff === 'prerelease' &&
-    semver.parse(triggerVersion)!.prerelease[0] ===
-      semver.parse(packageJson.version)!.prerelease[0]
-  ) {
-    await commitAndTag(workingDirectory, packageJson, packageMetadata);
+  if (success) {
+    await commitAndTag(workingDirectory, packageJson, libraryPackage);
   } else {
     core.warning(`Something bad happened.`);
   }
 
-  // isVersionValid(packageMetadata.version, newVersion);
+  // isVersionValid(libraryPackage.version, newVersion);
 
   // if (!isVersionValid(packageJson.version, newVersion)) {
   //   core.warning(
