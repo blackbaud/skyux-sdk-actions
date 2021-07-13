@@ -1,17 +1,10 @@
-import * as core from '@actions/core';
-
-import * as fsExtra from 'fs-extra';
-import * as path from 'path';
-
-import * as notifySlackModule from './notify-slack';
-import { npmPublish } from './npm-publish';
-import * as spawnModule from './spawn';
-import * as utils from './utils';
+import mock from 'mock-require';
+import path from 'path';
 
 describe('npmPublish', () => {
   let infoSpy: jasmine.Spy;
   let failedLogSpy: jasmine.Spy;
-  let writeSpy: jasmine.Spy;
+  let fsSpyObj: jasmine.SpyObj<any>;
   let slackSpy: jasmine.Spy;
   let spawnSpy: jasmine.Spy;
   let getTagSpy: jasmine.Spy;
@@ -24,49 +17,73 @@ describe('npmPublish', () => {
 
     mockNpmDryRun = 'false';
 
-    spyOn(core, 'getInput').and.callFake((key: string) => {
-      if (key === 'working-directory') {
-        return 'MOCK_WORKING_DIRECTORY';
-      } else if (key === 'npm-token') {
-        return 'MOCK_TOKEN';
-      } else if (key === 'npm-dry-run') {
-        return mockNpmDryRun;
-      }
-      return '';
+    infoSpy = jasmine.createSpy('@actions/core.info');
+    failedLogSpy = jasmine.createSpy('@actions/core.setFailed');
+
+    mock('@actions/core', {
+      getInput(key: string) {
+        if (key === 'working-directory') {
+          return 'MOCK_WORKING_DIRECTORY';
+        } else if (key === 'npm-token') {
+          return 'MOCK_TOKEN';
+        } else if (key === 'npm-dry-run') {
+          return mockNpmDryRun;
+        }
+        return '';
+      },
+      info: infoSpy,
+      setFailed: failedLogSpy,
     });
 
-    infoSpy = spyOn(core, 'info');
-    failedLogSpy = spyOn(core, 'setFailed');
+    fsSpyObj = jasmine.createSpyObj('fs-extra', [
+      'ensureFile',
+      'readJsonSync',
+      'removeSync',
+      'writeFileSync',
+    ]);
 
-    spyOn(fsExtra, 'readJsonSync').and.returnValue({
+    fsSpyObj.readJsonSync.and.returnValue({
       name: 'foo-package',
       version: '1.2.3',
     });
-    spyOn(fsExtra, 'ensureFile');
-    writeSpy = spyOn(fsExtra, 'writeFileSync');
-    spyOn(fsExtra, 'removeSync');
 
-    slackSpy = spyOn(notifySlackModule, 'notifySlack');
+    mock('fs-extra', fsSpyObj);
 
-    spawnSpy = spyOn(spawnModule, 'spawn');
+    slackSpy = jasmine.createSpy('notifySlack');
 
-    getTagSpy = spyOn(utils, 'getTag').and.returnValue('1.0.0');
+    mock('./notify-slack', {
+      notifySlack: slackSpy,
+    });
+
+    spawnSpy = jasmine.createSpy('spawn');
+
+    mock('./spawn', {
+      spawn: spawnSpy,
+    });
+
+    getTagSpy = jasmine.createSpy('getTag').and.returnValue('1.0.0');
+
+    mock('./utils', {
+      getTag: getTagSpy,
+    });
   });
 
   afterEach(() => {
     process.env.GITHUB_REPOSITORY = undefined;
+    mock.stopAll();
   });
 
+  function getUtil() {
+    return mock.reRequire('./npm-publish');
+  }
+
   it('should publish to NPM', async (done: DoneFn) => {
+    const { npmPublish } = getUtil();
+
     await npmPublish();
 
-    expect(writeSpy).toHaveBeenCalledWith(
-      `${path.join(
-        process.cwd(),
-        core.getInput('working-directory'),
-        'dist',
-        '.npmrc'
-      )}`,
+    expect(fsSpyObj.writeFileSync).toHaveBeenCalledWith(
+      `${path.join(process.cwd(), 'MOCK_WORKING_DIRECTORY', 'dist', '.npmrc')}`,
       '//registry.npmjs.org/:_authToken=MOCK_TOKEN'
     );
 
@@ -80,11 +97,7 @@ describe('npmPublish', () => {
       'npm',
       ['publish', '--access', 'public', '--tag', 'latest'],
       {
-        cwd: path.join(
-          process.cwd(),
-          core.getInput('working-directory'),
-          'dist'
-        ),
+        cwd: path.join(process.cwd(), 'MOCK_WORKING_DIRECTORY', 'dist'),
         stdio: 'inherit',
       }
     );
@@ -96,17 +109,15 @@ describe('npmPublish', () => {
     getTagSpy.and.callThrough();
     getTagSpy.and.returnValue('1.0.0-rc.0');
 
+    const { npmPublish } = getUtil();
+
     await npmPublish();
 
     expect(spawnSpy).toHaveBeenCalledWith(
       'npm',
       ['publish', '--access', 'public', '--tag', 'next'],
       {
-        cwd: path.join(
-          process.cwd(),
-          core.getInput('working-directory'),
-          'dist'
-        ),
+        cwd: path.join(process.cwd(), 'MOCK_WORKING_DIRECTORY', 'dist'),
         stdio: 'inherit',
       }
     );
@@ -117,17 +128,15 @@ describe('npmPublish', () => {
   it('should allow running `npm publish --dry-run`', async (done: DoneFn) => {
     mockNpmDryRun = 'true';
 
+    const { npmPublish } = getUtil();
+
     await npmPublish();
 
     expect(spawnSpy).toHaveBeenCalledWith(
       'npm',
       ['publish', '--access', 'public', '--tag', 'latest', '--dry-run'],
       {
-        cwd: path.join(
-          process.cwd(),
-          core.getInput('working-directory'),
-          'dist'
-        ),
+        cwd: path.join(process.cwd(), 'MOCK_WORKING_DIRECTORY', 'dist'),
         stdio: 'inherit',
       }
     );
@@ -137,7 +146,11 @@ describe('npmPublish', () => {
 
   it('should handle errors', async (done: DoneFn) => {
     spawnSpy.and.throwError('Something bad happened.');
+
+    const { npmPublish } = getUtil();
+
     await npmPublish();
+
     expect(failedLogSpy).toHaveBeenCalledWith('Something bad happened.');
     expect(failedLogSpy).toHaveBeenCalledWith(
       '`foo-package@1.2.3` failed to publish to NPM.'
@@ -151,7 +164,11 @@ describe('npmPublish', () => {
   it('should not notify Slack of errors if `--dry-run`', async (done: DoneFn) => {
     mockNpmDryRun = 'true';
     spawnSpy.and.throwError('Something bad happened.');
+
+    const { npmPublish } = getUtil();
+
     await npmPublish();
+
     expect(failedLogSpy).toHaveBeenCalledWith('Something bad happened.');
     expect(failedLogSpy).toHaveBeenCalledWith(
       '`foo-package@1.2.3` failed to publish to NPM.'

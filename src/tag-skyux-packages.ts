@@ -37,11 +37,13 @@ function updateChangelog(
   const changelogPath = path.join(workingDirectory, 'CHANGELOG.md');
   const changelog = fs.readFileSync(changelogPath).toString();
 
-  const date = new Date().toLocaleString().split(', ')[0];
+  const date = new Date();
 
-  const contents = `# ${newVersion} (${date})
+  const contents = `# ${newVersion} (${date.getFullYear()}-${date.getMonth()}-${date.getDate()})
 
-- \`${packageMetadata.name}@${packageMetadata.version}\` [Release notes](${packageMetadata.changelogUrl})
+- \`${packageMetadata.name}@${packageMetadata.version}\` [Release notes](${
+    packageMetadata.changelogUrl
+  })
 
 ${changelog}`;
 

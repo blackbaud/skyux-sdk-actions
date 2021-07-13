@@ -85,9 +85,11 @@ describe('Tag `@skyux/packages`', () => {
       '.skyuxpackagestemp'
     );
 
+    const date = new Date();
+
     expect(fsSpyObj.writeFileSync).toHaveBeenCalledWith(
       path.join('mock-working-directory/.skyuxpackagestemp/CHANGELOG.md'),
-      `# 1.0.1 (7/12/2021)
+      `# 1.0.1 (${date.getFullYear()}-${date.getMonth()}-${date.getDate()})
 
 - \`@skyux/foobar@1.0.0\` [Release notes](https://changelog.com)
 
