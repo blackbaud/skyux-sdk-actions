@@ -4,12 +4,13 @@ import path from 'path';
 describe('Tag `@skyux/packages`', () => {
   let cloneRepoAsAdminSpy: jasmine.Spy;
   let fsSpyObj: jasmine.SpyObj<any>;
+  let mockSkyuxPackagesCheckoutVersion: string;
   let mockSkyuxPackagesVersion: string;
   let spawnSpy: jasmine.Spy;
+  let readJsonSyncCounter: number;
+  let warningSpy: jasmine.Spy;
 
   beforeEach(() => {
-    mockSkyuxPackagesVersion = '1.0.0';
-
     fsSpyObj = jasmine.createSpyObj('fs-extra', [
       'readFileSync',
       'readJsonSync',
@@ -21,15 +22,37 @@ describe('Tag `@skyux/packages`', () => {
       return Buffer.from('ORIGINAL_CHANGELOG_CONTENT\n');
     });
 
+    readJsonSyncCounter = 0;
+    mockSkyuxPackagesVersion = '2.0.0';
+    mockSkyuxPackagesCheckoutVersion = '1.0.0';
+
     fsSpyObj.readJsonSync.and.callFake(() => {
-      return {
+      let packageJson: any = {
         version: mockSkyuxPackagesVersion,
       };
+
+      // The first time package.json is read return what's in the master branch.
+      // Subsequent reads will be from another major-version specific branch (e.g. `4.x.x`).
+      if (readJsonSyncCounter > 0) {
+        packageJson = {
+          version: mockSkyuxPackagesCheckoutVersion,
+        };
+      }
+
+      readJsonSyncCounter++;
+
+      return packageJson;
     });
 
     spawnSpy = jasmine.createSpy('spawn');
 
+    spawnSpy.and.callFake(() => {
+      return Promise.resolve('');
+    });
+
     cloneRepoAsAdminSpy = jasmine.createSpy('cloneRepoAsAdmin');
+
+    warningSpy = jasmine.createSpy('warning');
 
     mock('@actions/core', {
       getInput(key: string) {
@@ -42,6 +65,7 @@ describe('Tag `@skyux/packages`', () => {
             return '';
         }
       },
+      warning: warningSpy,
     });
 
     mock('fs-extra', fsSpyObj);
@@ -71,6 +95,8 @@ describe('Tag `@skyux/packages`', () => {
   }
 
   it('should update and commit the changelog/package.json to blackbaud/skyux-packages repo', async () => {
+    mockSkyuxPackagesVersion = '1.0.0';
+
     const { tagSkyuxPackages } = getUtil();
 
     await tagSkyuxPackages({
@@ -100,7 +126,8 @@ ORIGINAL_CHANGELOG_CONTENT
 
     expect(fsSpyObj.writeJsonSync).toHaveBeenCalledWith(
       path.join('mock-working-directory/.skyuxpackagestemp/package.json'),
-      { version: '1.0.1' }
+      { version: '1.0.1' },
+      { spaces: 2 }
     );
 
     verifySpawn('git', ['add', '.']);
@@ -112,35 +139,104 @@ ORIGINAL_CHANGELOG_CONTENT
     verifySpawn('git', ['push', 'origin', 'master']);
   });
 
-  it('should tag a release', async () => {
+  it('should tag patch releases', async () => {
+    mockSkyuxPackagesVersion = '5.2.0';
+
     const { tagSkyuxPackages } = getUtil();
 
     await tagSkyuxPackages({
       changelogUrl: 'https://changelog.com',
       name: '@skyux/foobar',
-      version: '1.0.0',
+      version: '5.0.1',
     });
 
-    verifySpawn('git', ['tag', '1.0.1']);
-    verifySpawn('git', ['push', 'origin', '1.0.1']);
+    verifySpawn('git', ['tag', '5.2.1']);
+    verifySpawn('git', ['push', 'origin', '5.2.1']);
   });
 
-  it('should update prerelease versions', async () => {
-    mockSkyuxPackagesVersion = '3.0.0-alpha.0';
+  it('should tag prerelease versions in the same release group', async () => {
+    mockSkyuxPackagesVersion = '5.0.0-alpha.0';
 
     const { tagSkyuxPackages } = getUtil();
 
     await tagSkyuxPackages({
       changelogUrl: 'https://changelog.com',
       name: '@skyux/foobar',
-      version: '1.0.0',
+      version: '5.0.0-alpha.15',
     });
 
-    expect(fsSpyObj.writeJsonSync).toHaveBeenCalledWith(
-      path.join('mock-working-directory/.skyuxpackagestemp/package.json'),
-      { version: '3.0.0-alpha.1' }
-    );
+    verifySpawn('git', ['tag', '5.0.0-alpha.1']);
+  });
 
-    verifySpawn('git', ['tag', '3.0.0-alpha.1']);
+  it('should tag releases for older major versions', async () => {
+    mockSkyuxPackagesVersion = '6.1.0';
+    mockSkyuxPackagesCheckoutVersion = '5.9.2';
+
+    const { tagSkyuxPackages } = getUtil();
+
+    await tagSkyuxPackages({
+      changelogUrl: 'https://changelog.com',
+      name: '@skyux/foobar',
+      version: '5.1.1',
+    });
+
+    verifySpawn('git', ['checkout', '5.x.x']);
+    verifySpawn('git', ['tag', '5.9.3']);
+  });
+
+  it('should abort if library prerelease version not in same group as @skyux/packages prerelease version', async () => {
+    mockSkyuxPackagesVersion = '5.0.0-alpha.3';
+
+    const { tagSkyuxPackages } = getUtil();
+
+    await tagSkyuxPackages({
+      changelogUrl: 'https://changelog.com',
+      name: '@skyux/foobar',
+      version: '5.0.0-beta.3',
+    });
+
+    expect(warningSpy).toHaveBeenCalledWith('Something bad happened.');
+  });
+
+  it('should abort if library prerelease version older than @skyux/packages major version', async () => {
+    mockSkyuxPackagesVersion = '6.1.0';
+
+    const { tagSkyuxPackages } = getUtil();
+
+    await tagSkyuxPackages({
+      changelogUrl: 'https://changelog.com',
+      name: '@skyux/foobar',
+      version: '5.1.1-beta.3',
+    });
+
+    expect(warningSpy).toHaveBeenCalledWith('Something bad happened.');
+  });
+
+  it('should abort if library major version is greater than @skyux/packages version', async () => {
+    mockSkyuxPackagesVersion = '5.1.0';
+
+    const { tagSkyuxPackages } = getUtil();
+
+    await tagSkyuxPackages({
+      changelogUrl: 'https://changelog.com',
+      name: '@skyux/foobar',
+      version: '6.0.0',
+    });
+
+    expect(warningSpy).toHaveBeenCalledWith('Something bad happened.');
+  });
+
+  it('should abort if library major version is greater than @skyux/packages prerelease version', async () => {
+    mockSkyuxPackagesVersion = '5.0.0-alpha.0';
+
+    const { tagSkyuxPackages } = getUtil();
+
+    await tagSkyuxPackages({
+      changelogUrl: 'https://changelog.com',
+      name: '@skyux/foobar',
+      version: '5.0.0',
+    });
+
+    expect(warningSpy).toHaveBeenCalledWith('Something bad happened.');
   });
 });

@@ -68,6 +68,6 @@ export async function npmPublish(): Promise<PackageMetadata> {
   return {
     changelogUrl,
     name: packageName,
-    version: version,
+    version,
   };
 }
