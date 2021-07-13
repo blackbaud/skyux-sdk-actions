@@ -137,6 +137,18 @@ async function commitAndTag(
   await spawn('git', ['push', 'origin', newVersion], spawnConfig);
 }
 
+function checkoutMajorVersionBranch(
+  workingDirectory: string,
+  majorVersion: number
+): Promise<string> {
+  const spawnConfig: child_process.SpawnOptions = {
+    cwd: workingDirectory,
+    stdio: 'inherit',
+  };
+
+  return spawn('git', ['checkout', `${majorVersion}.x.x`], spawnConfig);
+}
+
 /**
  * After every SKY UX component library release, we also tag the `@skyux/packages` repo,
  * which is used by consumers of the Angular CLI to run `ng update @skyux/packages`.
@@ -184,31 +196,22 @@ export async function tagSkyuxPackages(
   ) {
     await commitAndTag(workingDirectory, packageJson, packageMetadata);
   } else if (versionDiff === 'major' && libraryMajorVersion < majorVersion) {
-    const spawnConfig: child_process.SpawnOptions = {
-      cwd: workingDirectory,
-      stdio: 'inherit',
-    };
-
-    const result = await spawn(
-      'git',
-      ['checkout', `${libraryMajorVersion}.x.x`],
-      spawnConfig
+    const result = await checkoutMajorVersionBranch(
+      workingDirectory,
+      libraryMajorVersion
     );
 
     if (result.includes('did not match any file(s) known to git')) {
-      console.log('Branch not found!');
-    } else {
-      const checkoutPackageJson = readPackageJson(workingDirectory);
-      await commitAndTag(
-        workingDirectory,
-        checkoutPackageJson,
-        packageMetadata
-      );
+      throw new Error(`Foobar!`);
     }
+
+    const checkoutPackageJson = readPackageJson(workingDirectory);
+
+    await commitAndTag(workingDirectory, checkoutPackageJson, packageMetadata);
   } else if (
     versionDiff === 'prerelease' &&
-    semver.parse(triggerVersion)?.prerelease[0] ===
-      semver.parse(packageJson.version)?.prerelease[0]
+    semver.parse(triggerVersion)!.prerelease[0] ===
+      semver.parse(packageJson.version)!.prerelease[0]
   ) {
     await commitAndTag(workingDirectory, packageJson, packageMetadata);
   } else {
