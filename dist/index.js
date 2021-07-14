@@ -5734,6 +5734,7 @@ function checkoutMajorVersionBranch(workingDirectory, majorVersion) {
 function tagSkyuxPackages(libPackage) {
     return __awaiter(this, void 0, void 0, function* () {
         const accessToken = core.getInput('github-token');
+        const isDryRun = core.getInput('npm-dry-run') === 'true';
         const workingDirectory = path_1.default.join(core.getInput('working-directory'), SKYUX_PACKAGES_REPO_TEMP_DIR);
         const repository = 'blackbaud/skyux-packages';
         const repoUrl = `https://${accessToken}@github.com/${repository}.git`;
@@ -5779,7 +5780,12 @@ function tagSkyuxPackages(libPackage) {
             packageJson.version = newVersion;
             fs_extra_1.default.writeJsonSync(packageJsonPath, packageJson, { spaces: 2 });
             updateChangelog(workingDirectory, newVersion, libPackage);
-            yield commitAndTag(workingDirectory, newVersion);
+            if (!isDryRun) {
+                yield commitAndTag(workingDirectory, newVersion);
+            }
+            else {
+                core.warning(`Tagging was aborted because the 'npm-dry-run' flag is set. The '${repository}' repository would have been tagged with (${newVersion}).`);
+            }
         }
         else {
             const parsedVersion = semver_1.default.parse(libPackage.version);

@@ -111,6 +111,7 @@ export async function tagSkyuxPackages(
   libPackage: PackageMetadata
 ): Promise<void> {
   const accessToken = core.getInput('github-token');
+  const isDryRun = core.getInput('npm-dry-run') === 'true';
 
   const workingDirectory = path.join(
     core.getInput('working-directory'),
@@ -192,7 +193,13 @@ export async function tagSkyuxPackages(
 
     updateChangelog(workingDirectory, newVersion, libPackage);
 
-    await commitAndTag(workingDirectory, newVersion);
+    if (!isDryRun) {
+      await commitAndTag(workingDirectory, newVersion);
+    } else {
+      core.warning(
+        `Tagging was aborted because the 'npm-dry-run' flag is set. The '${repository}' repository would have been tagged with (${newVersion}).`
+      );
+    }
   } else {
     const parsedVersion = semver.parse(libPackage.version);
 
