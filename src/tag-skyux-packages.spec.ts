@@ -5,6 +5,7 @@ describe('Tag `@skyux/packages`', () => {
   let cloneRepoAsAdminSpy: jasmine.Spy;
   let fsSpyObj: jasmine.SpyObj<any>;
   let mockGitCheckoutResult: string;
+  let mockPackageGroup: any;
   let mockSkyuxPackagesCheckoutVersion: string;
   let mockSkyuxPackagesVersion: string;
   let readJsonSyncCounter: number;
@@ -24,12 +25,18 @@ describe('Tag `@skyux/packages`', () => {
     });
 
     readJsonSyncCounter = 0;
+    mockPackageGroup = {
+      '@skyux/foobar': '^5.0.0',
+    };
     mockSkyuxPackagesVersion = '2.0.0';
     mockSkyuxPackagesCheckoutVersion = '1.0.0';
 
     fsSpyObj.readJsonSync.and.callFake(() => {
       let packageJson: any = {
         version: mockSkyuxPackagesVersion,
+        'ng-update': {
+          packageGroup: mockPackageGroup,
+        },
       };
 
       // The first time package.json is read return what's in the master branch.
@@ -37,6 +44,9 @@ describe('Tag `@skyux/packages`', () => {
       if (readJsonSyncCounter > 0) {
         packageJson = {
           version: mockSkyuxPackagesCheckoutVersion,
+          'ng-update': {
+            packageGroup: mockPackageGroup,
+          },
         };
       }
 
@@ -133,7 +143,10 @@ ORIGINAL_CHANGELOG_CONTENT
 
     expect(fsSpyObj.writeJsonSync).toHaveBeenCalledWith(
       path.join('mock-working-directory/.skyuxpackagestemp/package.json'),
-      { version: '1.0.1' },
+      {
+        version: '1.0.1',
+        'ng-update': { packageGroup: { '@skyux/foobar': '^5.0.0' } },
+      },
       { spaces: 2 }
     );
 
@@ -269,6 +282,20 @@ ORIGINAL_CHANGELOG_CONTENT
 
     expect(warningSpy).toHaveBeenCalledWith(
       "The '@skyux/foobar' package attempted to tag 'blackbaud/skyux-packages' with a version in the same range as (^5.0.0) but a compatible version of '@skyux/packages' could not be found. Manually tag and release 'blackbaud/skyux-packages' with a version that is in the same range as '@skyux/foobar@^5.0.0'."
+    );
+  });
+
+  it('should abort if library not listed in packageGroup', async () => {
+    const { tagSkyuxPackages } = getUtil();
+
+    await tagSkyuxPackages({
+      changelogUrl: 'https://changelog.com',
+      name: '@skyux/invalid',
+      version: '5.0.0',
+    });
+
+    expect(warningSpy).toHaveBeenCalledWith(
+      "Tagging 'blackbaud/skyux-packages' was aborted because the library '@skyux/invalid' is not listed in the `packageGroup` section of 'blackbaud/skyux-packages' package.json file."
     );
   });
 });

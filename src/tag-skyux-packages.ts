@@ -132,6 +132,14 @@ export async function tagSkyuxPackages(
 
   let packageJson = fs.readJsonSync(packageJsonPath);
 
+  // Abort if the library is not whitelisted on the `@skyux/packages` repo.
+  if (!packageJson['ng-update'].packageGroup[libPackage.name]) {
+    core.warning(
+      `Tagging '${repository}' was aborted because the library '${libPackage.name}' is not listed in the \`packageGroup\` section of '${repository}' package.json file.`
+    );
+    return;
+  }
+
   const versionDiff = semver.diff(libPackage.version, packageJson.version);
 
   const prereleaseData = semver.prerelease(packageJson.version);
