@@ -99,11 +99,11 @@ function checkoutMajorVersionBranch(
  * Executing this command will update all component libraries the consumer has
  * installed at once.
  *
- * NOTE: Every major or premajor version must be initiated manually on the @skyux/packages repo.
- * For example, to allow for a new major version of '5.0.0' to be released, you need to manually
+ * NOTE: Every release group (major, premajor, prerelease group, etc.) must be initiated manually on the
+ * @skyux/packages repo before its version can be automatically bumped by this script.
+ * For example, to allow for a new major version of '5.0.0' to be released, we need to manually
  * tag @skyux/packages with '5.0.0' (this would be the same for prerelease versions, '5.0.0-alpha.0' to
- * '5.0.0-beta.0', etc.). This is done so that each release level is deliberately made available
- * to consumers.
+ * '5.0.0-beta.0', etc.). This is done so that each release group is made available to our consumers deliberately.
  *
  * @param libPackage Metadata describing the recently released SKY UX component library.
  */
