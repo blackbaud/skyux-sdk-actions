@@ -55,6 +55,10 @@ describe('screenshot comparator', () => {
     });
   });
 
+  afterEach(() => {
+    mock.stopAll();
+  });
+
   function getUtil() {
     // Refresh the clone utility, too.
     mock.reRequire('./clone-repo-as-admin');

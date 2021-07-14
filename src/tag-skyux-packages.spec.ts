@@ -33,7 +33,7 @@ describe('Tag `@skyux/packages`', () => {
       };
 
       // The first time package.json is read return what's in the master branch.
-      // Subsequent reads will be from another major-version specific branch (e.g. `4.x.x`).
+      // Subsequent reads will be from another major-version-specific branch (e.g. `4.x.x`).
       if (readJsonSyncCounter > 0) {
         packageJson = {
           version: mockSkyuxPackagesCheckoutVersion,
@@ -113,7 +113,7 @@ describe('Tag `@skyux/packages`', () => {
     });
 
     expect(cloneRepoAsAdminSpy).toHaveBeenCalledWith(
-      'https://MOCK_TOKEN@github.com/skyux-packages.git',
+      'https://MOCK_TOKEN@github.com/blackbaud/skyux-packages.git',
       'master',
       '.skyuxpackagestemp'
     );
@@ -191,7 +191,7 @@ ORIGINAL_CHANGELOG_CONTENT
     verifySpawn('git', ['tag', '5.9.3']);
   });
 
-  it('should abort if prior major version does not have a matching dev branch', async () => {
+  it('should throw error if prior major version does not have a matching dev branch', async () => {
     mockSkyuxPackagesVersion = '5.3.0';
     mockGitCheckoutResult = 'did not match any file(s) known to git';
 
@@ -203,9 +203,9 @@ ORIGINAL_CHANGELOG_CONTENT
         name: '@skyux/foobar',
         version: '4.1.1',
       })
-    ).toBeRejectedWithError('Foobar!');
-
-    // expect(warningSpy).toHaveBeenCalledWith('Something bad happened.');
+    ).toBeRejectedWithError(
+      "Failed to tag the repository 'blackbaud/skyux-packages'. A branch named '4.x.x' was not found."
+    );
   });
 
   it('should abort if library prerelease version not in the same prerelease group', async () => {
@@ -219,7 +219,9 @@ ORIGINAL_CHANGELOG_CONTENT
       version: '5.0.0-beta.3', // <-- Important, not 'alpha'.
     });
 
-    expect(warningSpy).toHaveBeenCalledWith('Something bad happened.');
+    expect(warningSpy).toHaveBeenCalledWith(
+      "The '@skyux/foobar' package attempted to tag 'blackbaud/skyux-packages' with a version in the same range as (^5.0.0-beta.0) but a compatible version of '@skyux/packages' could not be found. Manually tag and release 'blackbaud/skyux-packages' with a version that is in the same range as '@skyux/foobar@^5.0.0-beta.0'."
+    );
   });
 
   it('should abort if library prerelease version less than @skyux/packages version', async () => {
@@ -233,7 +235,9 @@ ORIGINAL_CHANGELOG_CONTENT
       version: '5.1.1-beta.3',
     });
 
-    expect(warningSpy).toHaveBeenCalledWith('Something bad happened.');
+    expect(warningSpy).toHaveBeenCalledWith(
+      "The '@skyux/foobar' package attempted to tag 'blackbaud/skyux-packages' with a version in the same range as (^5.0.0-beta.0) but a compatible version of '@skyux/packages' could not be found. Manually tag and release 'blackbaud/skyux-packages' with a version that is in the same range as '@skyux/foobar@^5.0.0-beta.0'."
+    );
   });
 
   it('should abort if library major version is greater than @skyux/packages version', async () => {
@@ -247,7 +251,9 @@ ORIGINAL_CHANGELOG_CONTENT
       version: '6.0.0',
     });
 
-    expect(warningSpy).toHaveBeenCalledWith('Something bad happened.');
+    expect(warningSpy).toHaveBeenCalledWith(
+      "The '@skyux/foobar' package attempted to tag 'blackbaud/skyux-packages' with a version in the same range as (^6.0.0) but a compatible version of '@skyux/packages' could not be found. Manually tag and release 'blackbaud/skyux-packages' with a version that is in the same range as '@skyux/foobar@^6.0.0'."
+    );
   });
 
   it('should abort if library major version is greater than @skyux/packages prerelease version', async () => {
@@ -261,6 +267,8 @@ ORIGINAL_CHANGELOG_CONTENT
       version: '5.0.0',
     });
 
-    expect(warningSpy).toHaveBeenCalledWith('Something bad happened.');
+    expect(warningSpy).toHaveBeenCalledWith(
+      "The '@skyux/foobar' package attempted to tag 'blackbaud/skyux-packages' with a version in the same range as (^5.0.0) but a compatible version of '@skyux/packages' could not be found. Manually tag and release 'blackbaud/skyux-packages' with a version that is in the same range as '@skyux/foobar@^5.0.0'."
+    );
   });
 });

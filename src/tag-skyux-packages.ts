@@ -12,17 +12,6 @@ import { spawn } from './spawn';
 const SKYUX_PACKAGES_REPO_TEMP_DIR = '.skyuxpackagestemp';
 const SKYUX_PACKAGES_REPO_BRANCH = 'master';
 
-function readPackageJson(workingDirectory: string): any {
-  const packageJsonPath = path.join(workingDirectory, 'package.json');
-  const packageJson = fs.readJsonSync(packageJsonPath);
-  return packageJson;
-}
-
-function updatePackageJson(workingDirectory: string, contents: any): void {
-  const packageJsonPath = path.join(workingDirectory, 'package.json');
-  fs.writeJsonSync(packageJsonPath, contents, { spaces: 2 });
-}
-
 function bumpVersion(version: string): string {
   const releaseType = (version as string).includes('-')
     ? 'prerelease'
@@ -33,53 +22,10 @@ function bumpVersion(version: string): string {
   return newVersion;
 }
 
-// function isVersionValid(currentVersion: string, newVersion: string): boolean {
-//   console.log(
-//     'EH?',
-//     currentVersion,
-//     newVersion,
-//     semver.diff(currentVersion, newVersion)
-//   );
-
-//   // console.log(
-//   //   'Hmmm...',
-//   //   semver.diff('1.0.0', '2.0.0'),
-//   //   semver.diff('1.0.0', '2.0.0-alpha.0'),
-//   //   semver.diff('1.0.0-beta.0', '2.0.0'),
-//   //   semver.diff('2.0.0', '1.0.0'),
-//   //   semver.diff('2.0.0', '1.0.0-alpha.0'),
-//   //   semver.diff('2.0.0-alpha.0', '1.0.0-alpha.0'),
-//   //   semver.diff('2.0.0-alpha.0', '2.0.0-beta.0'),
-//   //   semver.diff('2.0.0-beta.0', '2.0.0-alpha.1'),
-//   //   semver.lt('2.0.0-beta.0', '2.0.0-alpha.1')
-//   // );
-
-//   const versionDiff = semver.diff(currentVersion, newVersion);
-
-//   return versionDiff === 'patch' || versionDiff === 'prerelease';
-// }
-
-// function updatePackageJson(workingDirectory: string, newVersion: string): string {
-//   const packageJsonPath = path.join(workingDirectory, 'package.json');
-//   const packageJson = fs.readJsonSync(packageJsonPath);
-
-//   const releaseType = (packageJson.version as string).includes('-')
-//     ? 'prerelease'
-//     : 'patch';
-
-//   const newVersion = semver.inc(packageJson.version, releaseType) as string;
-
-//   packageJson.version = newVersion;
-
-//   fs.writeJsonSync(packageJsonPath, packageJson);
-
-//   return newVersion;
-// }
-
 function updateChangelog(
   workingDirectory: string,
   newVersion: string,
-  libraryPackage: PackageMetadata
+  libPackage: PackageMetadata
 ): void {
   const changelogPath = path.join(workingDirectory, 'CHANGELOG.md');
   const changelog = fs.readFileSync(changelogPath).toString();
@@ -88,8 +34,8 @@ function updateChangelog(
 
   const contents = `# ${newVersion} (${date.getFullYear()}-${date.getMonth()}-${date.getDate()})
 
-- \`${libraryPackage.name}@${libraryPackage.version}\` [Release notes](${
-    libraryPackage.changelogUrl
+- \`${libPackage.name}@${libPackage.version}\` [Release notes](${
+    libPackage.changelogUrl
   })
 
 ${changelog}`;
@@ -97,17 +43,7 @@ ${changelog}`;
   fs.writeFileSync(changelogPath, contents, { encoding: 'utf-8' });
 }
 
-async function commitAndTag(
-  workingDirectory: string,
-  packageJson: any,
-  libraryPackage: PackageMetadata
-) {
-  const newVersion = bumpVersion(packageJson.version);
-  packageJson.version = newVersion;
-
-  updatePackageJson(workingDirectory, packageJson);
-  updateChangelog(workingDirectory, newVersion, libraryPackage);
-
+async function commitAndTag(workingDirectory: string, newVersion: string) {
   const spawnConfig: child_process.SpawnOptions = {
     cwd: workingDirectory,
     stdio: 'inherit',
@@ -137,6 +73,10 @@ async function commitAndTag(
   await spawn('git', ['push', 'origin', newVersion], spawnConfig);
 }
 
+function getMajorVersionBranch(majorVersion: number): string {
+  return `${majorVersion}.x.x`;
+}
+
 function checkoutMajorVersionBranch(
   workingDirectory: string,
   majorVersion: number
@@ -146,7 +86,11 @@ function checkoutMajorVersionBranch(
     stdio: 'inherit',
   };
 
-  return spawn('git', ['checkout', `${majorVersion}.x.x`], spawnConfig);
+  return spawn(
+    'git',
+    ['checkout', getMajorVersionBranch(majorVersion)],
+    spawnConfig
+  );
 }
 
 /**
@@ -161,10 +105,10 @@ function checkoutMajorVersionBranch(
  * '5.0.0-beta.0', etc.). This is done so that each release level is deliberately made available
  * to consumers.
  *
- * @param libraryPackage Metadata describing the recently released SKY UX component library.
+ * @param libPackage Metadata describing the recently released SKY UX component library.
  */
 export async function tagSkyuxPackages(
-  libraryPackage: PackageMetadata
+  libPackage: PackageMetadata
 ): Promise<void> {
   const accessToken = core.getInput('github-token');
 
@@ -173,7 +117,9 @@ export async function tagSkyuxPackages(
     SKYUX_PACKAGES_REPO_TEMP_DIR
   );
 
-  const repoUrl = `https://${accessToken}@github.com/skyux-packages.git`;
+  const repository = 'blackbaud/skyux-packages';
+
+  const repoUrl = `https://${accessToken}@github.com/${repository}.git`;
 
   // Clone blackbaud/skyux-packages repo as admin user.
   await cloneRepoAsAdmin(
@@ -182,61 +128,80 @@ export async function tagSkyuxPackages(
     SKYUX_PACKAGES_REPO_TEMP_DIR
   );
 
-  // Update the CHANGELOG and package.json with a patch/minor version.
-  let packageJson = readPackageJson(workingDirectory);
+  const packageJsonPath = path.join(workingDirectory, 'package.json');
 
-  const versionDiff = semver.diff(libraryPackage.version, packageJson.version);
-  const prereleaseGroup = semver.parse(packageJson.version)!.prerelease[0];
+  let packageJson = fs.readJsonSync(packageJsonPath);
 
-  const libraryPrereleaseGroup = semver.parse(libraryPackage.version)!
-    .prerelease[0];
+  const versionDiff = semver.diff(libPackage.version, packageJson.version);
 
-  let success = false;
+  const prereleaseData = semver.prerelease(packageJson.version);
+  const prereleaseGroup = prereleaseData && prereleaseData[0];
+
+  const libPrereleaseData = semver.prerelease(libPackage.version);
+  const libPrereleaseGroup = libPrereleaseData && libPrereleaseData[0];
+
+  let enableTagging = false;
 
   if (
     versionDiff === null || // versions are exactly the same
     versionDiff === 'minor' ||
     versionDiff === 'patch' ||
-    (versionDiff === 'prerelease' && prereleaseGroup === libraryPrereleaseGroup)
+    (versionDiff === 'prerelease' && prereleaseGroup === libPrereleaseGroup)
   ) {
-    success = true;
-  }
-
-  if (versionDiff === 'major') {
+    enableTagging = true;
+  } else if (versionDiff === 'major') {
     const majorVersion = semver.major(packageJson.version);
-    const libraryMajorVersion = semver.major(libraryPackage.version);
+    const libMajorVersion = semver.major(libPackage.version);
 
     // If the library version is a prior major version, attempt to checkout
     // the respective major version branch (e.g. `5.x.x`).
-    if (libraryMajorVersion < majorVersion) {
+    if (libMajorVersion < majorVersion) {
       const result = await checkoutMajorVersionBranch(
         workingDirectory,
-        libraryMajorVersion
+        libMajorVersion
       );
 
       // Does the major version branch exist?
       if (result.includes('did not match any file(s) known to git')) {
-        throw new Error(`Foobar!`);
+        throw new Error(
+          `Failed to tag the repository '${repository}'. A branch named '${getMajorVersionBranch(
+            libMajorVersion
+          )}' was not found.`
+        );
       }
 
-      packageJson = readPackageJson(workingDirectory);
+      packageJson = fs.readJsonSync(packageJsonPath);
 
-      success = true;
+      enableTagging = true;
     }
   }
 
-  if (success) {
-    await commitAndTag(workingDirectory, packageJson, libraryPackage);
+  if (enableTagging) {
+    // Update package.json with the bumped version.
+    const newVersion = bumpVersion(packageJson.version);
+    packageJson.version = newVersion;
+    fs.writeJsonSync(packageJsonPath, packageJson, { spaces: 2 });
+
+    updateChangelog(workingDirectory, newVersion, libPackage);
+
+    await commitAndTag(workingDirectory, newVersion);
   } else {
-    core.warning(`Something bad happened.`);
+    const parsedVersion = semver.parse(libPackage.version);
+
+    let targetRange = `^${parsedVersion!.major}.0.0`;
+
+    const prereleaseGroup =
+      parsedVersion?.prerelease && parsedVersion.prerelease[0];
+
+    if (prereleaseGroup) {
+      targetRange += `-${prereleaseGroup}.0`;
+    }
+
+    core.warning(
+      `The '${libPackage.name}' package attempted to tag '${repository}' with a version ` +
+        `in the same range as (${targetRange}) but a compatible version of '@skyux/packages' ` +
+        `could not be found. Manually tag and release '${repository}' with a version that is in the ` +
+        `same range as '${libPackage.name}@${targetRange}'.`
+    );
   }
-
-  // isVersionValid(libraryPackage.version, newVersion);
-
-  // if (!isVersionValid(packageJson.version, newVersion)) {
-  //   core.warning(
-  //     `The version bump generated for '@skyux/packages' is not compatible with its current version. Manually tag and release '@skyux/packages' with a version in the same release category as the bumped version. (current: ${packageJson.version}, wanted: ${newVersion}).`
-  //   );
-  //   return;
-  // }
 }
