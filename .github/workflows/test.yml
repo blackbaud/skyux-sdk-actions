@@ -20,9 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v2
         with:
-          node-version: '12.x'
+          node-version: '14.x'
       - name: Clone sample project
         run: git clone https://github.com/blackbaud/skyux-sdk-template-library --branch 4.x.x-test-github-actions --single-branch
       - name: Run action
