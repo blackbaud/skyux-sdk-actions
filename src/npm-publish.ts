@@ -20,12 +20,20 @@ export async function npmPublish(): Promise<PackageMetadata> {
   const packageName = packageJson.name;
   const version = packageJson.version;
 
-  const npmTag = getTag().indexOf('-') > -1 ? 'next' : 'latest';
+  const gitTag = getTag();
+  const npmTag = gitTag.indexOf('-') > -1 ? 'next' : 'latest';
   const npmFilePath = path.join(distPath, '.npmrc');
   const npmToken = core.getInput('npm-token');
 
   const repository = process.env.GITHUB_REPOSITORY;
   const changelogUrl = `https://github.com/${repository}/blob/${version}/CHANGELOG.md`;
+
+  if (gitTag !== version) {
+    core.setFailed(
+      `Aborted publishing to NPM because the version listed in package.json (${version}) does not match the git tag (${gitTag})!`
+    );
+    process.exit(1);
+  }
 
   core.info(
     `Preparing to publish ${packageName}@${version} to NPM from ${distPath}...`
