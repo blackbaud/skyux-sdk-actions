@@ -5723,11 +5723,11 @@ function checkoutMajorVersionBranch(workingDirectory, majorVersion) {
  * Executing this command will update all component libraries the consumer has
  * installed at once.
  *
- * NOTE: Every major or premajor version must be initiated manually on the @skyux/packages repo.
- * For example, to allow for a new major version of '5.0.0' to be released, you need to manually
+ * NOTE: Every release group (major, premajor, prerelease group, etc.) must be initiated manually on the
+ * @skyux/packages repo before its version can be automatically bumped by this script.
+ * For example, to allow for a new major version of '5.0.0' to be released, we need to manually
  * tag @skyux/packages with '5.0.0' (this would be the same for prerelease versions, '5.0.0-alpha.0' to
- * '5.0.0-beta.0', etc.). This is done so that each release level is deliberately made available
- * to consumers.
+ * '5.0.0-beta.0', etc.). This is done so that each release group is made available to our consumers deliberately.
  *
  * @param libPackage Metadata describing the recently released SKY UX component library.
  */
@@ -5741,6 +5741,11 @@ function tagSkyuxPackages(libPackage) {
         yield clone_repo_as_admin_1.cloneRepoAsAdmin(repoUrl, SKYUX_PACKAGES_REPO_BRANCH, SKYUX_PACKAGES_REPO_TEMP_DIR);
         const packageJsonPath = path_1.default.join(workingDirectory, 'package.json');
         let packageJson = fs_extra_1.default.readJsonSync(packageJsonPath);
+        // Abort if the library is not whitelisted on the `@skyux/packages` repo.
+        if (!packageJson['ng-update'].packageGroup[libPackage.name]) {
+            core.warning(`Tagging '${repository}' was aborted because the library '${libPackage.name}' is not listed in the \`packageGroup\` section of '${repository}' package.json file.`);
+            return;
+        }
         const versionDiff = semver_1.default.diff(libPackage.version, packageJson.version);
         const prereleaseData = semver_1.default.prerelease(packageJson.version);
         const prereleaseGroup = prereleaseData && prereleaseData[0];
