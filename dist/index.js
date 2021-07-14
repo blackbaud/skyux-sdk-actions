@@ -1768,7 +1768,7 @@ function npmPublish() {
         return {
             changelogUrl,
             name: packageName,
-            version: version,
+            version,
         };
     });
 }
@@ -5668,44 +5668,32 @@ const path_1 = __importDefault(__webpack_require__(622));
 const semver_1 = __importDefault(__webpack_require__(876));
 const clone_repo_as_admin_1 = __webpack_require__(399);
 const spawn_1 = __webpack_require__(820);
-const REPO_TEMP_DIR = '.skyuxpackagestemp';
-const REPO_BRANCH = 'master';
-function updatePackageJson(workingDirectory) {
-    const packageJsonPath = path_1.default.join(workingDirectory, 'package.json');
-    const packageJson = fs_extra_1.default.readJsonSync(packageJsonPath);
-    const releaseType = packageJson.version.includes('-')
+const SKYUX_PACKAGES_REPO_TEMP_DIR = '.skyuxpackagestemp';
+const SKYUX_PACKAGES_REPO_BRANCH = 'master';
+function bumpVersion(version) {
+    const releaseType = version.includes('-')
         ? 'prerelease'
         : 'patch';
-    const newVersion = semver_1.default.inc(packageJson.version, releaseType);
-    packageJson.version = newVersion;
-    fs_extra_1.default.writeJsonSync(packageJsonPath, packageJson);
+    const newVersion = semver_1.default.inc(version, releaseType);
     return newVersion;
 }
-function updateChangelog(workingDirectory, newVersion, packageMetadata) {
+function updateChangelog(workingDirectory, newVersion, libPackage) {
     const changelogPath = path_1.default.join(workingDirectory, 'CHANGELOG.md');
     const changelog = fs_extra_1.default.readFileSync(changelogPath).toString();
     const date = new Date();
     const contents = `# ${newVersion} (${date.getFullYear()}-${date.getMonth()}-${date.getDate()})
 
-- \`${packageMetadata.name}@${packageMetadata.version}\` [Release notes](${packageMetadata.changelogUrl})
+- \`${libPackage.name}@${libPackage.version}\` [Release notes](${libPackage.changelogUrl})
 
 ${changelog}`;
     fs_extra_1.default.writeFileSync(changelogPath, contents, { encoding: 'utf-8' });
 }
-function tagSkyuxPackages(packageMetadata) {
+function commitAndTag(workingDirectory, newVersion) {
     return __awaiter(this, void 0, void 0, function* () {
-        const accessToken = core.getInput('github-token');
-        const workingDirectory = path_1.default.join(core.getInput('working-directory'), REPO_TEMP_DIR);
-        const repoUrl = `https://${accessToken}@github.com/skyux-packages.git`;
-        // Clone blackbaud/skyux-packages repo as admin user.
-        yield clone_repo_as_admin_1.cloneRepoAsAdmin(repoUrl, REPO_BRANCH, REPO_TEMP_DIR);
         const spawnConfig = {
             cwd: workingDirectory,
             stdio: 'inherit',
         };
-        // Update the CHANGELOG and package.json with a patch/minor version.
-        const newVersion = updatePackageJson(workingDirectory);
-        updateChangelog(workingDirectory, newVersion, packageMetadata);
         // Commit directly to master branch.
         yield spawn_1.spawn('git', ['add', '.'], spawnConfig);
         yield spawn_1.spawn('git', [
@@ -5713,10 +5701,93 @@ function tagSkyuxPackages(packageMetadata) {
             '-m',
             `Updated changelog/package.json for ${newVersion} release`,
         ], spawnConfig);
-        yield spawn_1.spawn('git', ['push', 'origin', REPO_BRANCH], spawnConfig);
+        yield spawn_1.spawn('git', ['push', 'origin', SKYUX_PACKAGES_REPO_BRANCH], spawnConfig);
         // Tag the commit and push to origin.
         yield spawn_1.spawn('git', ['tag', newVersion], spawnConfig);
         yield spawn_1.spawn('git', ['push', 'origin', newVersion], spawnConfig);
+    });
+}
+function getMajorVersionBranch(majorVersion) {
+    return `${majorVersion}.x.x`;
+}
+function checkoutMajorVersionBranch(workingDirectory, majorVersion) {
+    const spawnConfig = {
+        cwd: workingDirectory,
+        stdio: 'inherit',
+    };
+    return spawn_1.spawn('git', ['checkout', getMajorVersionBranch(majorVersion)], spawnConfig);
+}
+/**
+ * After every SKY UX component library release, we also tag the `@skyux/packages` repo,
+ * which is used by consumers of the Angular CLI to run `ng update @skyux/packages`.
+ * Executing this command will update all component libraries the consumer has
+ * installed at once.
+ *
+ * NOTE: Every major or premajor version must be initiated manually on the @skyux/packages repo.
+ * For example, to allow for a new major version of '5.0.0' to be released, you need to manually
+ * tag @skyux/packages with '5.0.0' (this would be the same for prerelease versions, '5.0.0-alpha.0' to
+ * '5.0.0-beta.0', etc.). This is done so that each release level is deliberately made available
+ * to consumers.
+ *
+ * @param libPackage Metadata describing the recently released SKY UX component library.
+ */
+function tagSkyuxPackages(libPackage) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const accessToken = core.getInput('github-token');
+        const workingDirectory = path_1.default.join(core.getInput('working-directory'), SKYUX_PACKAGES_REPO_TEMP_DIR);
+        const repository = 'blackbaud/skyux-packages';
+        const repoUrl = `https://${accessToken}@github.com/${repository}.git`;
+        // Clone blackbaud/skyux-packages repo as admin user.
+        yield clone_repo_as_admin_1.cloneRepoAsAdmin(repoUrl, SKYUX_PACKAGES_REPO_BRANCH, SKYUX_PACKAGES_REPO_TEMP_DIR);
+        const packageJsonPath = path_1.default.join(workingDirectory, 'package.json');
+        let packageJson = fs_extra_1.default.readJsonSync(packageJsonPath);
+        const versionDiff = semver_1.default.diff(libPackage.version, packageJson.version);
+        const prereleaseData = semver_1.default.prerelease(packageJson.version);
+        const prereleaseGroup = prereleaseData && prereleaseData[0];
+        const libPrereleaseData = semver_1.default.prerelease(libPackage.version);
+        const libPrereleaseGroup = libPrereleaseData && libPrereleaseData[0];
+        let enableTagging = false;
+        if (versionDiff === null || // versions are exactly the same
+            versionDiff === 'minor' ||
+            versionDiff === 'patch' ||
+            (versionDiff === 'prerelease' && prereleaseGroup === libPrereleaseGroup)) {
+            enableTagging = true;
+        }
+        else if (versionDiff === 'major') {
+            const majorVersion = semver_1.default.major(packageJson.version);
+            const libMajorVersion = semver_1.default.major(libPackage.version);
+            // If the library version is a prior major version, attempt to checkout
+            // the respective major version branch (e.g. `5.x.x`).
+            if (libMajorVersion < majorVersion) {
+                const result = yield checkoutMajorVersionBranch(workingDirectory, libMajorVersion);
+                // Does the major version branch exist?
+                if (result.includes('did not match any file(s) known to git')) {
+                    throw new Error(`Failed to tag the repository '${repository}'. A branch named '${getMajorVersionBranch(libMajorVersion)}' was not found.`);
+                }
+                packageJson = fs_extra_1.default.readJsonSync(packageJsonPath);
+                enableTagging = true;
+            }
+        }
+        if (enableTagging) {
+            // Update package.json with the bumped version.
+            const newVersion = bumpVersion(packageJson.version);
+            packageJson.version = newVersion;
+            fs_extra_1.default.writeJsonSync(packageJsonPath, packageJson, { spaces: 2 });
+            updateChangelog(workingDirectory, newVersion, libPackage);
+            yield commitAndTag(workingDirectory, newVersion);
+        }
+        else {
+            const parsedVersion = semver_1.default.parse(libPackage.version);
+            let targetRange = `^${parsedVersion.major}.0.0`;
+            const prereleaseGroup = (parsedVersion === null || parsedVersion === void 0 ? void 0 : parsedVersion.prerelease) && parsedVersion.prerelease[0];
+            if (prereleaseGroup) {
+                targetRange += `-${prereleaseGroup}.0`;
+            }
+            core.warning(`The '${libPackage.name}' package attempted to tag '${repository}' with a version ` +
+                `in the same range as (${targetRange}) but a compatible version of '@skyux/packages' ` +
+                `could not be found. Manually tag and release '${repository}' with a version that is in the ` +
+                `same range as '${libPackage.name}@${targetRange}'.`);
+        }
     });
 }
 exports.tagSkyuxPackages = tagSkyuxPackages;
