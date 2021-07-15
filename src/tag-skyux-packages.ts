@@ -43,7 +43,11 @@ ${changelog}`;
   fs.writeFileSync(changelogPath, contents, { encoding: 'utf-8' });
 }
 
-async function commitAndTag(workingDirectory: string, newVersion: string) {
+async function commitAndTag(
+  workingDirectory: string,
+  newVersion: string,
+  branch: string
+) {
   const spawnConfig: child_process.SpawnOptions = {
     cwd: workingDirectory,
     stdio: 'inherit',
@@ -62,11 +66,7 @@ async function commitAndTag(workingDirectory: string, newVersion: string) {
     spawnConfig
   );
 
-  await spawn(
-    'git',
-    ['push', 'origin', SKYUX_PACKAGES_REPO_BRANCH],
-    spawnConfig
-  );
+  await spawn('git', ['push', 'origin', branch], spawnConfig);
 
   // Tag the commit and push to origin.
   await spawn('git', ['tag', newVersion], spawnConfig);
@@ -77,20 +77,16 @@ function getMajorVersionBranch(majorVersion: number): string {
   return `${majorVersion}.x.x`;
 }
 
-function checkoutMajorVersionBranch(
-  workingDirectory: string,
-  majorVersion: number
+function checkoutBranch(
+  branch: string,
+  workingDirectory: string
 ): Promise<string> {
   const spawnConfig: child_process.SpawnOptions = {
     cwd: workingDirectory,
     stdio: 'inherit',
   };
 
-  return spawn(
-    'git',
-    ['checkout', getMajorVersionBranch(majorVersion)],
-    spawnConfig
-  );
+  return spawn('git', ['checkout', branch], spawnConfig);
 }
 
 /**
@@ -151,6 +147,8 @@ export async function tagSkyuxPackages(
 
   let enableTagging = false;
 
+  let branch = SKYUX_PACKAGES_REPO_BRANCH;
+
   if (
     versionDiff === null || // versions are exactly the same
     versionDiff === 'minor' ||
@@ -165,17 +163,14 @@ export async function tagSkyuxPackages(
     // If the library version is a prior major version, attempt to checkout
     // the respective major version branch (e.g. `5.x.x`).
     if (libMajorVersion < majorVersion) {
-      const result = await checkoutMajorVersionBranch(
-        workingDirectory,
-        libMajorVersion
-      );
+      branch = getMajorVersionBranch(libMajorVersion);
+
+      const result = await checkoutBranch(branch, workingDirectory);
 
       // Does the major version branch exist?
       if (result.includes('did not match any file(s) known to git')) {
         throw new Error(
-          `Failed to tag the repository '${repository}'. A branch named '${getMajorVersionBranch(
-            libMajorVersion
-          )}' was not found.`
+          `Failed to tag the repository '${repository}'. A branch named '${branch}' was not found.`
         );
       }
 
@@ -194,7 +189,7 @@ export async function tagSkyuxPackages(
     updateChangelog(workingDirectory, newVersion, libPackage);
 
     if (!isDryRun) {
-      await commitAndTag(workingDirectory, newVersion);
+      await commitAndTag(workingDirectory, newVersion, branch);
     } else {
       core.warning(
         `Tagging was aborted because the 'npm-dry-run' flag is set. The '${repository}' repository would have been tagged with (${newVersion}).`

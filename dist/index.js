@@ -5693,7 +5693,7 @@ function updateChangelog(workingDirectory, newVersion, libPackage) {
 ${changelog}`;
     fs_extra_1.default.writeFileSync(changelogPath, contents, { encoding: 'utf-8' });
 }
-function commitAndTag(workingDirectory, newVersion) {
+function commitAndTag(workingDirectory, newVersion, branch) {
     return __awaiter(this, void 0, void 0, function* () {
         const spawnConfig = {
             cwd: workingDirectory,
@@ -5706,7 +5706,7 @@ function commitAndTag(workingDirectory, newVersion) {
             '-m',
             `Updated changelog/package.json for ${newVersion} release`,
         ], spawnConfig);
-        yield spawn_1.spawn('git', ['push', 'origin', SKYUX_PACKAGES_REPO_BRANCH], spawnConfig);
+        yield spawn_1.spawn('git', ['push', 'origin', branch], spawnConfig);
         // Tag the commit and push to origin.
         yield spawn_1.spawn('git', ['tag', newVersion], spawnConfig);
         yield spawn_1.spawn('git', ['push', 'origin', newVersion], spawnConfig);
@@ -5715,12 +5715,12 @@ function commitAndTag(workingDirectory, newVersion) {
 function getMajorVersionBranch(majorVersion) {
     return `${majorVersion}.x.x`;
 }
-function checkoutMajorVersionBranch(workingDirectory, majorVersion) {
+function checkoutBranch(branch, workingDirectory) {
     const spawnConfig = {
         cwd: workingDirectory,
         stdio: 'inherit',
     };
-    return spawn_1.spawn('git', ['checkout', getMajorVersionBranch(majorVersion)], spawnConfig);
+    return spawn_1.spawn('git', ['checkout', branch], spawnConfig);
 }
 /**
  * After every SKY UX component library release, we also tag the `@skyux/packages` repo,
@@ -5758,6 +5758,7 @@ function tagSkyuxPackages(libPackage) {
         const libPrereleaseData = semver_1.default.prerelease(libPackage.version);
         const libPrereleaseGroup = libPrereleaseData && libPrereleaseData[0];
         let enableTagging = false;
+        let branch = SKYUX_PACKAGES_REPO_BRANCH;
         if (versionDiff === null || // versions are exactly the same
             versionDiff === 'minor' ||
             versionDiff === 'patch' ||
@@ -5770,10 +5771,11 @@ function tagSkyuxPackages(libPackage) {
             // If the library version is a prior major version, attempt to checkout
             // the respective major version branch (e.g. `5.x.x`).
             if (libMajorVersion < majorVersion) {
-                const result = yield checkoutMajorVersionBranch(workingDirectory, libMajorVersion);
+                branch = getMajorVersionBranch(libMajorVersion);
+                const result = yield checkoutBranch(branch, workingDirectory);
                 // Does the major version branch exist?
                 if (result.includes('did not match any file(s) known to git')) {
-                    throw new Error(`Failed to tag the repository '${repository}'. A branch named '${getMajorVersionBranch(libMajorVersion)}' was not found.`);
+                    throw new Error(`Failed to tag the repository '${repository}'. A branch named '${branch}' was not found.`);
                 }
                 packageJson = fs_extra_1.default.readJsonSync(packageJsonPath);
                 enableTagging = true;
@@ -5786,7 +5788,7 @@ function tagSkyuxPackages(libPackage) {
             fs_extra_1.default.writeJsonSync(packageJsonPath, packageJson, { spaces: 2 });
             updateChangelog(workingDirectory, newVersion, libPackage);
             if (!isDryRun) {
-                yield commitAndTag(workingDirectory, newVersion);
+                yield commitAndTag(workingDirectory, newVersion, branch);
             }
             else {
                 core.warning(`Tagging was aborted because the 'npm-dry-run' flag is set. The '${repository}' repository would have been tagged with (${newVersion}).`);
