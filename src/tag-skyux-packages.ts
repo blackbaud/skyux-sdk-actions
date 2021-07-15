@@ -32,7 +32,9 @@ function updateChangelog(
 
   const date = new Date();
 
-  const contents = `# ${newVersion} (${date.getFullYear()}-${date.getMonth()}-${date.getDate()})
+  const contents = `# ${newVersion} (${date.getFullYear()}-${
+    date.getMonth() + 1
+  }-${date.getDate()})
 
 - \`${libPackage.name}@${libPackage.version}\` [Release notes](${
     libPackage.changelogUrl

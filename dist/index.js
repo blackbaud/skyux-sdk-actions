@@ -5686,7 +5686,7 @@ function updateChangelog(workingDirectory, newVersion, libPackage) {
     const changelogPath = path_1.default.join(workingDirectory, 'CHANGELOG.md');
     const changelog = fs_extra_1.default.readFileSync(changelogPath).toString();
     const date = new Date();
-    const contents = `# ${newVersion} (${date.getFullYear()}-${date.getMonth()}-${date.getDate()})
+    const contents = `# ${newVersion} (${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()})
 
 - \`${libPackage.name}@${libPackage.version}\` [Release notes](${libPackage.changelogUrl})
 

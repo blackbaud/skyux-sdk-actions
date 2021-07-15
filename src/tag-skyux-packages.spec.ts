@@ -137,7 +137,7 @@ describe('Tag `@skyux/packages`', () => {
 
     expect(fsSpyObj.writeFileSync).toHaveBeenCalledWith(
       path.join('mock-working-directory/.skyuxpackagestemp/CHANGELOG.md'),
-      `# 1.0.1 (${date.getFullYear()}-${date.getMonth()}-${date.getDate()})
+      `# 1.0.1 (${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()})
 
 - \`@skyux/foobar@1.0.0\` [Release notes](https://changelog.com)
 
