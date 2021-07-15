@@ -5795,7 +5795,7 @@ function tagSkyuxPackages(libPackage) {
         else {
             const parsedVersion = semver_1.default.parse(libPackage.version);
             let targetRange = `^${parsedVersion.major}.0.0`;
-            const prereleaseGroup = (parsedVersion === null || parsedVersion === void 0 ? void 0 : parsedVersion.prerelease) && parsedVersion.prerelease[0];
+            const prereleaseGroup = parsedVersion.prerelease && parsedVersion.prerelease[0];
             if (prereleaseGroup) {
                 targetRange += `-${prereleaseGroup}.0`;
             }

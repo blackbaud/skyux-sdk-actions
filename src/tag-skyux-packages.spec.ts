@@ -5,6 +5,7 @@ describe('Tag `@skyux/packages`', () => {
   let cloneRepoAsAdminSpy: jasmine.Spy;
   let fsSpyObj: jasmine.SpyObj<any>;
   let mockGitCheckoutResult: string;
+  let mockNpmDryRun: string;
   let mockPackageGroup: any;
   let mockSkyuxPackagesCheckoutVersion: string;
   let mockSkyuxPackagesVersion: string;
@@ -71,11 +72,15 @@ describe('Tag `@skyux/packages`', () => {
 
     warningSpy = jasmine.createSpy('warning');
 
+    mockNpmDryRun = '';
+
     mock('@actions/core', {
       getInput(key: string) {
         switch (key) {
           case 'github-token':
             return 'MOCK_TOKEN';
+          case 'npm-dry-run':
+            return mockNpmDryRun;
           case 'working-directory':
             return 'mock-working-directory';
           default:
@@ -296,6 +301,23 @@ ORIGINAL_CHANGELOG_CONTENT
 
     expect(warningSpy).toHaveBeenCalledWith(
       "Tagging 'blackbaud/skyux-packages' was aborted because the library '@skyux/invalid' is not listed in the `packageGroup` section of 'blackbaud/skyux-packages' package.json file."
+    );
+  });
+
+  it('should abort if `npm-dry-run` is set', async () => {
+    mockNpmDryRun = 'true';
+    mockSkyuxPackagesVersion = '5.0.0';
+
+    const { tagSkyuxPackages } = getUtil();
+
+    await tagSkyuxPackages({
+      changelogUrl: 'https://changelog.com',
+      name: '@skyux/foobar',
+      version: '5.0.0',
+    });
+
+    expect(warningSpy).toHaveBeenCalledWith(
+      "Tagging was aborted because the 'npm-dry-run' flag is set. The 'blackbaud/skyux-packages' repository would have been tagged with (5.0.1)."
     );
   });
 });

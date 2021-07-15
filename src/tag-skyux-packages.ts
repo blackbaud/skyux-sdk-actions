@@ -201,12 +201,12 @@ export async function tagSkyuxPackages(
       );
     }
   } else {
-    const parsedVersion = semver.parse(libPackage.version);
+    const parsedVersion = semver.parse(libPackage.version)!;
 
-    let targetRange = `^${parsedVersion!.major}.0.0`;
+    let targetRange = `^${parsedVersion.major}.0.0`;
 
     const prereleaseGroup =
-      parsedVersion?.prerelease && parsedVersion.prerelease[0];
+      parsedVersion.prerelease && parsedVersion.prerelease[0];
 
     if (prereleaseGroup) {
       targetRange += `-${prereleaseGroup}.0`;

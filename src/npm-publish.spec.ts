@@ -9,6 +9,7 @@ describe('npmPublish', () => {
   let spawnSpy: jasmine.Spy;
   let getTagSpy: jasmine.Spy;
   let mockNpmDryRun: string;
+  let mockPackageJson: any;
 
   beforeEach(() => {
     process.env.GITHUB_REPOSITORY = 'org/repo';
@@ -42,10 +43,12 @@ describe('npmPublish', () => {
       'writeFileSync',
     ]);
 
-    fsSpyObj.readJsonSync.and.returnValue({
+    mockPackageJson = {
       name: 'foo-package',
       version: '1.2.3',
-    });
+    };
+
+    fsSpyObj.readJsonSync.and.returnValue(mockPackageJson);
 
     mock('fs-extra', fsSpyObj);
 
@@ -61,7 +64,7 @@ describe('npmPublish', () => {
       spawn: spawnSpy,
     });
 
-    getTagSpy = jasmine.createSpy('getTag').and.returnValue('1.0.0');
+    getTagSpy = jasmine.createSpy('getTag').and.returnValue('1.2.3');
 
     mock('./utils', {
       getTag: getTagSpy,
@@ -175,5 +178,18 @@ describe('npmPublish', () => {
     );
     expect(slackSpy).not.toHaveBeenCalled();
     done();
+  });
+
+  it('should throw an error if tag does not match package.json version', async () => {
+    mockPackageJson.version = '1.0.0';
+    getTagSpy.and.returnValue('1.1.0');
+
+    const { npmPublish } = getUtil();
+
+    await npmPublish();
+
+    expect(failedLogSpy).toHaveBeenCalledWith(
+      'Aborted publishing to NPM because the version listed in package.json (1.0.0) does not match the git tag (1.1.0)!'
+    );
   });
 });
