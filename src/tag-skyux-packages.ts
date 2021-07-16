@@ -31,14 +31,13 @@ function updateChangelog(
   const changelog = fs.readFileSync(changelogPath).toString();
 
   const date = new Date();
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
 
-  const contents = `# ${newVersion} (${date.getFullYear()}-${
-    date.getMonth() + 1
-  }-${date.getDate()})
+  const contents = `# ${newVersion} (${year}-${month}-${day})
 
-- \`${libPackage.name}@${libPackage.version}\` [Release notes](${
-    libPackage.changelogUrl
-  })
+- \`${libPackage.name}@${libPackage.version}\` [Release notes](${libPackage.changelogUrl})
 
 ${changelog}`;
 
@@ -49,7 +48,7 @@ async function commitAndTag(
   workingDirectory: string,
   newVersion: string,
   branch: string
-) {
+): Promise<void> {
   const spawnConfig: child_process.SpawnOptions = {
     cwd: workingDirectory,
     stdio: 'inherit',
