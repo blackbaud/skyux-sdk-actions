@@ -5,12 +5,14 @@ import * as path from 'path';
 
 import { SkyUxCIPlatformConfig } from './ci-platform-config';
 import { npmPublish } from './npm-publish';
+import { PackageMetadata } from './package-metadata';
 import { runSkyUxCommand } from './run-skyux-command';
 import {
   checkNewBaselineScreenshots,
   checkNewFailureScreenshots,
 } from './screenshot-comparator';
 import { spawn } from './spawn';
+import { tagSkyuxPackages } from './tag-skyux-packages';
 import { isPullRequest, isPush, isTag } from './utils';
 
 // Generate a unique build name to be used by BrowserStack.
@@ -135,25 +137,8 @@ async function buildLibrary() {
   }
 }
 
-async function publishLibrary() {
-  npmPublish();
-}
-
-async function checkCodeFormat() {
-  const packageJson = fs.readJsonSync(
-    path.join(core.getInput('working-directory'), 'package.json')
-  );
-  if (packageJson.devDependencies['@skyux-sdk/builder-code-formatter']) {
-    try {
-      await runSkyUxCommand('format-check');
-    } catch (err) {
-      console.error('[SKY UX ERROR]:', err);
-      core.setFailed(
-        'Library source code is not formatted correctly. Did you run `skyux format`?'
-      );
-      process.exit(1);
-    }
-  }
+async function publishLibrary(): Promise<PackageMetadata> {
+  return npmPublish();
 }
 
 async function run(): Promise<void> {
@@ -201,12 +186,12 @@ async function run(): Promise<void> {
 
   await install();
   await installCerts();
-  await checkCodeFormat();
 
   // Don't run tests for tags.
   if (isTag()) {
     await buildLibrary();
-    await publishLibrary();
+    const packageMetadata = await publishLibrary();
+    await tagSkyuxPackages(packageMetadata);
   } else {
     await build();
     await coverage(configKey);

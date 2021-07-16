@@ -6,5 +6,9 @@
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
     "prettier"
-  ]
+  ],
+  "rules": {
+    "no-empty-function": "off",
+    "@typescript-eslint/no-empty-function": ["off"]
+  }
 }
