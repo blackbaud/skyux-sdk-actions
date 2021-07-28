@@ -1,6 +1,6 @@
-import core from '@actions/core';
+import * as core from '@actions/core';
 
-import path from 'path';
+import * as path from 'path';
 
 /**
  * Runs lifecycle hook Node.js scripts. The script must export an async function named `runAsync`.
