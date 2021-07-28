@@ -3,9 +3,11 @@ import * as core from '@actions/core';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 
+import { executeAngularCliSteps } from './angular-cli/main';
 import { SkyUxCIPlatformConfig } from './ci-platform-config';
 import { npmPublish } from './npm-publish';
 import { PackageMetadata } from './package-metadata';
+import { runLifecycleHook } from './run-lifecycle-hook';
 import { runSkyUxCommand } from './run-skyux-command';
 import {
   checkNewBaselineScreenshots,
@@ -19,34 +21,6 @@ import { isPullRequest, isPush, isTag } from './utils';
 const BUILD_ID = `${process.env.GITHUB_REPOSITORY?.split('/')[1]}-${
   process.env.GITHUB_EVENT_NAME
 }-${process.env.GITHUB_RUN_ID}-${Math.random().toString().slice(2, 7)}`;
-
-/**
- * Runs lifecycle hook Node.js scripts. The script must export an async function named `runAsync`.
- * @example
- * ```
- * module.exports = {
- *   runAsync: async () => {}
- * };
- * ```
- * @param name The name of the lifecycle hook to call. See the `action.yml` file at the project root for possible options.
- */
-async function runLifecycleHook(name: string) {
-  const scriptPath = core.getInput(name);
-  if (scriptPath) {
-    const basePath = path.join(
-      process.cwd(),
-      core.getInput('working-directory')
-    );
-    const fullPath = path.join(basePath, scriptPath);
-    core.info(`Running '${name}' lifecycle hook: ${fullPath}`);
-
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const script = require(fullPath);
-
-    await script.runAsync();
-    core.info(`Lifecycle hook '${name}' successfully executed.`);
-  }
-}
 
 async function installCerts(): Promise<void> {
   try {
@@ -76,6 +50,7 @@ async function install(): Promise<void> {
       '--no-save',
       '--no-package-lock',
       'blackbaud/skyux-sdk-builder-config',
+      'blackbaud/skyux-sdk-pipeline-settings',
     ]);
   } catch (err) {
     console.error('[SKY UX ERROR]:', err);
@@ -186,6 +161,13 @@ async function run(): Promise<void> {
 
   await install();
   await installCerts();
+
+  // Determine if running Angular CLI.
+  const packageJson = fs.readJsonSync(path.join(process.cwd(), 'package.json'));
+  if (!packageJson.devDependencies['@skyux-sdk/builder']) {
+    core.info('Angular CLI detected.');
+    await executeAngularCliSteps(BUILD_ID);
+  }
 
   // Don't run tests for tags.
   if (isTag()) {
