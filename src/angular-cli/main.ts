@@ -21,8 +21,14 @@ async function buildLibrary(projectName: string) {
   }
 }
 
-async function publishLibrary(): Promise<PackageMetadata> {
-  return npmPublish();
+async function publishLibrary(projectName: string): Promise<PackageMetadata> {
+  const distPath = path.join(
+    process.cwd(),
+    core.getInput('working-directory'),
+    'dist',
+    projectName
+  );
+  return npmPublish(distPath);
 }
 
 async function coverage(buildId: string, projectName: string) {
@@ -50,7 +56,7 @@ export async function executeAngularCliSteps(buildId: string): Promise<void> {
 
   // Don't run tests for tags.
   if (isTag()) {
-    const packageMetadata = await publishLibrary();
+    const packageMetadata = await publishLibrary(projectName);
     await tagSkyuxPackages(packageMetadata);
   } else {
     await coverage(buildId, projectName);

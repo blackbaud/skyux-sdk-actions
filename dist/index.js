@@ -1724,9 +1724,11 @@ const path = __importStar(__webpack_require__(622));
 const notify_slack_1 = __webpack_require__(564);
 const spawn_1 = __webpack_require__(820);
 const utils_1 = __webpack_require__(611);
-function npmPublish() {
+function npmPublish(distPath) {
     return __awaiter(this, void 0, void 0, function* () {
-        const distPath = path.join(process.cwd(), core.getInput('working-directory'), 'dist');
+        distPath =
+            distPath ||
+                path.join(process.cwd(), core.getInput('working-directory'), 'dist');
         const packageJsonPath = path.join(distPath, 'package.json');
         const packageJson = fs.readJsonSync(packageJsonPath);
         const packageName = packageJson.name;
@@ -21999,9 +22001,10 @@ function buildLibrary(projectName) {
         }
     });
 }
-function publishLibrary() {
+function publishLibrary(projectName) {
     return __awaiter(this, void 0, void 0, function* () {
-        return npm_publish_1.npmPublish();
+        const distPath = path_1.default.join(process.cwd(), core_1.default.getInput('working-directory'), 'dist', projectName);
+        return npm_publish_1.npmPublish(distPath);
     });
 }
 function coverage(buildId, projectName) {
@@ -22030,7 +22033,7 @@ function executeAngularCliSteps(buildId) {
         yield buildLibrary(projectName);
         // Don't run tests for tags.
         if (utils_1.isTag()) {
-            const packageMetadata = yield publishLibrary();
+            const packageMetadata = yield publishLibrary(projectName);
             yield tag_skyux_packages_1.tagSkyuxPackages(packageMetadata);
         }
         else {
