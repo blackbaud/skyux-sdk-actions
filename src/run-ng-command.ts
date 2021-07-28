@@ -1,6 +1,5 @@
 import * as core from '@actions/core';
 
-import { SkyUxCIPlatformConfig } from './ci-platform-config';
 import { spawn } from './spawn';
 
 /**

@@ -21966,6 +21966,25 @@ createToken('GTE0PRE', '^\\s*>=\\s*0\.0\.0-0\\s*$')
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -21975,14 +21994,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.executeAngularCliSteps = void 0;
-const core_1 = __importDefault(__webpack_require__(470));
-const fs_extra_1 = __importDefault(__webpack_require__(226));
-const path_1 = __importDefault(__webpack_require__(622));
+const core = __importStar(__webpack_require__(470));
+const fs = __importStar(__webpack_require__(226));
+const path = __importStar(__webpack_require__(622));
 const npm_publish_1 = __webpack_require__(96);
 const run_lifecycle_hook_1 = __webpack_require__(797);
 const run_ng_command_1 = __webpack_require__(585);
@@ -21996,20 +22012,20 @@ function buildLibrary(projectName) {
         }
         catch (err) {
             console.error('[SKY UX ERROR]:', err);
-            core_1.default.setFailed('Library build failed.');
+            core.setFailed('Library build failed.');
             process.exit(1);
         }
     });
 }
 function publishLibrary(projectName) {
     return __awaiter(this, void 0, void 0, function* () {
-        const distPath = path_1.default.join(process.cwd(), core_1.default.getInput('working-directory'), 'dist', projectName);
+        const distPath = path.join(process.cwd(), core.getInput('working-directory'), 'dist', projectName);
         return npm_publish_1.npmPublish(distPath);
     });
 }
 function coverage(buildId, projectName) {
     return __awaiter(this, void 0, void 0, function* () {
-        core_1.default.exportVariable('BROWSER_STACK_BUILD_ID', `${buildId}-coverage`);
+        core.exportVariable('BROWSER_STACK_BUILD_ID', `${buildId}-coverage`);
         try {
             yield run_lifecycle_hook_1.runLifecycleHook('hook-before-script');
             yield run_ng_command_1.runNgCommand('test', [
@@ -22021,14 +22037,14 @@ function coverage(buildId, projectName) {
         }
         catch (err) {
             console.error('[SKY UX ERROR]:', err);
-            core_1.default.setFailed('Code coverage failed.');
+            core.setFailed('Code coverage failed.');
             process.exit(1);
         }
     });
 }
 function executeAngularCliSteps(buildId) {
     return __awaiter(this, void 0, void 0, function* () {
-        const angularJson = fs_extra_1.default.readJsonSync(path_1.default.join(process.cwd(), 'angular.json'));
+        const angularJson = fs.readJsonSync(path.join(process.cwd(), 'angular.json'));
         const projectName = angularJson.defaultProject;
         yield buildLibrary(projectName);
         // Don't run tests for tags.
