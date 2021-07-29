@@ -3989,7 +3989,6 @@ function install() {
 function build() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            yield run_lifecycle_hook_1.runLifecycleHook('hook-before-script');
             yield run_skyux_command_1.runSkyUxCommand('build');
         }
         catch (err) {
@@ -4003,7 +4002,6 @@ function coverage(configKey) {
     return __awaiter(this, void 0, void 0, function* () {
         core.exportVariable('BROWSER_STACK_BUILD_ID', `${BUILD_ID}-coverage`);
         try {
-            yield run_lifecycle_hook_1.runLifecycleHook('hook-before-script');
             yield run_skyux_command_1.runSkyUxCommand('test', ['--coverage', 'library'], configKey);
         }
         catch (err) {
@@ -4018,7 +4016,6 @@ function visual(configKey) {
         core.exportVariable('BROWSER_STACK_BUILD_ID', `${BUILD_ID}-visual`);
         const repository = process.env.GITHUB_REPOSITORY || '';
         try {
-            yield run_lifecycle_hook_1.runLifecycleHook('hook-before-script');
             yield run_skyux_command_1.runSkyUxCommand('e2e', [], configKey);
             if (utils_1.isPush()) {
                 yield screenshot_comparator_1.checkNewBaselineScreenshots(repository, BUILD_ID);
@@ -4081,8 +4078,9 @@ function run() {
         const packageJson = fs.readJsonSync(path.join(process.cwd(), 'package.json'));
         if (!packageJson.devDependencies['@skyux-sdk/builder']) {
             core.info('Angular CLI detected.');
-            yield main_1.executeAngularCliSteps(BUILD_ID);
+            yield main_1.executeAngularCliSteps(BUILD_ID, configKey);
         }
+        yield run_lifecycle_hook_1.runLifecycleHook('hook-before-script');
         // Don't run tests for tags.
         if (utils_1.isTag()) {
             yield buildLibrary();
@@ -22039,16 +22037,26 @@ function publishLibrary(projectName) {
         return npm_publish_1.npmPublish(distPath);
     });
 }
-function coverage(buildId, projectName) {
+function coverage(buildId, projectName, platform) {
     return __awaiter(this, void 0, void 0, function* () {
         core.exportVariable('BROWSER_STACK_BUILD_ID', `${buildId}-coverage`);
+        const args = [];
+        switch (platform) {
+            case "gh-actions" /* GitHubActions */:
+                args.push('--karma-config=./node_modules/@skyux-sdk/pipeline-settings/platforms/gh-actions/karma/karma.angular-cli.conf.js');
+                break;
+            case "none" /* None */:
+            default:
+                // Run `ChromeHeadless` by default since it comes pre-installed on the CI machine.
+                args.push('--browsers=ChromeHeadless');
+                break;
+        }
         try {
-            yield run_lifecycle_hook_1.runLifecycleHook('hook-before-script');
             yield run_ng_command_1.runNgCommand('test', [
                 projectName,
                 '--code-coverage',
-                '--karma-config=./node_modules/@skyux-sdk/pipeline-settings/platforms/gh-actions/karma/karma.angular-cli.conf.js',
                 '--watch=false',
+                ...args,
             ]);
         }
         catch (err) {
@@ -22058,10 +22066,11 @@ function coverage(buildId, projectName) {
         }
     });
 }
-function executeAngularCliSteps(buildId) {
+function executeAngularCliSteps(buildId, platform) {
     return __awaiter(this, void 0, void 0, function* () {
         const angularJson = fs.readJsonSync(path.join(process.cwd(), 'angular.json'));
         const projectName = angularJson.defaultProject;
+        yield run_lifecycle_hook_1.runLifecycleHook('hook-before-script');
         yield buildLibrary(projectName);
         // Don't run tests for tags.
         if (utils_1.isTag()) {
@@ -22069,7 +22078,7 @@ function executeAngularCliSteps(buildId) {
             yield tag_skyux_packages_1.tagSkyuxPackages(packageMetadata);
         }
         else {
-            yield coverage(buildId, projectName);
+            yield coverage(buildId, projectName, platform);
         }
     });
 }

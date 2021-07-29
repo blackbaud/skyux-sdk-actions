@@ -3,6 +3,7 @@ import * as core from '@actions/core';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 
+import { SkyUxCIPlatformConfig } from '../ci-platform-config';
 import { npmPublish } from '../npm-publish';
 import { PackageMetadata } from '../package-metadata';
 import { runLifecycleHook } from '../run-lifecycle-hook';
@@ -31,15 +32,34 @@ async function publishLibrary(projectName: string): Promise<PackageMetadata> {
   return npmPublish(distPath);
 }
 
-async function coverage(buildId: string, projectName: string) {
+async function coverage(
+  buildId: string,
+  projectName: string,
+  platform: SkyUxCIPlatformConfig
+) {
   core.exportVariable('BROWSER_STACK_BUILD_ID', `${buildId}-coverage`);
+
+  const args: string[] = [];
+
+  switch (platform) {
+    case SkyUxCIPlatformConfig.GitHubActions:
+      args.push(
+        '--karma-config=./node_modules/@skyux-sdk/pipeline-settings/platforms/gh-actions/karma/karma.angular-cli.conf.js'
+      );
+      break;
+    case SkyUxCIPlatformConfig.None:
+    default:
+      // Run `ChromeHeadless` by default since it comes pre-installed on the CI machine.
+      args.push('--browsers=ChromeHeadless');
+      break;
+  }
+
   try {
-    await runLifecycleHook('hook-before-script');
     await runNgCommand('test', [
       projectName,
       '--code-coverage',
-      '--karma-config=./node_modules/@skyux-sdk/pipeline-settings/platforms/gh-actions/karma/karma.angular-cli.conf.js',
       '--watch=false',
+      ...args,
     ]);
   } catch (err) {
     console.error(err);
@@ -48,9 +68,14 @@ async function coverage(buildId: string, projectName: string) {
   }
 }
 
-export async function executeAngularCliSteps(buildId: string): Promise<void> {
+export async function executeAngularCliSteps(
+  buildId: string,
+  platform: SkyUxCIPlatformConfig
+): Promise<void> {
   const angularJson = fs.readJsonSync(path.join(process.cwd(), 'angular.json'));
   const projectName = angularJson.defaultProject;
+
+  await runLifecycleHook('hook-before-script');
 
   await buildLibrary(projectName);
 
@@ -59,6 +84,6 @@ export async function executeAngularCliSteps(buildId: string): Promise<void> {
     const packageMetadata = await publishLibrary(projectName);
     await tagSkyuxPackages(packageMetadata);
   } else {
-    await coverage(buildId, projectName);
+    await coverage(buildId, projectName, platform);
   }
 }
