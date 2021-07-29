@@ -29,7 +29,6 @@ async function install(): Promise<void> {
     await spawn('npm', [
       'install',
       '--no-save',
-      '--no-package-lock',
       'blackbaud/skyux-sdk-pipeline-settings#gh-actions-karma',
     ]);
 
