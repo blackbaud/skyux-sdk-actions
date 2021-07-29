@@ -22034,7 +22034,6 @@ function install() {
                 '--no-save',
                 'blackbaud/skyux-sdk-pipeline-settings#gh-actions-karma',
             ]);
-            yield spawn_1.spawn('npm', ['ls', 'karma-browserstack-launcher']);
         }
         catch (err) {
             console.error(err);

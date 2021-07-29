@@ -31,8 +31,6 @@ async function install(): Promise<void> {
       '--no-save',
       'blackbaud/skyux-sdk-pipeline-settings#gh-actions-karma',
     ]);
-
-    await spawn('npm', ['ls', 'karma-browserstack-launcher']);
   } catch (err) {
     console.error(err);
     core.setFailed('Packages installation failed.');
