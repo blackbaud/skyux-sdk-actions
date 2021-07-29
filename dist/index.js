@@ -22022,13 +22022,20 @@ const utils_1 = __webpack_require__(611);
 function install() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            yield spawn_1.spawn('npm', ['ci']);
+            const packageLock = path.join(process.cwd(), core.getInput('working-directory'), 'package-lock.json');
+            if (fs.existsSync(packageLock)) {
+                yield spawn_1.spawn('npm', ['ci']);
+            }
+            else {
+                yield spawn_1.spawn('npm', ['install']);
+            }
             yield spawn_1.spawn('npm', [
                 'install',
                 '--no-save',
                 '--no-package-lock',
                 'blackbaud/skyux-sdk-pipeline-settings#gh-actions-karma',
             ]);
+            yield spawn_1.spawn('npm', ['ls', 'karma-browserstack-launcher']);
         }
         catch (err) {
             console.error(err);

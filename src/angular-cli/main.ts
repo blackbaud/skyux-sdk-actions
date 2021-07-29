@@ -14,7 +14,17 @@ import { isTag } from '../utils';
 
 async function install(): Promise<void> {
   try {
-    await spawn('npm', ['ci']);
+    const packageLock = path.join(
+      process.cwd(),
+      core.getInput('working-directory'),
+      'package-lock.json'
+    );
+
+    if (fs.existsSync(packageLock)) {
+      await spawn('npm', ['ci']);
+    } else {
+      await spawn('npm', ['install']);
+    }
 
     await spawn('npm', [
       'install',
@@ -22,6 +32,8 @@ async function install(): Promise<void> {
       '--no-package-lock',
       'blackbaud/skyux-sdk-pipeline-settings#gh-actions-karma',
     ]);
+
+    await spawn('npm', ['ls', 'karma-browserstack-launcher']);
   } catch (err) {
     console.error(err);
     core.setFailed('Packages installation failed.');
