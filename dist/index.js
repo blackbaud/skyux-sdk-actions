@@ -22027,7 +22027,7 @@ function buildLibrary(projectName) {
             yield run_lifecycle_hook_1.runLifecycleHook('hook-after-build-public-library-success');
         }
         catch (err) {
-            console.error('[SKY UX ERROR]:', err);
+            console.error(err);
             core.setFailed('Library build failed.');
             process.exit(1);
         }
@@ -22052,7 +22052,7 @@ function coverage(buildId, projectName) {
             ]);
         }
         catch (err) {
-            console.error('[SKY UX ERROR]:', err);
+            console.error(err);
             core.setFailed('Code coverage failed.');
             process.exit(1);
         }

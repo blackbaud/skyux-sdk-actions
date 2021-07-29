@@ -15,7 +15,7 @@ async function buildLibrary(projectName: string) {
     await runNgCommand('build', [projectName, '--configuration=production']);
     await runLifecycleHook('hook-after-build-public-library-success');
   } catch (err) {
-    console.error('[SKY UX ERROR]:', err);
+    console.error(err);
     core.setFailed('Library build failed.');
     process.exit(1);
   }
@@ -42,7 +42,7 @@ async function coverage(buildId: string, projectName: string) {
       '--watch=false',
     ]);
   } catch (err) {
-    console.error('[SKY UX ERROR]:', err);
+    console.error(err);
     core.setFailed('Code coverage failed.');
     process.exit(1);
   }
