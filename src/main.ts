@@ -50,7 +50,6 @@ async function install(): Promise<void> {
       '--no-save',
       '--no-package-lock',
       'blackbaud/skyux-sdk-builder-config',
-      'blackbaud/skyux-sdk-pipeline-settings#gh-actions-karma',
     ]);
   } catch (err) {
     console.error('[SKY UX ERROR]:', err);
@@ -156,15 +155,16 @@ async function run(): Promise<void> {
     configKey = SkyUxCIPlatformConfig.None;
   }
 
-  await install();
-  await installCerts();
-
   // Determine if running Angular CLI.
   const packageJson = fs.readJsonSync(path.join(process.cwd(), 'package.json'));
   if (!packageJson.devDependencies['@skyux-sdk/builder']) {
     core.info('Angular CLI detected.');
     await executeAngularCliSteps(BUILD_ID, configKey);
+    return;
   }
+
+  await install();
+  await installCerts();
 
   await runLifecycleHook('hook-before-script');
 

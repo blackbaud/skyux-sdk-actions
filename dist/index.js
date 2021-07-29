@@ -3976,7 +3976,6 @@ function install() {
                 '--no-save',
                 '--no-package-lock',
                 'blackbaud/skyux-sdk-builder-config',
-                'blackbaud/skyux-sdk-pipeline-settings#gh-actions-karma',
             ]);
         }
         catch (err) {
@@ -4072,14 +4071,15 @@ function run() {
                 'Tests will run through the local instance of ChromeHeadless.');
             configKey = "none" /* None */;
         }
-        yield install();
-        yield installCerts();
         // Determine if running Angular CLI.
         const packageJson = fs.readJsonSync(path.join(process.cwd(), 'package.json'));
         if (!packageJson.devDependencies['@skyux-sdk/builder']) {
             core.info('Angular CLI detected.');
             yield main_1.executeAngularCliSteps(BUILD_ID, configKey);
+            return;
         }
+        yield install();
+        yield installCerts();
         yield run_lifecycle_hook_1.runLifecycleHook('hook-before-script');
         // Don't run tests for tags.
         if (utils_1.isTag()) {
@@ -22016,8 +22016,27 @@ const path = __importStar(__webpack_require__(622));
 const npm_publish_1 = __webpack_require__(96);
 const run_lifecycle_hook_1 = __webpack_require__(797);
 const run_ng_command_1 = __webpack_require__(585);
+const spawn_1 = __webpack_require__(820);
 const tag_skyux_packages_1 = __webpack_require__(293);
 const utils_1 = __webpack_require__(611);
+function install() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            yield spawn_1.spawn('npm', ['ci']);
+            yield spawn_1.spawn('npm', [
+                'install',
+                '--no-save',
+                '--no-package-lock',
+                'blackbaud/skyux-sdk-pipeline-settings#gh-actions-karma',
+            ]);
+        }
+        catch (err) {
+            console.error(err);
+            core.setFailed('Packages installation failed.');
+            process.exit(1);
+        }
+    });
+}
 function buildLibrary(projectName) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -22070,6 +22089,7 @@ function executeAngularCliSteps(buildId, platform) {
     return __awaiter(this, void 0, void 0, function* () {
         const angularJson = fs.readJsonSync(path.join(process.cwd(), 'angular.json'));
         const projectName = angularJson.defaultProject;
+        yield install();
         yield run_lifecycle_hook_1.runLifecycleHook('hook-before-script');
         yield buildLibrary(projectName);
         // Don't run tests for tags.

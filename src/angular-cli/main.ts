@@ -8,8 +8,26 @@ import { npmPublish } from '../npm-publish';
 import { PackageMetadata } from '../package-metadata';
 import { runLifecycleHook } from '../run-lifecycle-hook';
 import { runNgCommand } from '../run-ng-command';
+import { spawn } from '../spawn';
 import { tagSkyuxPackages } from '../tag-skyux-packages';
 import { isTag } from '../utils';
+
+async function install(): Promise<void> {
+  try {
+    await spawn('npm', ['ci']);
+
+    await spawn('npm', [
+      'install',
+      '--no-save',
+      '--no-package-lock',
+      'blackbaud/skyux-sdk-pipeline-settings#gh-actions-karma',
+    ]);
+  } catch (err) {
+    console.error(err);
+    core.setFailed('Packages installation failed.');
+    process.exit(1);
+  }
+}
 
 async function buildLibrary(projectName: string) {
   try {
@@ -74,6 +92,8 @@ export async function executeAngularCliSteps(
 ): Promise<void> {
   const angularJson = fs.readJsonSync(path.join(process.cwd(), 'angular.json'));
   const projectName = angularJson.defaultProject;
+
+  await install();
 
   await runLifecycleHook('hook-before-script');
 
