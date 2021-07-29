@@ -50,7 +50,7 @@ async function install(): Promise<void> {
       '--no-save',
       '--no-package-lock',
       'blackbaud/skyux-sdk-builder-config',
-      'blackbaud/skyux-sdk-pipeline-settings',
+      'blackbaud/skyux-sdk-pipeline-settings#gh-actions-karma',
     ]);
   } catch (err) {
     console.error('[SKY UX ERROR]:', err);
