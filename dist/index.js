@@ -22032,7 +22032,7 @@ function install() {
             yield spawn_1.spawn('npm', [
                 'install',
                 '--no-save',
-                'blackbaud/skyux-sdk-pipeline-settings#gh-actions-karma',
+                'blackbaud/skyux-sdk-pipeline-settings',
             ]);
         }
         catch (err) {
