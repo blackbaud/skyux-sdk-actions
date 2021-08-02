@@ -72,6 +72,7 @@ async function coverage(configKey: SkyUxCIPlatformConfig) {
   core.exportVariable('BROWSER_STACK_BUILD_ID', `${BUILD_ID}-coverage`);
   try {
     await runSkyUxCommand('test', ['--coverage', 'library'], configKey);
+    await runLifecycleHook('hook-after-code-coverage-success');
   } catch (err) {
     console.error('[SKY UX ERROR]:', err);
     core.setFailed('Code coverage failed.');

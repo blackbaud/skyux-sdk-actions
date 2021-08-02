@@ -88,6 +88,8 @@ async function coverage(
       '--watch=false',
       ...args,
     ]);
+
+    await runLifecycleHook('hook-after-code-coverage-success');
   } catch (err) {
     console.error(err);
     core.setFailed('Code coverage failed.');

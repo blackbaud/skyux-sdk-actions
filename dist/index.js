@@ -4002,6 +4002,7 @@ function coverage(configKey) {
         core.exportVariable('BROWSER_STACK_BUILD_ID', `${BUILD_ID}-coverage`);
         try {
             yield run_skyux_command_1.runSkyUxCommand('test', ['--coverage', 'library'], configKey);
+            yield run_lifecycle_hook_1.runLifecycleHook('hook-after-code-coverage-success');
         }
         catch (err) {
             console.error('[SKY UX ERROR]:', err);
@@ -22082,6 +22083,7 @@ function coverage(buildId, projectName, platform) {
                 '--watch=false',
                 ...args,
             ]);
+            yield run_lifecycle_hook_1.runLifecycleHook('hook-after-code-coverage-success');
         }
         catch (err) {
             console.error(err);
