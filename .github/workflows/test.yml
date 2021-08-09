@@ -46,7 +46,9 @@ jobs:
         with:
           node-version: '14.x'
       - name: Setup default project
-        run: npx -p @angular/cli@12 ng new ng-twelve-test-github-actions --routing --style=scss
+        run: |
+          npx -p @angular/cli@12 ng new ng-twelve-test-github-actions --create-application=false --strict
+          npx -p @angular/cli@12 ng generate library my-lib
       - name: Run action
         uses: ./
         with:
@@ -57,8 +59,6 @@ jobs:
           code-coverage-threshold-lines: 100
           code-coverage-threshold-statements: 100
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          hook-after-build-public-library-success: ./scripts/after-build-public-library-success.js
-          hook-before-script: ./scripts/before-script.js
           npm-dry-run: true
           npm-token: ${{ secrets.NPM_TOKEN }}
           slack-webhook: ${{ secrets.SLACK_WEBHOOK }}
