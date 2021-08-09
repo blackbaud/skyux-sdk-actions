@@ -46,7 +46,7 @@ jobs:
         with:
           node-version: '14.x'
       - name: Setup default project
-        run: npx -p @angular/cli@12 ng new ng-12-test-github-actions
+        run: npx -p @angular/cli@12 ng new ng-twelve-test-github-actions --routing --style=scss
       - name: Run action
         uses: ./
         with:
@@ -62,5 +62,5 @@ jobs:
           npm-dry-run: true
           npm-token: ${{ secrets.NPM_TOKEN }}
           slack-webhook: ${{ secrets.SLACK_WEBHOOK }}
-          visual-baselines-branch: ng-12-test-github-actions
-          working-directory: ./ng-12-test-github-actions
+          visual-baselines-branch: ng-twelve-test-github-actions
+          working-directory: ./ng-twelve-test-github-actions
