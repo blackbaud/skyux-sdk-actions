@@ -46,14 +46,10 @@ jobs:
         with:
           node-version: '14.x'
       - name: Create workspace
-        run: |
-          npx -p @angular/cli@12 ng new ng-twelve-test-github-actions --create-application=false --strict
-          npx -p @angular/cli@12 ng generate library my-lib
+        run: npx -p @angular/cli@12 ng new ng-twelve-test-github-actions --create-application=false --strict
       - name: Create library
-        run: |
-          npx -p @angular/cli@12 ng generate library my-lib
-        with:
-          working-directory: 'ng-twelve-test-github-actions'
+        run: npx -p @angular/cli@12 ng generate library my-lib
+        working-directory: 'ng-twelve-test-github-actions'
       - name: Run action
         uses: ./
         with:
