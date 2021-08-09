@@ -4073,7 +4073,7 @@ function run() {
             configKey = "none" /* None */;
         }
         // Determine if running Angular CLI.
-        const packageJson = fs.readJsonSync(path.join(process.cwd(), 'package.json'));
+        const packageJson = fs.readJsonSync(path.join(process.cwd(), core.getInput('working-directory'), 'package.json'));
         if (!packageJson.devDependencies['@skyux-sdk/builder']) {
             core.info('Angular CLI detected.');
             yield main_1.executeAngularCliSteps(BUILD_ID, configKey);

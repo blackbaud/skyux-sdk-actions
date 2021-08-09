@@ -34,11 +34,11 @@ jobs:
           code-coverage-threshold-functions: 100
           code-coverage-threshold-lines: 100
           code-coverage-threshold-statements: 100
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          hook-after-build-public-library-success: ./scripts/after-build-public-library-success.js
+          hook-before-script: ./scripts/before-script.js
           npm-dry-run: true
           npm-token: ${{ secrets.NPM_TOKEN }}
-          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
           slack-webhook: ${{ secrets.SLACK_WEBHOOK }}
           visual-baselines-branch: 4.x.x-test-github-actions
           working-directory: ./skyux-sdk-template-library
-          hook-after-build-public-library-success: ./scripts/after-build-public-library-success.js
-          hook-before-script: ./scripts/before-script.js
