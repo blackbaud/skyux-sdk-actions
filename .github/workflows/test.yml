@@ -30,6 +30,10 @@ jobs:
         with:
           browser-stack-access-key: ${{ secrets.BROWSER_STACK_ACCESS_KEY }}
           browser-stack-username: ${{ secrets.BROWSER_STACK_USERNAME }}
+          code-coverage-threshold-branches: 100
+          code-coverage-threshold-functions: 100
+          code-coverage-threshold-lines: 100
+          code-coverage-threshold-statements: 100
           npm-dry-run: true
           npm-token: ${{ secrets.NPM_TOKEN }}
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
