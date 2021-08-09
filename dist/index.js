@@ -22099,7 +22099,7 @@ function coverage(buildId, projectName, platform) {
 }
 function executeAngularCliSteps(buildId, platform) {
     return __awaiter(this, void 0, void 0, function* () {
-        const angularJson = fs.readJsonSync(path.join(process.cwd(), 'angular.json'));
+        const angularJson = fs.readJsonSync(path.join(process.cwd(), core.getInput('working-directory'), 'angular.json'));
         const projectName = angularJson.defaultProject;
         yield install();
         yield run_lifecycle_hook_1.runLifecycleHook('hook-before-script');

@@ -126,7 +126,10 @@ export async function executeAngularCliSteps(
   buildId: string,
   platform: SkyUxCIPlatformConfig
 ): Promise<void> {
-  const angularJson = fs.readJsonSync(path.join(process.cwd(), 'angular.json'));
+  const angularJson = fs.readJsonSync(
+    path.join(process.cwd(), core.getInput('working-directory'), 'angular.json')
+  );
+
   const projectName = angularJson.defaultProject;
 
   await install();
