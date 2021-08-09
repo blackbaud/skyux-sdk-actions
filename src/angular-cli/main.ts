@@ -29,7 +29,7 @@ async function install(): Promise<void> {
     await spawn('npm', [
       'install',
       '--no-save',
-      'blackbaud/skyux-sdk-pipeline-settings',
+      'blackbaud/skyux-sdk-pipeline-settings#angular-cli-support',
     ]);
   } catch (err) {
     console.error(err);
@@ -65,6 +65,31 @@ async function coverage(
   platform: SkyUxCIPlatformConfig
 ) {
   core.exportVariable('BROWSER_STACK_BUILD_ID', `${buildId}-coverage`);
+
+  core.exportVariable(
+    'SKY_UX_CODE_COVERAGE_BROWSER_SET',
+    core.getInput('code-coverage-browser-set')
+  );
+
+  core.exportVariable(
+    'SKY_UX_CODE_COVERAGE_THRESHOLD_BRANCHES',
+    core.getInput('code-coverage-threshold-branches')
+  );
+
+  core.exportVariable(
+    'SKY_UX_CODE_COVERAGE_THRESHOLD_FUNCTIONS',
+    core.getInput('code-coverage-threshold-functions')
+  );
+
+  core.exportVariable(
+    'SKY_UX_CODE_COVERAGE_THRESHOLD_LINES',
+    core.getInput('code-coverage-threshold-lines')
+  );
+
+  core.exportVariable(
+    'SKY_UX_CODE_COVERAGE_THRESHOLD_STATEMENTS',
+    core.getInput('code-coverage-threshold-statements')
+  );
 
   const args: string[] = [];
 

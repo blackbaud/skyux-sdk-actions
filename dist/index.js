@@ -22033,7 +22033,7 @@ function install() {
             yield spawn_1.spawn('npm', [
                 'install',
                 '--no-save',
-                'blackbaud/skyux-sdk-pipeline-settings',
+                'blackbaud/skyux-sdk-pipeline-settings#angular-cli-support',
             ]);
         }
         catch (err) {
@@ -22065,6 +22065,11 @@ function publishLibrary(projectName) {
 function coverage(buildId, projectName, platform) {
     return __awaiter(this, void 0, void 0, function* () {
         core.exportVariable('BROWSER_STACK_BUILD_ID', `${buildId}-coverage`);
+        core.exportVariable('SKY_UX_CODE_COVERAGE_BROWSER_SET', core.getInput('code-coverage-browser-set'));
+        core.exportVariable('SKY_UX_CODE_COVERAGE_THRESHOLD_BRANCHES', core.getInput('code-coverage-threshold-branches'));
+        core.exportVariable('SKY_UX_CODE_COVERAGE_THRESHOLD_FUNCTIONS', core.getInput('code-coverage-threshold-functions'));
+        core.exportVariable('SKY_UX_CODE_COVERAGE_THRESHOLD_LINES', core.getInput('code-coverage-threshold-lines'));
+        core.exportVariable('SKY_UX_CODE_COVERAGE_THRESHOLD_STATEMENTS', core.getInput('code-coverage-threshold-statements'));
         const args = [];
         switch (platform) {
             case "gh-actions" /* GitHubActions */:
