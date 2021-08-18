@@ -165,7 +165,7 @@ export async function executeAngularCliSteps(buildId: string): Promise<void> {
     const packageMetadata = await publishLibrary(projectName);
     await tagSkyuxPackages(packageMetadata);
   } else {
-    // await coverage(buildId, projectName);
+    await coverage(buildId, projectName);
     await visual(buildId, `${projectName}-showcase`);
   }
 }

@@ -22140,7 +22140,7 @@ function executeAngularCliSteps(buildId) {
             yield tag_skyux_packages_1.tagSkyuxPackages(packageMetadata);
         }
         else {
-            // await coverage(buildId, projectName);
+            yield coverage(buildId, projectName);
             yield visual(buildId, `${projectName}-showcase`);
         }
     });
