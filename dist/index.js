@@ -4016,7 +4016,7 @@ function visual(configKey) {
         core.exportVariable('BROWSER_STACK_BUILD_ID', `${BUILD_ID}-visual`);
         const repository = process.env.GITHUB_REPOSITORY || '';
         try {
-            yield run_skyux_command_1.runSkyUxCommand('e2e', [], configKey);
+            yield run_skyux_command_1.runSkyUxCommand('e2e', ['--logLevel=verbose'], configKey);
             if (utils_1.isPush()) {
                 yield screenshot_comparator_1.checkNewBaselineScreenshots(repository, BUILD_ID);
             }

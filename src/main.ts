@@ -84,7 +84,7 @@ async function visual(configKey: SkyUxCIPlatformConfig) {
   core.exportVariable('BROWSER_STACK_BUILD_ID', `${BUILD_ID}-visual`);
   const repository = process.env.GITHUB_REPOSITORY || '';
   try {
-    await runSkyUxCommand('e2e', [], configKey);
+    await runSkyUxCommand('e2e', ['--logLevel=verbose'], configKey);
     if (isPush()) {
       await checkNewBaselineScreenshots(repository, BUILD_ID);
     }
