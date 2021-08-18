@@ -22017,9 +22017,18 @@ const path = __importStar(__webpack_require__(622));
 const npm_publish_1 = __webpack_require__(96);
 const run_lifecycle_hook_1 = __webpack_require__(797);
 const run_ng_command_1 = __webpack_require__(585);
+const screenshot_comparator_1 = __webpack_require__(453);
 const spawn_1 = __webpack_require__(820);
 const tag_skyux_packages_1 = __webpack_require__(293);
 const utils_1 = __webpack_require__(611);
+function getBrowserStackCliArguments(buildId) {
+    return [
+        `--browserstack-username=${core.getInput('browser-stack-username')}`,
+        `--browserstack-access-key=${core.getInput('browser-stack-access-key')}`,
+        `--browserstack-build-id=${buildId}`,
+        `--browserstack-project=${core.getInput('browser-stack-project') || process.env.GITHUB_REPOSITORY}`,
+    ];
+}
 function install() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -22069,10 +22078,7 @@ function coverage(buildId, projectName) {
                 './node_modules/@skyux-sdk/pipeline-settings/test-runners/karma.js',
                 '--platform=gh-actions',
                 `--project-name=${projectName}`,
-                `--browserstack-username=${core.getInput('browser-stack-username')}`,
-                `--browserstack-access-key=${core.getInput('browser-stack-access-key')}`,
-                `--browserstack-build-id=${buildId}-coverage`,
-                `--browserstack-project=${core.getInput('browser-stack-project') || process.env.GITHUB_REPOSITORY}`,
+                ...getBrowserStackCliArguments(`${buildId}-coverage`),
                 `--code-coverage-browser-set=${core.getInput('code-coverage-browser-set')}`,
                 `--code-coverage-threshold-branches=${core.getInput('code-coverage-threshold-branches')}`,
                 `--code-coverage-threshold-functions=${core.getInput('code-coverage-threshold-functions')}`,
@@ -22084,6 +22090,34 @@ function coverage(buildId, projectName) {
         catch (err) {
             console.error(err);
             core.setFailed('Code coverage failed.');
+            process.exit(1);
+        }
+    });
+}
+function visual(buildId, projectName) {
+    var _a;
+    return __awaiter(this, void 0, void 0, function* () {
+        const repository = process.env.GITHUB_REPOSITORY || '';
+        const angularJson = fs.readJsonSync(path.join(process.cwd(), core.getInput('working-directory'), 'angular.json'));
+        const projectRoot = path.join(core.getInput('working-directory'), ((_a = angularJson === null || angularJson === void 0 ? void 0 : angularJson.projects[projectName]) === null || _a === void 0 ? void 0 : _a.root) || '');
+        try {
+            yield spawn_1.spawn('node', [
+                './node_modules/@skyux-sdk/pipeline-settings/test-runners/protractor.js',
+                '--platform=gh-actions',
+                `--project-name=${projectName}`,
+                `--project-root=${projectRoot}`,
+                ...getBrowserStackCliArguments(`${buildId}-visual`),
+            ]);
+            if (utils_1.isPush()) {
+                yield screenshot_comparator_1.checkNewBaselineScreenshots(repository, buildId);
+            }
+        }
+        catch (err) {
+            if (utils_1.isPullRequest()) {
+                yield screenshot_comparator_1.checkNewFailureScreenshots(buildId);
+            }
+            console.error('[SKY UX ERROR]:', err);
+            core.setFailed('End-to-end tests failed.');
             process.exit(1);
         }
     });
@@ -22102,6 +22136,7 @@ function executeAngularCliSteps(buildId) {
         }
         else {
             yield coverage(buildId, projectName);
+            yield visual(buildId, projectName);
         }
     });
 }

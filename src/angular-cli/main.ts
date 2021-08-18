@@ -7,9 +7,24 @@ import { npmPublish } from '../npm-publish';
 import { PackageMetadata } from '../package-metadata';
 import { runLifecycleHook } from '../run-lifecycle-hook';
 import { runNgCommand } from '../run-ng-command';
+import {
+  checkNewBaselineScreenshots,
+  checkNewFailureScreenshots,
+} from '../screenshot-comparator';
 import { spawn } from '../spawn';
 import { tagSkyuxPackages } from '../tag-skyux-packages';
-import { isTag } from '../utils';
+import { isPullRequest, isPush, isTag } from '../utils';
+
+function getBrowserStackCliArguments(buildId: string): string[] {
+  return [
+    `--browserstack-username=${core.getInput('browser-stack-username')}`,
+    `--browserstack-access-key=${core.getInput('browser-stack-access-key')}`,
+    `--browserstack-build-id=${buildId}`,
+    `--browserstack-project=${
+      core.getInput('browser-stack-project') || process.env.GITHUB_REPOSITORY
+    }`,
+  ];
+}
 
 async function install(): Promise<void> {
   try {
@@ -64,12 +79,7 @@ async function coverage(buildId: string, projectName: string) {
       './node_modules/@skyux-sdk/pipeline-settings/test-runners/karma.js',
       '--platform=gh-actions',
       `--project-name=${projectName}`,
-      `--browserstack-username=${core.getInput('browser-stack-username')}`,
-      `--browserstack-access-key=${core.getInput('browser-stack-access-key')}`,
-      `--browserstack-build-id=${buildId}-coverage`,
-      `--browserstack-project=${
-        core.getInput('browser-stack-project') || process.env.GITHUB_REPOSITORY
-      }`,
+      ...getBrowserStackCliArguments(`${buildId}-coverage`),
       `--code-coverage-browser-set=${core.getInput(
         'code-coverage-browser-set'
       )}`,
@@ -95,6 +105,41 @@ async function coverage(buildId: string, projectName: string) {
   }
 }
 
+async function visual(buildId: string, projectName: string) {
+  const repository = process.env.GITHUB_REPOSITORY || '';
+
+  const angularJson = fs.readJsonSync(
+    path.join(process.cwd(), core.getInput('working-directory'), 'angular.json')
+  );
+
+  const projectRoot = path.join(
+    core.getInput('working-directory'),
+    angularJson?.projects[projectName]?.root || ''
+  );
+
+  try {
+    await spawn('node', [
+      './node_modules/@skyux-sdk/pipeline-settings/test-runners/protractor.js',
+      '--platform=gh-actions',
+      `--project-name=${projectName}`,
+      `--project-root=${projectRoot}`,
+      ...getBrowserStackCliArguments(`${buildId}-visual`),
+    ]);
+
+    if (isPush()) {
+      await checkNewBaselineScreenshots(repository, buildId);
+    }
+  } catch (err) {
+    if (isPullRequest()) {
+      await checkNewFailureScreenshots(buildId);
+    }
+
+    console.error('[SKY UX ERROR]:', err);
+    core.setFailed('End-to-end tests failed.');
+    process.exit(1);
+  }
+}
+
 export async function executeAngularCliSteps(buildId: string): Promise<void> {
   const angularJson = fs.readJsonSync(
     path.join(process.cwd(), core.getInput('working-directory'), 'angular.json')
@@ -114,5 +159,6 @@ export async function executeAngularCliSteps(buildId: string): Promise<void> {
     await tagSkyuxPackages(packageMetadata);
   } else {
     await coverage(buildId, projectName);
+    await visual(buildId, projectName);
   }
 }
