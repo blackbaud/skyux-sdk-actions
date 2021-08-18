@@ -91,27 +91,11 @@ async function coverage(
     core.getInput('code-coverage-threshold-statements')
   );
 
-  const args: string[] = [];
-
-  switch (platform) {
-    case SkyUxCIPlatformConfig.GitHubActions:
-      args.push(
-        '--karma-config=./node_modules/@skyux-sdk/pipeline-settings/platforms/gh-actions/karma/karma.angular-cli.conf.js'
-      );
-      break;
-    case SkyUxCIPlatformConfig.None:
-    default:
-      // Run `ChromeHeadless` by default since it comes pre-installed on the CI machine.
-      args.push('--browsers=ChromeHeadless');
-      break;
-  }
-
   try {
-    await runNgCommand('test', [
-      projectName,
-      '--code-coverage',
-      '--watch=false',
-      ...args,
+    await spawn('node', [
+      './node_modules/@skyux-sdk/pipeline-settings/test-runners/karma.js',
+      '--platform=gh-actions',
+      `--project-name=${projectName}`,
     ]);
 
     await runLifecycleHook('hook-after-code-coverage-success');

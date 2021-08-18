@@ -22070,23 +22070,11 @@ function coverage(buildId, projectName, platform) {
         core.exportVariable('SKY_UX_CODE_COVERAGE_THRESHOLD_FUNCTIONS', core.getInput('code-coverage-threshold-functions'));
         core.exportVariable('SKY_UX_CODE_COVERAGE_THRESHOLD_LINES', core.getInput('code-coverage-threshold-lines'));
         core.exportVariable('SKY_UX_CODE_COVERAGE_THRESHOLD_STATEMENTS', core.getInput('code-coverage-threshold-statements'));
-        const args = [];
-        switch (platform) {
-            case "gh-actions" /* GitHubActions */:
-                args.push('--karma-config=./node_modules/@skyux-sdk/pipeline-settings/platforms/gh-actions/karma/karma.angular-cli.conf.js');
-                break;
-            case "none" /* None */:
-            default:
-                // Run `ChromeHeadless` by default since it comes pre-installed on the CI machine.
-                args.push('--browsers=ChromeHeadless');
-                break;
-        }
         try {
-            yield run_ng_command_1.runNgCommand('test', [
-                projectName,
-                '--code-coverage',
-                '--watch=false',
-                ...args,
+            yield spawn_1.spawn('node', [
+                './node_modules/@skyux-sdk/pipeline-settings/test-runners/karma.js',
+                '--platform=gh-actions',
+                `--project-name=${projectName}`,
             ]);
             yield run_lifecycle_hook_1.runLifecycleHook('hook-after-code-coverage-success');
         }
