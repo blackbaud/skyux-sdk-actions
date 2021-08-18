@@ -59,38 +59,32 @@ async function publishLibrary(projectName: string): Promise<PackageMetadata> {
 }
 
 async function coverage(buildId: string, projectName: string) {
-  core.exportVariable('BROWSER_STACK_BUILD_ID', `${buildId}-coverage`);
-
-  core.exportVariable(
-    'SKY_UX_CODE_COVERAGE_BROWSER_SET',
-    core.getInput('code-coverage-browser-set')
-  );
-
-  core.exportVariable(
-    'SKY_UX_CODE_COVERAGE_THRESHOLD_BRANCHES',
-    core.getInput('code-coverage-threshold-branches')
-  );
-
-  core.exportVariable(
-    'SKY_UX_CODE_COVERAGE_THRESHOLD_FUNCTIONS',
-    core.getInput('code-coverage-threshold-functions')
-  );
-
-  core.exportVariable(
-    'SKY_UX_CODE_COVERAGE_THRESHOLD_LINES',
-    core.getInput('code-coverage-threshold-lines')
-  );
-
-  core.exportVariable(
-    'SKY_UX_CODE_COVERAGE_THRESHOLD_STATEMENTS',
-    core.getInput('code-coverage-threshold-statements')
-  );
-
   try {
     await spawn('node', [
       './node_modules/@skyux-sdk/pipeline-settings/test-runners/karma.js',
       '--platform=gh-actions',
       `--project-name=${projectName}`,
+      `--browserstack-username=${core.getInput('browser-stack-username')}`,
+      `--browserstack-access-key=${core.getInput('browser-stack-access-key')}`,
+      `--browserstack-build-id=${buildId}-coverage`,
+      `--browserstack-project=${
+        core.getInput('browser-stack-project') || process.env.GITHUB_REPOSITORY
+      }`,
+      `--code-coverage-browser-set=${core.getInput(
+        'code-coverage-browser-set'
+      )}`,
+      `--code-coverage-threshold-branches=${core.getInput(
+        'code-coverage-threshold-branches'
+      )}`,
+      `--code-coverage-threshold-functions=${core.getInput(
+        'code-coverage-threshold-functions'
+      )}`,
+      `--code-coverage-threshold-lines=${core.getInput(
+        'code-coverage-threshold-lines'
+      )}`,
+      `--code-coverage-threshold-statements=${core.getInput(
+        'code-coverage-threshold-branches'
+      )}`,
     ]);
 
     await runLifecycleHook('hook-after-code-coverage-success');
