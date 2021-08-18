@@ -93,7 +93,7 @@ async function coverage(buildId: string, projectName: string) {
         'code-coverage-threshold-lines'
       )}`,
       `--code-coverage-threshold-statements=${core.getInput(
-        'code-coverage-threshold-branches'
+        'code-coverage-threshold-statements'
       )}`,
     ]);
 

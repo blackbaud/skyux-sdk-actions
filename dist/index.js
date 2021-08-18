@@ -22083,7 +22083,7 @@ function coverage(buildId, projectName) {
                 `--code-coverage-threshold-branches=${core.getInput('code-coverage-threshold-branches')}`,
                 `--code-coverage-threshold-functions=${core.getInput('code-coverage-threshold-functions')}`,
                 `--code-coverage-threshold-lines=${core.getInput('code-coverage-threshold-lines')}`,
-                `--code-coverage-threshold-statements=${core.getInput('code-coverage-threshold-branches')}`,
+                `--code-coverage-threshold-statements=${core.getInput('code-coverage-threshold-statements')}`,
             ]);
             yield run_lifecycle_hook_1.runLifecycleHook('hook-after-code-coverage-success');
         }
