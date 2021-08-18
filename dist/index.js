@@ -22100,6 +22100,11 @@ function visual(buildId, projectName) {
         const repository = process.env.GITHUB_REPOSITORY || '';
         const angularJson = fs.readJsonSync(path.join(process.cwd(), core.getInput('working-directory'), 'angular.json'));
         const projectRoot = path.join(core.getInput('working-directory'), ((_a = angularJson === null || angularJson === void 0 ? void 0 : angularJson.projects[projectName]) === null || _a === void 0 ? void 0 : _a.root) || '');
+        const e2ePath = path.join(projectRoot, 'e2e');
+        if (!fs.existsSync(e2ePath)) {
+            core.warning(`Skipping visual tests because "${e2ePath}" was not found.`);
+            return;
+        }
         try {
             yield spawn_1.spawn('node', [
                 './node_modules/@skyux-sdk/pipeline-settings/test-runners/protractor.js',
@@ -22136,7 +22141,7 @@ function executeAngularCliSteps(buildId) {
         }
         else {
             yield coverage(buildId, projectName);
-            yield visual(buildId, projectName);
+            yield visual(buildId, `${projectName}-showcase`);
         }
     });
 }

@@ -117,6 +117,13 @@ async function visual(buildId: string, projectName: string) {
     angularJson?.projects[projectName]?.root || ''
   );
 
+  const e2ePath = path.join(projectRoot, 'e2e');
+
+  if (!fs.existsSync(e2ePath)) {
+    core.warning(`Skipping visual tests because "${e2ePath}" was not found.`);
+    return;
+  }
+
   try {
     await spawn('node', [
       './node_modules/@skyux-sdk/pipeline-settings/test-runners/protractor.js',
@@ -159,6 +166,6 @@ export async function executeAngularCliSteps(buildId: string): Promise<void> {
     await tagSkyuxPackages(packageMetadata);
   } else {
     await coverage(buildId, projectName);
-    await visual(buildId, projectName);
+    await visual(buildId, `${projectName}-showcase`);
   }
 }
