@@ -3,7 +3,6 @@ import * as core from '@actions/core';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 
-import { SkyUxCIPlatformConfig } from '../ci-platform-config';
 import { npmPublish } from '../npm-publish';
 import { PackageMetadata } from '../package-metadata';
 import { runLifecycleHook } from '../run-lifecycle-hook';
@@ -59,11 +58,7 @@ async function publishLibrary(projectName: string): Promise<PackageMetadata> {
   return npmPublish(distPath);
 }
 
-async function coverage(
-  buildId: string,
-  projectName: string,
-  platform: SkyUxCIPlatformConfig
-) {
+async function coverage(buildId: string, projectName: string) {
   core.exportVariable('BROWSER_STACK_BUILD_ID', `${buildId}-coverage`);
 
   core.exportVariable(
@@ -106,10 +101,7 @@ async function coverage(
   }
 }
 
-export async function executeAngularCliSteps(
-  buildId: string,
-  platform: SkyUxCIPlatformConfig
-): Promise<void> {
+export async function executeAngularCliSteps(buildId: string): Promise<void> {
   const angularJson = fs.readJsonSync(
     path.join(process.cwd(), core.getInput('working-directory'), 'angular.json')
   );
@@ -127,6 +119,6 @@ export async function executeAngularCliSteps(
     const packageMetadata = await publishLibrary(projectName);
     await tagSkyuxPackages(packageMetadata);
   } else {
-    await coverage(buildId, projectName, platform);
+    await coverage(buildId, projectName);
   }
 }

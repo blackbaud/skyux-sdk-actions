@@ -4072,11 +4072,11 @@ function run() {
                 'Tests will run through the local instance of ChromeHeadless.');
             configKey = "none" /* None */;
         }
-        // Determine if running Angular CLI.
         const packageJson = fs.readJsonSync(path.join(process.cwd(), core.getInput('working-directory'), 'package.json'));
+        // Determine if running Angular CLI.
         if (!packageJson.devDependencies['@skyux-sdk/builder']) {
             core.info('Angular CLI detected.');
-            yield main_1.executeAngularCliSteps(BUILD_ID, configKey);
+            yield main_1.executeAngularCliSteps(BUILD_ID);
             return;
         }
         yield install();
@@ -22062,7 +22062,7 @@ function publishLibrary(projectName) {
         return npm_publish_1.npmPublish(distPath);
     });
 }
-function coverage(buildId, projectName, platform) {
+function coverage(buildId, projectName) {
     return __awaiter(this, void 0, void 0, function* () {
         core.exportVariable('BROWSER_STACK_BUILD_ID', `${buildId}-coverage`);
         core.exportVariable('SKY_UX_CODE_COVERAGE_BROWSER_SET', core.getInput('code-coverage-browser-set'));
@@ -22085,7 +22085,7 @@ function coverage(buildId, projectName, platform) {
         }
     });
 }
-function executeAngularCliSteps(buildId, platform) {
+function executeAngularCliSteps(buildId) {
     return __awaiter(this, void 0, void 0, function* () {
         const angularJson = fs.readJsonSync(path.join(process.cwd(), core.getInput('working-directory'), 'angular.json'));
         const projectName = angularJson.defaultProject;
@@ -22098,7 +22098,7 @@ function executeAngularCliSteps(buildId, platform) {
             yield tag_skyux_packages_1.tagSkyuxPackages(packageMetadata);
         }
         else {
-            yield coverage(buildId, projectName, platform);
+            yield coverage(buildId, projectName);
         }
     });
 }

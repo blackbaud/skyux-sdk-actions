@@ -156,13 +156,14 @@ async function run(): Promise<void> {
     configKey = SkyUxCIPlatformConfig.None;
   }
 
-  // Determine if running Angular CLI.
   const packageJson = fs.readJsonSync(
     path.join(process.cwd(), core.getInput('working-directory'), 'package.json')
   );
+
+  // Determine if running Angular CLI.
   if (!packageJson.devDependencies['@skyux-sdk/builder']) {
     core.info('Angular CLI detected.');
-    await executeAngularCliSteps(BUILD_ID, configKey);
+    await executeAngularCliSteps(BUILD_ID);
     return;
   }
 
