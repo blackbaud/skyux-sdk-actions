@@ -76,7 +76,9 @@ async function publishLibrary(projectName: string): Promise<PackageMetadata> {
 async function coverage(buildId: string, projectName: string) {
   try {
     await spawn('node', [
-      './node_modules/@skyux-sdk/pipeline-settings/test-runners/karma.js',
+      path.join(
+        './node_modules/@skyux-sdk/pipeline-settings/test-runners/karma.js'
+      ),
       '--platform=gh-actions',
       `--project-name=${projectName}`,
       ...getBrowserStackCliArguments(`${buildId}-coverage`),
@@ -105,16 +107,12 @@ async function coverage(buildId: string, projectName: string) {
   }
 }
 
-async function visual(buildId: string, projectName: string) {
-  const repository = process.env.GITHUB_REPOSITORY || '';
-
-  const angularJson = fs.readJsonSync(
-    path.join(process.cwd(), core.getInput('working-directory'), 'angular.json')
-  );
+async function visual(buildId: string, projectName: string, angularJson: any) {
+  const repository = process.env.GITHUB_REPOSITORY!;
 
   const projectRoot = path.join(
     core.getInput('working-directory'),
-    angularJson?.projects[projectName]?.root || ''
+    angularJson.projects[projectName].root
   );
 
   const e2ePath = path.join(projectRoot, 'e2e');
@@ -126,7 +124,9 @@ async function visual(buildId: string, projectName: string) {
 
   try {
     await spawn('node', [
-      './node_modules/@skyux-sdk/pipeline-settings/test-runners/protractor.js',
+      path.join(
+        './node_modules/@skyux-sdk/pipeline-settings/test-runners/protractor.js'
+      ),
       '--platform=gh-actions',
       `--project-name=${projectName}`,
       `--project-root=${projectRoot}`,
@@ -166,6 +166,6 @@ export async function executeAngularCliSteps(buildId: string): Promise<void> {
     await tagSkyuxPackages(packageMetadata);
   } else {
     await coverage(buildId, projectName);
-    await visual(buildId, `${projectName}-showcase`);
+    await visual(buildId, `${projectName}-showcase`, angularJson);
   }
 }

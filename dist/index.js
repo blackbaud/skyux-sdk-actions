@@ -18535,10 +18535,16 @@ function runLifecycleHook(name) {
             const basePath = path.join(process.cwd(), core.getInput('working-directory'));
             const fullPath = path.join(basePath, scriptPath);
             core.info(`Running '${name}' lifecycle hook: ${fullPath}`);
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
-            const script = require(fullPath);
-            yield script.runAsync();
-            core.info(`Lifecycle hook '${name}' successfully executed.`);
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-var-requires
+                const script = require(fullPath);
+                yield script.runAsync();
+                core.info(`Lifecycle hook '${name}' successfully executed.`);
+            }
+            catch (err) {
+                console.error('[SKY UX ERROR]:', err);
+                core.setFailed(`The lifecycle hook '${name}' was not found or was not exported correctly.`);
+            }
         }
     });
 }
@@ -22075,7 +22081,7 @@ function coverage(buildId, projectName) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             yield spawn_1.spawn('node', [
-                './node_modules/@skyux-sdk/pipeline-settings/test-runners/karma.js',
+                path.join('./node_modules/@skyux-sdk/pipeline-settings/test-runners/karma.js'),
                 '--platform=gh-actions',
                 `--project-name=${projectName}`,
                 ...getBrowserStackCliArguments(`${buildId}-coverage`),
@@ -22094,12 +22100,10 @@ function coverage(buildId, projectName) {
         }
     });
 }
-function visual(buildId, projectName) {
-    var _a;
+function visual(buildId, projectName, angularJson) {
     return __awaiter(this, void 0, void 0, function* () {
-        const repository = process.env.GITHUB_REPOSITORY || '';
-        const angularJson = fs.readJsonSync(path.join(process.cwd(), core.getInput('working-directory'), 'angular.json'));
-        const projectRoot = path.join(core.getInput('working-directory'), ((_a = angularJson === null || angularJson === void 0 ? void 0 : angularJson.projects[projectName]) === null || _a === void 0 ? void 0 : _a.root) || '');
+        const repository = process.env.GITHUB_REPOSITORY;
+        const projectRoot = path.join(core.getInput('working-directory'), angularJson.projects[projectName].root);
         const e2ePath = path.join(projectRoot, 'e2e');
         if (!fs.existsSync(e2ePath)) {
             core.warning(`Skipping visual tests because "${e2ePath}" was not found.`);
@@ -22107,7 +22111,7 @@ function visual(buildId, projectName) {
         }
         try {
             yield spawn_1.spawn('node', [
-                './node_modules/@skyux-sdk/pipeline-settings/test-runners/protractor.js',
+                path.join('./node_modules/@skyux-sdk/pipeline-settings/test-runners/protractor.js'),
                 '--platform=gh-actions',
                 `--project-name=${projectName}`,
                 `--project-root=${projectRoot}`,
@@ -22141,7 +22145,7 @@ function executeAngularCliSteps(buildId) {
         }
         else {
             yield coverage(buildId, projectName);
-            yield visual(buildId, `${projectName}-showcase`);
+            yield visual(buildId, `${projectName}-showcase`, angularJson);
         }
     });
 }
