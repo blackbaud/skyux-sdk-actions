@@ -1724,9 +1724,11 @@ const path = __importStar(__webpack_require__(622));
 const notify_slack_1 = __webpack_require__(564);
 const spawn_1 = __webpack_require__(820);
 const utils_1 = __webpack_require__(611);
-function npmPublish() {
+function npmPublish(distPath) {
     return __awaiter(this, void 0, void 0, function* () {
-        const distPath = path.join(process.cwd(), core.getInput('working-directory'), 'dist');
+        distPath =
+            distPath ||
+                path.join(process.cwd(), core.getInput('working-directory'), 'dist');
         const packageJsonPath = path.join(distPath, 'package.json');
         const packageJson = fs.readJsonSync(packageJsonPath);
         const packageName = packageJson.name;
@@ -3937,7 +3939,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(__webpack_require__(470));
 const fs = __importStar(__webpack_require__(226));
 const path = __importStar(__webpack_require__(622));
+const main_1 = __webpack_require__(992);
 const npm_publish_1 = __webpack_require__(96);
+const run_lifecycle_hook_1 = __webpack_require__(797);
 const run_skyux_command_1 = __webpack_require__(495);
 const screenshot_comparator_1 = __webpack_require__(453);
 const spawn_1 = __webpack_require__(820);
@@ -3945,30 +3949,6 @@ const tag_skyux_packages_1 = __webpack_require__(293);
 const utils_1 = __webpack_require__(611);
 // Generate a unique build name to be used by BrowserStack.
 const BUILD_ID = `${(_a = process.env.GITHUB_REPOSITORY) === null || _a === void 0 ? void 0 : _a.split('/')[1]}-${process.env.GITHUB_EVENT_NAME}-${process.env.GITHUB_RUN_ID}-${Math.random().toString().slice(2, 7)}`;
-/**
- * Runs lifecycle hook Node.js scripts. The script must export an async function named `runAsync`.
- * @example
- * ```
- * module.exports = {
- *   runAsync: async () => {}
- * };
- * ```
- * @param name The name of the lifecycle hook to call. See the `action.yml` file at the project root for possible options.
- */
-function runLifecycleHook(name) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const scriptPath = core.getInput(name);
-        if (scriptPath) {
-            const basePath = path.join(process.cwd(), core.getInput('working-directory'));
-            const fullPath = path.join(basePath, scriptPath);
-            core.info(`Running '${name}' lifecycle hook: ${fullPath}`);
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
-            const script = require(fullPath);
-            yield script.runAsync();
-            core.info(`Lifecycle hook '${name}' successfully executed.`);
-        }
-    });
-}
 function installCerts() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -4008,7 +3988,6 @@ function install() {
 function build() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            yield runLifecycleHook('hook-before-script');
             yield run_skyux_command_1.runSkyUxCommand('build');
         }
         catch (err) {
@@ -4022,8 +4001,8 @@ function coverage(configKey) {
     return __awaiter(this, void 0, void 0, function* () {
         core.exportVariable('BROWSER_STACK_BUILD_ID', `${BUILD_ID}-coverage`);
         try {
-            yield runLifecycleHook('hook-before-script');
             yield run_skyux_command_1.runSkyUxCommand('test', ['--coverage', 'library'], configKey);
+            yield run_lifecycle_hook_1.runLifecycleHook('hook-after-code-coverage-success');
         }
         catch (err) {
             console.error('[SKY UX ERROR]:', err);
@@ -4037,8 +4016,7 @@ function visual(configKey) {
         core.exportVariable('BROWSER_STACK_BUILD_ID', `${BUILD_ID}-visual`);
         const repository = process.env.GITHUB_REPOSITORY || '';
         try {
-            yield runLifecycleHook('hook-before-script');
-            yield run_skyux_command_1.runSkyUxCommand('e2e', [], configKey);
+            yield run_skyux_command_1.runSkyUxCommand('e2e', ['--logLevel=verbose'], configKey);
             if (utils_1.isPush()) {
                 yield screenshot_comparator_1.checkNewBaselineScreenshots(repository, BUILD_ID);
             }
@@ -4057,7 +4035,7 @@ function buildLibrary() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             yield run_skyux_command_1.runSkyUxCommand('build-public-library');
-            yield runLifecycleHook('hook-after-build-public-library-success');
+            yield run_lifecycle_hook_1.runLifecycleHook('hook-after-build-public-library-success');
         }
         catch (err) {
             console.error('[SKY UX ERROR]:', err);
@@ -4094,8 +4072,16 @@ function run() {
                 'Tests will run through the local instance of ChromeHeadless.');
             configKey = "none" /* None */;
         }
+        const packageJson = fs.readJsonSync(path.join(process.cwd(), core.getInput('working-directory'), 'package.json'));
+        // Determine if running Angular CLI.
+        if (!packageJson.devDependencies['@skyux-sdk/builder']) {
+            core.info('Angular CLI detected.');
+            yield main_1.executeAngularCliSteps(BUILD_ID);
+            return;
+        }
         yield install();
         yield installCerts();
+        yield run_lifecycle_hook_1.runLifecycleHook('hook-before-script');
         // Don't run tests for tags.
         if (utils_1.isTag()) {
             yield buildLibrary();
@@ -12762,7 +12748,52 @@ function regExpEscape (s) {
 /* 582 */,
 /* 583 */,
 /* 584 */,
-/* 585 */,
+/* 585 */
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.runNgCommand = void 0;
+const core = __importStar(__webpack_require__(470));
+const spawn_1 = __webpack_require__(820);
+/**
+ *
+ * @param command The Angular CLI command to execute.
+ * @param args Any command line arguments.
+ * @param platformConfigKey The name of the CI platform config to use.
+ */
+function runNgCommand(command, args = []) {
+    core.info(`
+=====================================================
+> Running Angular CLI command: '${command}'
+=====================================================
+`);
+    return spawn_1.spawn('npx', ['-p', '@angular/cli', 'ng', command, ...args]);
+}
+exports.runNgCommand = runNgCommand;
+
+
+/***/ }),
 /* 586 */
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
@@ -18450,7 +18481,77 @@ exports.getUserAgent = getUserAgent;
 
 
 /***/ }),
-/* 797 */,
+/* 797 */
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.runLifecycleHook = void 0;
+const core = __importStar(__webpack_require__(470));
+const path = __importStar(__webpack_require__(622));
+/**
+ * Runs lifecycle hook Node.js scripts. The script must export an async function named `runAsync`.
+ * @example
+ * ```
+ * module.exports = {
+ *   runAsync: async () => {}
+ * };
+ * ```
+ * @param name The name of the lifecycle hook to call. See the `action.yml` file at the project root for possible options.
+ */
+function runLifecycleHook(name) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const scriptPath = core.getInput(name);
+        if (scriptPath) {
+            const basePath = path.join(process.cwd(), core.getInput('working-directory'));
+            const fullPath = path.join(basePath, scriptPath);
+            core.info(`Running '${name}' lifecycle hook: ${fullPath}`);
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-var-requires
+                const script = require(fullPath);
+                yield script.runAsync();
+                core.info(`Lifecycle hook '${name}' successfully executed.`);
+            }
+            catch (err) {
+                console.error('[SKY UX ERROR]:', err);
+                core.setFailed(`The lifecycle hook '${name}' was not found or was not exported correctly.`);
+            }
+        }
+    });
+}
+exports.runLifecycleHook = runLifecycleHook;
+
+
+/***/ }),
 /* 798 */,
 /* 799 */,
 /* 800 */,
@@ -21881,7 +21982,177 @@ createToken('GTE0PRE', '^\\s*>=\\s*0\.0\.0-0\\s*$')
 /* 989 */,
 /* 990 */,
 /* 991 */,
-/* 992 */,
+/* 992 */
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.executeAngularCliSteps = void 0;
+const core = __importStar(__webpack_require__(470));
+const fs = __importStar(__webpack_require__(226));
+const path = __importStar(__webpack_require__(622));
+const npm_publish_1 = __webpack_require__(96);
+const run_lifecycle_hook_1 = __webpack_require__(797);
+const run_ng_command_1 = __webpack_require__(585);
+const screenshot_comparator_1 = __webpack_require__(453);
+const spawn_1 = __webpack_require__(820);
+const tag_skyux_packages_1 = __webpack_require__(293);
+const utils_1 = __webpack_require__(611);
+function getBrowserStackCliArguments(buildId) {
+    return [
+        `--browserstack-username=${core.getInput('browser-stack-username')}`,
+        `--browserstack-access-key=${core.getInput('browser-stack-access-key')}`,
+        `--browserstack-build-id=${buildId}`,
+        `--browserstack-project=${core.getInput('browser-stack-project') || process.env.GITHUB_REPOSITORY}`,
+    ];
+}
+function install() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const packageLock = path.join(process.cwd(), core.getInput('working-directory'), 'package-lock.json');
+            if (fs.existsSync(packageLock)) {
+                yield spawn_1.spawn('npm', ['ci']);
+            }
+            else {
+                yield spawn_1.spawn('npm', ['install']);
+            }
+            yield spawn_1.spawn('npm', [
+                'install',
+                '--no-save',
+                'blackbaud/skyux-sdk-pipeline-settings#angular-cli-support',
+            ]);
+        }
+        catch (err) {
+            console.error(err);
+            core.setFailed('Packages installation failed.');
+            process.exit(1);
+        }
+    });
+}
+function buildLibrary(projectName) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            yield run_ng_command_1.runNgCommand('build', [projectName, '--configuration=production']);
+            yield run_lifecycle_hook_1.runLifecycleHook('hook-after-build-public-library-success');
+        }
+        catch (err) {
+            console.error(err);
+            core.setFailed('Library build failed.');
+            process.exit(1);
+        }
+    });
+}
+function publishLibrary(projectName) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const distPath = path.join(process.cwd(), core.getInput('working-directory'), 'dist', projectName);
+        return npm_publish_1.npmPublish(distPath);
+    });
+}
+function coverage(buildId, projectName) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            yield spawn_1.spawn('node', [
+                path.join('./node_modules/@skyux-sdk/pipeline-settings/test-runners/karma.js'),
+                '--platform=gh-actions',
+                `--project-name=${projectName}`,
+                ...getBrowserStackCliArguments(`${buildId}-coverage`),
+                `--code-coverage-browser-set=${core.getInput('code-coverage-browser-set')}`,
+                `--code-coverage-threshold-branches=${core.getInput('code-coverage-threshold-branches')}`,
+                `--code-coverage-threshold-functions=${core.getInput('code-coverage-threshold-functions')}`,
+                `--code-coverage-threshold-lines=${core.getInput('code-coverage-threshold-lines')}`,
+                `--code-coverage-threshold-statements=${core.getInput('code-coverage-threshold-statements')}`,
+            ]);
+            yield run_lifecycle_hook_1.runLifecycleHook('hook-after-code-coverage-success');
+        }
+        catch (err) {
+            console.error(err);
+            core.setFailed('Code coverage failed.');
+            process.exit(1);
+        }
+    });
+}
+function visual(buildId, projectName, angularJson) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const repository = process.env.GITHUB_REPOSITORY;
+        const projectRoot = path.join(core.getInput('working-directory'), angularJson.projects[projectName].root);
+        const e2ePath = path.join(projectRoot, 'e2e');
+        if (!fs.existsSync(e2ePath)) {
+            core.warning(`Skipping visual tests because "${e2ePath}" was not found.`);
+            return;
+        }
+        try {
+            yield spawn_1.spawn('node', [
+                path.join('./node_modules/@skyux-sdk/pipeline-settings/test-runners/protractor.js'),
+                '--platform=gh-actions',
+                `--project-name=${projectName}`,
+                `--project-root=${projectRoot}`,
+                ...getBrowserStackCliArguments(`${buildId}-visual`),
+            ]);
+            if (utils_1.isPush()) {
+                yield screenshot_comparator_1.checkNewBaselineScreenshots(repository, buildId);
+            }
+        }
+        catch (err) {
+            if (utils_1.isPullRequest()) {
+                yield screenshot_comparator_1.checkNewFailureScreenshots(buildId);
+            }
+            console.error('[SKY UX ERROR]:', err);
+            core.setFailed('End-to-end tests failed.');
+            process.exit(1);
+        }
+    });
+}
+function executeAngularCliSteps(buildId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const angularJson = fs.readJsonSync(path.join(process.cwd(), core.getInput('working-directory'), 'angular.json'));
+        const projectName = angularJson.defaultProject;
+        yield install();
+        yield run_lifecycle_hook_1.runLifecycleHook('hook-before-script');
+        yield buildLibrary(projectName);
+        // Don't run tests for tags.
+        if (utils_1.isTag()) {
+            const packageMetadata = yield publishLibrary(projectName);
+            yield tag_skyux_packages_1.tagSkyuxPackages(packageMetadata);
+        }
+        else {
+            yield coverage(buildId, projectName);
+            yield visual(buildId, `${projectName}-showcase`, angularJson);
+        }
+    });
+}
+exports.executeAngularCliSteps = executeAngularCliSteps;
+
+
+/***/ }),
 /* 993 */,
 /* 994 */,
 /* 995 */,

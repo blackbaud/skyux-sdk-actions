@@ -8,12 +8,10 @@ import { PackageMetadata } from './package-metadata';
 import { spawn } from './spawn';
 import { getTag } from './utils';
 
-export async function npmPublish(): Promise<PackageMetadata> {
-  const distPath = path.join(
-    process.cwd(),
-    core.getInput('working-directory'),
-    'dist'
-  );
+export async function npmPublish(distPath?: string): Promise<PackageMetadata> {
+  distPath =
+    distPath ||
+    path.join(process.cwd(), core.getInput('working-directory'), 'dist');
   const packageJsonPath = path.join(distPath, 'package.json');
 
   const packageJson = fs.readJsonSync(packageJsonPath);

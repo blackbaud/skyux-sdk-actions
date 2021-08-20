@@ -3,9 +3,11 @@ import * as core from '@actions/core';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 
+import { executeAngularCliSteps } from './angular-cli/main';
 import { SkyUxCIPlatformConfig } from './ci-platform-config';
 import { npmPublish } from './npm-publish';
 import { PackageMetadata } from './package-metadata';
+import { runLifecycleHook } from './run-lifecycle-hook';
 import { runSkyUxCommand } from './run-skyux-command';
 import {
   checkNewBaselineScreenshots,
@@ -19,34 +21,6 @@ import { isPullRequest, isPush, isTag } from './utils';
 const BUILD_ID = `${process.env.GITHUB_REPOSITORY?.split('/')[1]}-${
   process.env.GITHUB_EVENT_NAME
 }-${process.env.GITHUB_RUN_ID}-${Math.random().toString().slice(2, 7)}`;
-
-/**
- * Runs lifecycle hook Node.js scripts. The script must export an async function named `runAsync`.
- * @example
- * ```
- * module.exports = {
- *   runAsync: async () => {}
- * };
- * ```
- * @param name The name of the lifecycle hook to call. See the `action.yml` file at the project root for possible options.
- */
-async function runLifecycleHook(name: string) {
-  const scriptPath = core.getInput(name);
-  if (scriptPath) {
-    const basePath = path.join(
-      process.cwd(),
-      core.getInput('working-directory')
-    );
-    const fullPath = path.join(basePath, scriptPath);
-    core.info(`Running '${name}' lifecycle hook: ${fullPath}`);
-
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const script = require(fullPath);
-
-    await script.runAsync();
-    core.info(`Lifecycle hook '${name}' successfully executed.`);
-  }
-}
 
 async function installCerts(): Promise<void> {
   try {
@@ -86,7 +60,6 @@ async function install(): Promise<void> {
 
 async function build() {
   try {
-    await runLifecycleHook('hook-before-script');
     await runSkyUxCommand('build');
   } catch (err) {
     console.error('[SKY UX ERROR]:', err);
@@ -98,8 +71,8 @@ async function build() {
 async function coverage(configKey: SkyUxCIPlatformConfig) {
   core.exportVariable('BROWSER_STACK_BUILD_ID', `${BUILD_ID}-coverage`);
   try {
-    await runLifecycleHook('hook-before-script');
     await runSkyUxCommand('test', ['--coverage', 'library'], configKey);
+    await runLifecycleHook('hook-after-code-coverage-success');
   } catch (err) {
     console.error('[SKY UX ERROR]:', err);
     core.setFailed('Code coverage failed.');
@@ -111,8 +84,7 @@ async function visual(configKey: SkyUxCIPlatformConfig) {
   core.exportVariable('BROWSER_STACK_BUILD_ID', `${BUILD_ID}-visual`);
   const repository = process.env.GITHUB_REPOSITORY || '';
   try {
-    await runLifecycleHook('hook-before-script');
-    await runSkyUxCommand('e2e', [], configKey);
+    await runSkyUxCommand('e2e', ['--logLevel=verbose'], configKey);
     if (isPush()) {
       await checkNewBaselineScreenshots(repository, BUILD_ID);
     }
@@ -184,8 +156,21 @@ async function run(): Promise<void> {
     configKey = SkyUxCIPlatformConfig.None;
   }
 
+  const packageJson = fs.readJsonSync(
+    path.join(process.cwd(), core.getInput('working-directory'), 'package.json')
+  );
+
+  // Determine if running Angular CLI.
+  if (!packageJson.devDependencies['@skyux-sdk/builder']) {
+    core.info('Angular CLI detected.');
+    await executeAngularCliSteps(BUILD_ID);
+    return;
+  }
+
   await install();
   await installCerts();
+
+  await runLifecycleHook('hook-before-script');
 
   // Don't run tests for tags.
   if (isTag()) {
