@@ -7,6 +7,7 @@ describe('Angular CLI main', () => {
   let fsExtraSpyObj: jasmine.SpyObj<any>;
   let isBrowserStackProjectDefined: boolean;
   let mockAngularJson: any;
+  let mockPackageJson: any;
   let npmPublishSpy: jasmine.Spy;
   let packageLockExists: boolean;
   let runLifecycleHookSpy: jasmine.Spy;
@@ -72,8 +73,20 @@ describe('Angular CLI main', () => {
       defaultProject: 'my-lib',
     };
 
-    fsExtraSpyObj.readJsonSync.and.callFake(() => {
-      return mockAngularJson;
+    mockPackageJson = {
+      dependencies: {},
+      devDependencies: {},
+    };
+
+    fsExtraSpyObj.readJsonSync.and.callFake((filePath: string) => {
+      const basename = path.basename(filePath);
+      if (basename === 'angular.json') {
+        return mockAngularJson;
+      }
+
+      if (basename === 'package.json') {
+        return mockPackageJson;
+      }
     });
 
     mock('fs-extra', fsExtraSpyObj);
@@ -184,6 +197,19 @@ describe('Angular CLI main', () => {
     expect(coreSpyObj.setFailed).toHaveBeenCalledWith('Library build failed.');
   });
 
+  it('should generate documentation.json if schematics installed', async () => {
+    mockPackageJson.devDependencies['@skyux-sdk/documentation-schematics'] =
+      '1.0.0';
+
+    const { executeAngularCliSteps } = getUtil();
+
+    await executeAngularCliSteps('BUILD_ID');
+
+    expect(runNgCommandSpy).toHaveBeenCalledWith('generate', [
+      '@skyux-sdk/documentation-schematics:documentation',
+    ]);
+  });
+
   describe('code coverage', () => {
     it('should run code coverage', async () => {
       const { executeAngularCliSteps } = getUtil();
@@ -277,6 +303,17 @@ describe('Angular CLI main', () => {
 
       expect(coreSpyObj.warning).toHaveBeenCalledWith(
         'Skipping visual tests because "MOCK_WORKING-DIRECTORY/projects/my-lib-showcase/e2e" was not found.'
+      );
+    });
+
+    it('should abort visual tests if showcase app not found', async () => {
+      delete mockAngularJson.projects['my-lib-showcase'];
+
+      const { executeAngularCliSteps } = getUtil();
+      await executeAngularCliSteps('BUILD_ID');
+
+      expect(coreSpyObj.warning).toHaveBeenCalledWith(
+        'Skipping visual tests because a project named "my-lib-showcase" was not found in the workspace configuration.'
       );
     });
 

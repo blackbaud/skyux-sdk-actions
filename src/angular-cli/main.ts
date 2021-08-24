@@ -53,8 +53,21 @@ async function install(): Promise<void> {
 }
 
 async function buildLibrary(projectName: string) {
+  const packageJson = fs.readJsonSync(
+    path.join(core.getInput('working-directory'), 'package.json')
+  );
+
   try {
     await runNgCommand('build', [projectName, '--configuration=production']);
+    if (packageJson.devDependencies['@skyux-sdk/documentation-schematics']) {
+      await runNgCommand('generate', [
+        '@skyux-sdk/documentation-schematics:documentation',
+      ]);
+    } else {
+      core.warning(
+        'Skip generating "documentation.json" because the npm package "@skyux-sdk/documentation-schematics" is not installed.'
+      );
+    }
     await runLifecycleHook('hook-after-build-public-library-success');
   } catch (err) {
     console.error(err);
@@ -74,6 +87,12 @@ async function publishLibrary(projectName: string): Promise<PackageMetadata> {
 }
 
 async function coverage(buildId: string, projectName: string) {
+  core.info(`
+=====================================================
+> Running Angular CLI command: 'test'
+=====================================================
+`);
+
   try {
     await spawn('node', [
       path.join(
@@ -109,20 +128,34 @@ async function coverage(buildId: string, projectName: string) {
 
 async function visual(buildId: string, projectName: string, angularJson: any) {
   const repository = process.env.GITHUB_REPOSITORY!;
-
-  const projectRoot = path.join(
-    core.getInput('working-directory'),
-    angularJson.projects[projectName].root
-  );
-
-  const e2ePath = path.join(projectRoot, 'e2e');
-
-  if (!fs.existsSync(e2ePath)) {
-    core.warning(`Skipping visual tests because "${e2ePath}" was not found.`);
-    return;
-  }
+  const projectDefinition = angularJson.projects[projectName];
 
   try {
+    if (!projectDefinition) {
+      core.warning(
+        `Skipping visual tests because a project named "${projectName}" was not found in the workspace configuration.`
+      );
+      return;
+    }
+
+    const projectRoot = path.join(
+      core.getInput('working-directory'),
+      projectDefinition.root
+    );
+
+    const e2ePath = path.join(projectRoot, 'e2e');
+
+    if (!fs.existsSync(e2ePath)) {
+      core.warning(`Skipping visual tests because "${e2ePath}" was not found.`);
+      return;
+    }
+
+    core.info(`
+=====================================================
+> Running Angular CLI command: 'e2e'
+=====================================================
+`);
+
     await spawn('node', [
       path.join(
         './node_modules/@skyux-sdk/pipeline-settings/test-runners/protractor.js'
