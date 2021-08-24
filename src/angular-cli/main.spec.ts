@@ -1,12 +1,13 @@
 import mock from 'mock-require';
 import path from 'path';
 
-fdescribe('Angular CLI main', () => {
+describe('Angular CLI main', () => {
   let coreSpyObj: jasmine.SpyObj<any>;
   let e2eDirectoryExists: boolean;
   let fsExtraSpyObj: jasmine.SpyObj<any>;
   let isBrowserStackProjectDefined: boolean;
   let mockAngularJson: any;
+  let mockPackageJson: any;
   let npmPublishSpy: jasmine.Spy;
   let packageLockExists: boolean;
   let runLifecycleHookSpy: jasmine.Spy;
@@ -72,8 +73,20 @@ fdescribe('Angular CLI main', () => {
       defaultProject: 'my-lib',
     };
 
-    fsExtraSpyObj.readJsonSync.and.callFake(() => {
-      return mockAngularJson;
+    mockPackageJson = {
+      dependencies: {},
+      devDependencies: {},
+    };
+
+    fsExtraSpyObj.readJsonSync.and.callFake((filePath: string) => {
+      const basename = path.basename(filePath);
+      if (basename === 'angular.json') {
+        return mockAngularJson;
+      }
+
+      if (basename === 'package.json') {
+        return mockPackageJson;
+      }
     });
 
     mock('fs-extra', fsExtraSpyObj);

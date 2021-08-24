@@ -63,6 +63,10 @@ async function buildLibrary(projectName: string) {
       await runNgCommand('generate', [
         '@skyux-sdk/documentation-schematics:documentation',
       ]);
+    } else {
+      core.warning(
+        'Skip generating "documentation.json" because the npm package "@skyux-sdk/documentation-schematics" is not installed.'
+      );
     }
     await runLifecycleHook('hook-after-build-public-library-success');
   } catch (err) {

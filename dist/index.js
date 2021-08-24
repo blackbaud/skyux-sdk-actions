@@ -22068,6 +22068,9 @@ function buildLibrary(projectName) {
                     '@skyux-sdk/documentation-schematics:documentation',
                 ]);
             }
+            else {
+                core.warning('Skip generating "documentation.json" because the npm package "@skyux-sdk/documentation-schematics" is not installed.');
+            }
             yield run_lifecycle_hook_1.runLifecycleHook('hook-after-build-public-library-success');
         }
         catch (err) {
