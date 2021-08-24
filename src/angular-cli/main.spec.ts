@@ -20,7 +20,7 @@ describe('Angular CLI main', () => {
   beforeEach(() => {
     process.env.GITHUB_REPOSITORY = 'org/repo';
 
-    // spyOn(console, 'error');
+    spyOn(console, 'error');
 
     coreSpyObj = jasmine.createSpyObj('core', [
       'getInput',
@@ -197,6 +197,19 @@ describe('Angular CLI main', () => {
     expect(coreSpyObj.setFailed).toHaveBeenCalledWith('Library build failed.');
   });
 
+  it('should generate documentation.json if schematics installed', async () => {
+    mockPackageJson.devDependencies['@skyux-sdk/documentation-schematics'] =
+      '1.0.0';
+
+    const { executeAngularCliSteps } = getUtil();
+
+    await executeAngularCliSteps('BUILD_ID');
+
+    expect(runNgCommandSpy).toHaveBeenCalledWith('generate', [
+      '@skyux-sdk/documentation-schematics:documentation',
+    ]);
+  });
+
   describe('code coverage', () => {
     it('should run code coverage', async () => {
       const { executeAngularCliSteps } = getUtil();
@@ -290,6 +303,17 @@ describe('Angular CLI main', () => {
 
       expect(coreSpyObj.warning).toHaveBeenCalledWith(
         'Skipping visual tests because "MOCK_WORKING-DIRECTORY/projects/my-lib-showcase/e2e" was not found.'
+      );
+    });
+
+    it('should abort visual tests if showcase app not found', async () => {
+      delete mockAngularJson.projects['my-lib-showcase'];
+
+      const { executeAngularCliSteps } = getUtil();
+      await executeAngularCliSteps('BUILD_ID');
+
+      expect(coreSpyObj.warning).toHaveBeenCalledWith(
+        'Skipping visual tests because a project named "my-lib-showcase" was not found in the workspace configuration.'
       );
     });
 
