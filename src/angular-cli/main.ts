@@ -163,7 +163,6 @@ async function visual(buildId: string, projectName: string, angularJson: any) {
       '--platform=gh-actions',
       `--project-name=${projectName}`,
       `--project-root=${projectRoot}`,
-      ...getBrowserStackCliArguments(`${buildId}-visual`),
     ]);
 
     if (isPush()) {

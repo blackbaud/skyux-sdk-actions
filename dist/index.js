@@ -7127,6 +7127,8 @@ function cloneRepoAsAdmin(gitUrl, branch, directory) {
         yield spawn_1.spawn('git', [
             'clone',
             gitUrl,
+            '--depth',
+            '1',
             '--branch',
             branch,
             '--single-branch',
@@ -8397,6 +8399,7 @@ function commitBaselineScreenshots(repository, buildId) {
         core.info(`Preparing to commit baseline screenshots to the '${branch}' branch.`);
         const config = {
             cwd: path.resolve(workingDirectory, TEMP_DIR),
+            stdio: 'inherit',
         };
         yield spawn_1.spawn('git', ['checkout', branch], config);
         yield spawn_1.spawn('git', ['add', BASELINE_SCREENSHOT_DIR], config);
@@ -8405,7 +8408,7 @@ function commitBaselineScreenshots(repository, buildId) {
             '--message',
             `Build #${buildId}: Added new baseline screenshots. [ci skip]`,
         ], config);
-        yield spawn_1.spawn('git', ['push', '--force', '--quiet', 'origin', branch], config);
+        yield spawn_1.spawn('git', ['push', '--force', 'origin', branch], config);
         core.info('New baseline images saved.');
     });
 }
@@ -22139,7 +22142,6 @@ function visual(buildId, projectName, angularJson) {
                 '--platform=gh-actions',
                 `--project-name=${projectName}`,
                 `--project-root=${projectRoot}`,
-                ...getBrowserStackCliArguments(`${buildId}-visual`),
             ]);
             if (utils_1.isPush()) {
                 yield screenshot_comparator_1.checkNewBaselineScreenshots(repository, buildId);

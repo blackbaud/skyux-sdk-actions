@@ -20,6 +20,8 @@ export async function cloneRepoAsAdmin(
   await spawn('git', [
     'clone',
     gitUrl,
+    '--depth',
+    '1',
     '--branch',
     branch,
     '--single-branch',
