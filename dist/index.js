@@ -22060,8 +22060,14 @@ function install() {
 }
 function buildLibrary(projectName) {
     return __awaiter(this, void 0, void 0, function* () {
+        const packageJson = fs.readJsonSync(path.join(core.getInput('working-directory'), 'package.json'));
         try {
             yield run_ng_command_1.runNgCommand('build', [projectName, '--configuration=production']);
+            if (packageJson.devDependencies['@skyux-sdk/documentation-schematics']) {
+                yield run_ng_command_1.runNgCommand('generate', [
+                    '@skyux-sdk/documentation-schematics:documentation',
+                ]);
+            }
             yield run_lifecycle_hook_1.runLifecycleHook('hook-after-build-public-library-success');
         }
         catch (err) {

@@ -53,8 +53,17 @@ async function install(): Promise<void> {
 }
 
 async function buildLibrary(projectName: string) {
+  const packageJson = fs.readJsonSync(
+    path.join(core.getInput('working-directory'), 'package.json')
+  );
+
   try {
     await runNgCommand('build', [projectName, '--configuration=production']);
+    if (packageJson.devDependencies['@skyux-sdk/documentation-schematics']) {
+      await runNgCommand('generate', [
+        '@skyux-sdk/documentation-schematics:documentation',
+      ]);
+    }
     await runLifecycleHook('hook-after-build-public-library-success');
   } catch (err) {
     console.error(err);
