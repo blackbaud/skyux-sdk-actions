@@ -87,6 +87,12 @@ async function publishLibrary(projectName: string): Promise<PackageMetadata> {
 }
 
 async function coverage(buildId: string, projectName: string) {
+  core.info(`
+=====================================================
+> Running Angular CLI command: 'test'
+=====================================================
+`);
+
   try {
     await spawn('node', [
       path.join(
@@ -143,6 +149,12 @@ async function visual(buildId: string, projectName: string, angularJson: any) {
       core.warning(`Skipping visual tests because "${e2ePath}" was not found.`);
       return;
     }
+
+    core.info(`
+=====================================================
+> Running Angular CLI command: 'e2e'
+=====================================================
+`);
 
     await spawn('node', [
       path.join(

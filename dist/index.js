@@ -22088,6 +22088,11 @@ function publishLibrary(projectName) {
 }
 function coverage(buildId, projectName) {
     return __awaiter(this, void 0, void 0, function* () {
+        core.info(`
+=====================================================
+> Running Angular CLI command: 'test'
+=====================================================
+`);
         try {
             yield spawn_1.spawn('node', [
                 path.join('./node_modules/@skyux-sdk/pipeline-settings/test-runners/karma.js'),
@@ -22124,6 +22129,11 @@ function visual(buildId, projectName, angularJson) {
                 core.warning(`Skipping visual tests because "${e2ePath}" was not found.`);
                 return;
             }
+            core.info(`
+=====================================================
+> Running Angular CLI command: 'e2e'
+=====================================================
+`);
             yield spawn_1.spawn('node', [
                 path.join('./node_modules/@skyux-sdk/pipeline-settings/test-runners/protractor.js'),
                 '--platform=gh-actions',
