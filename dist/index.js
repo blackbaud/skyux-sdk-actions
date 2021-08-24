@@ -22109,13 +22109,18 @@ function coverage(buildId, projectName) {
 function visual(buildId, projectName, angularJson) {
     return __awaiter(this, void 0, void 0, function* () {
         const repository = process.env.GITHUB_REPOSITORY;
-        const projectRoot = path.join(core.getInput('working-directory'), angularJson.projects[projectName].root);
-        const e2ePath = path.join(projectRoot, 'e2e');
-        if (!fs.existsSync(e2ePath)) {
-            core.warning(`Skipping visual tests because "${e2ePath}" was not found.`);
-            return;
-        }
+        const projectDefinition = angularJson.projects[projectName];
         try {
+            if (!projectDefinition) {
+                core.warning(`Skipping visual tests because a project named "${projectName}" was not found in the workspace configuration.`);
+                return;
+            }
+            const projectRoot = path.join(core.getInput('working-directory'), projectDefinition.root);
+            const e2ePath = path.join(projectRoot, 'e2e');
+            if (!fs.existsSync(e2ePath)) {
+                core.warning(`Skipping visual tests because "${e2ePath}" was not found.`);
+                return;
+            }
             yield spawn_1.spawn('node', [
                 path.join('./node_modules/@skyux-sdk/pipeline-settings/test-runners/protractor.js'),
                 '--platform=gh-actions',

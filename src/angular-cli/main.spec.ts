@@ -1,7 +1,7 @@
 import mock from 'mock-require';
 import path from 'path';
 
-describe('Angular CLI main', () => {
+fdescribe('Angular CLI main', () => {
   let coreSpyObj: jasmine.SpyObj<any>;
   let e2eDirectoryExists: boolean;
   let fsExtraSpyObj: jasmine.SpyObj<any>;
@@ -19,7 +19,7 @@ describe('Angular CLI main', () => {
   beforeEach(() => {
     process.env.GITHUB_REPOSITORY = 'org/repo';
 
-    spyOn(console, 'error');
+    // spyOn(console, 'error');
 
     coreSpyObj = jasmine.createSpyObj('core', [
       'getInput',
