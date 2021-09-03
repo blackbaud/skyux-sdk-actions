@@ -1,6 +1,5 @@
 import * as core from '@actions/core';
 
-import * as child_process from 'child_process';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as rimraf from 'rimraf';
@@ -31,9 +30,8 @@ async function commitBaselineScreenshots(repository: string, buildId: string) {
     `Preparing to commit baseline screenshots to the '${branch}' branch.`
   );
 
-  const config: child_process.SpawnOptions = {
+  const config = {
     cwd: path.resolve(workingDirectory, TEMP_DIR),
-    stdio: 'inherit',
   };
 
   await spawn('git', ['checkout', branch], config);
@@ -47,8 +45,7 @@ async function commitBaselineScreenshots(repository: string, buildId: string) {
     ],
     config
   );
-
-  await spawn('git', ['push', '--force', 'origin', branch], config);
+  await spawn('git', ['push', '--force', '--quiet', 'origin', branch], config);
 
   core.info('New baseline images saved.');
 }

@@ -1,6 +1,7 @@
 import * as core from '@actions/core';
 
 import * as fs from 'fs-extra';
+import * as glob from 'glob';
 import * as path from 'path';
 
 import { npmPublish } from '../npm-publish';
@@ -94,6 +95,24 @@ async function coverage(buildId: string, projectName: string) {
 `);
 
   try {
+    const specs = glob.sync(
+      path.join(
+        process.cwd(),
+        core.getInput('working-directory'),
+        'projects',
+        projectName,
+        '**/*.spec.ts'
+      ),
+      {
+        nodir: true,
+      }
+    );
+
+    if (specs.length === 0) {
+      core.warning('Skipping code coverage because spec files were not found.');
+      return;
+    }
+
     await spawn('node', [
       path.join(
         './node_modules/@skyux-sdk/pipeline-settings/test-runners/karma.js'
