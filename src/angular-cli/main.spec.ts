@@ -7,6 +7,7 @@ describe('Angular CLI main', () => {
   let fsExtraSpyObj: jasmine.SpyObj<any>;
   let isBrowserStackProjectDefined: boolean;
   let mockAngularJson: any;
+  let mockGlobResults: string[];
   let mockPackageJson: any;
   let npmPublishSpy: jasmine.Spy;
   let packageLockExists: boolean;
@@ -90,6 +91,14 @@ describe('Angular CLI main', () => {
     });
 
     mock('fs-extra', fsExtraSpyObj);
+
+    mockGlobResults = ['foo.spec.ts'];
+
+    mock('glob', {
+      sync: () => {
+        return mockGlobResults;
+      },
+    });
 
     npmPublishSpy = jasmine.createSpy('npmPublish');
     mock('../npm-publish', {
@@ -274,6 +283,18 @@ describe('Angular CLI main', () => {
         '--code-coverage-threshold-statements=MOCK_CODE-COVERAGE-THRESHOLD-STATEMENTS',
       ]);
     });
+
+    it('should abort if no specs', async () => {
+      mockGlobResults = [];
+
+      const { executeAngularCliSteps } = getUtil();
+
+      await executeAngularCliSteps('BUILD_ID');
+
+      expect(coreSpyObj.warning).toHaveBeenCalledWith(
+        'Skipping code coverage because spec files were not found.'
+      );
+    });
   });
 
   describe('visual tests', () => {
@@ -288,10 +309,6 @@ describe('Angular CLI main', () => {
         '--platform=gh-actions',
         '--project-name=my-lib-showcase',
         '--project-root=MOCK_WORKING-DIRECTORY/projects/my-lib-showcase',
-        '--browserstack-username=MOCK_BROWSER-STACK-USERNAME',
-        '--browserstack-access-key=MOCK_BROWSER-STACK-ACCESS-KEY',
-        '--browserstack-build-id=BUILD_ID-visual',
-        '--browserstack-project=MOCK_BROWSER-STACK-PROJECT',
       ]);
     });
 
