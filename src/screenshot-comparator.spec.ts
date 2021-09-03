@@ -75,6 +75,8 @@ describe('screenshot comparator', () => {
       expect(spawnSpy).toHaveBeenCalledWith('git', [
         'clone',
         'https://MOCK_GITHUB_TOKEN@github.com/foo-repo.git',
+        '--depth',
+        '1',
         '--branch',
         'master',
         '--single-branch',
@@ -138,6 +140,8 @@ describe('screenshot comparator', () => {
       expect(spawnSpy).toHaveBeenCalledWith('git', [
         'clone',
         'https://MOCK_GITHUB_TOKEN@github.com/blackbaud/skyux-visual-test-results.git',
+        '--depth',
+        '1',
         '--branch',
         'master',
         '--single-branch',
