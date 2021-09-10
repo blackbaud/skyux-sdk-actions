@@ -44,7 +44,7 @@ async function install(): Promise<void> {
     await spawn('npm', [
       'install',
       '--no-save',
-      'blackbaud/skyux-sdk-pipeline-settings#angular-cli-support',
+      'blackbaud/skyux-sdk-pipeline-settings',
     ]);
   } catch (err) {
     console.error(err);

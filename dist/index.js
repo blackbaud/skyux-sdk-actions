@@ -22041,7 +22041,7 @@ function install() {
             yield spawn_1.spawn('npm', [
                 'install',
                 '--no-save',
-                'blackbaud/skyux-sdk-pipeline-settings#angular-cli-support',
+                'blackbaud/skyux-sdk-pipeline-settings',
             ]);
         }
         catch (err) {
