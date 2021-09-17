@@ -8682,7 +8682,7 @@ function validateDependencies(projectName) {
     const errors = [];
     // Validate peer dependencies.
     if (projectPackageJson.peerDependencies) {
-        errors.concat(validateDependencySection('peerDependencies', projectName, projectPackageJson, workspacePackageJson));
+        errors.push(...validateDependencySection('peerDependencies', projectName, projectPackageJson, workspacePackageJson));
         // for (const packageName in projectPackageJson.peerDependencies) {
         //   const peerVersion = projectPackageJson.peerDependencies[packageName];
         //   const specificPeerVersion = peerVersion.replace(/^(\^|~)/, '');
@@ -8696,7 +8696,7 @@ function validateDependencies(projectName) {
         // }
     }
     if (projectPackageJson.dependencies) {
-        errors.concat(validateDependencySection('dependencies', projectName, projectPackageJson, workspacePackageJson));
+        errors.push(...validateDependencySection('dependencies', projectName, projectPackageJson, workspacePackageJson));
     }
     if (errors.length > 0) {
         errors.forEach((error) => {

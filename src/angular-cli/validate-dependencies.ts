@@ -46,8 +46,8 @@ export function validateDependencies(projectName: string): void {
 
   // Validate peer dependencies.
   if (projectPackageJson.peerDependencies) {
-    errors.concat(
-      validateDependencySection(
+    errors.push(
+      ...validateDependencySection(
         'peerDependencies',
         projectName,
         projectPackageJson,
@@ -68,8 +68,8 @@ export function validateDependencies(projectName: string): void {
   }
 
   if (projectPackageJson.dependencies) {
-    errors.concat(
-      validateDependencySection(
+    errors.push(
+      ...validateDependencySection(
         'dependencies',
         projectName,
         projectPackageJson,
