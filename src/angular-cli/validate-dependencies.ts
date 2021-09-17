@@ -32,7 +32,7 @@ export function validateDependencies(projectName: string): void {
             basePath,
             ''
           )}' ` +
-            `is not compatible with the version listed in the root '${workspacePackageJsonPath.replace(
+            `does not match the version listed in the root '${workspacePackageJsonPath.replace(
               basePath,
               ''
             )}'. Provided: (${workspaceVersion}) Wanted: (${specificVersion})). ` +

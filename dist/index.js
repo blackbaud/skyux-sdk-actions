@@ -8675,7 +8675,7 @@ function validateDependencies(projectName) {
             const workspaceVersion = workspacePackageJson.dependencies[packageName];
             if (specificVersion !== workspaceVersion) {
                 errors.push(`The version range (${version}) of the peer dependency "${packageName}" listed in '${projectPackageJsonPath.replace(basePath, '')}' ` +
-                    `is not compatible with the version listed in the root '${workspacePackageJsonPath.replace(basePath, '')}'. Provided: (${workspaceVersion}) Wanted: (${specificVersion})). ` +
+                    `does not match the version listed in the root '${workspacePackageJsonPath.replace(basePath, '')}'. Provided: (${workspaceVersion}) Wanted: (${specificVersion})). ` +
                     `The version of the dependency listed in the root '${workspacePackageJsonPath.replace(basePath, '')}' \`dependencies\` section must be specific, and must not include a range character ` +
                     `(for example, write \`"${specificVersion}"\` instead of \`"${workspaceVersion}"\`).`);
             }
