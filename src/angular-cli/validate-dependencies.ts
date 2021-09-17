@@ -23,19 +23,24 @@ export function validateDependencies(projectName: string): void {
   // Validate peer dependencies.
   if (projectPackageJson.peerDependencies) {
     for (const packageName in projectPackageJson.peerDependencies) {
-      const specificVersion = packageName.replace(/^(\^|~)/, '');
-      if (specificVersion !== workspacePackageJson.dependencies[packageName]) {
+      const version = projectPackageJson.peerDependencies[packageName];
+      const specificVersion = version.replace(/^(\^|~)/, '');
+      const workspaceVersion = workspacePackageJson.dependencies[packageName];
+      if (specificVersion !== workspaceVersion) {
         errors.push(
-          `The version of the peer dependency "${packageName}" listed in '${projectPackageJsonPath.replace(
+          `The version range (${version}) of the peer dependency "${packageName}" listed in '${projectPackageJsonPath.replace(
             basePath,
             ''
           )}' ` +
-            `does not match the version of the same dependency listed in '${workspacePackageJsonPath.replace(
+            `is not compatible with the version listed in the root '${workspacePackageJsonPath.replace(
               basePath,
               ''
-            )}'. ` +
-            `The version provided in the \`dependencies\` section must be specific, and not include a range character ` +
-            `(for example, write \`"5.1.2"\` instead of \`"^5.1.0"\`).`
+            )}'. Provided: (${workspaceVersion}) Wanted: (${specificVersion})). ` +
+            `The version of the dependency listed in the root '${workspacePackageJsonPath.replace(
+              basePath,
+              ''
+            )}' \`dependencies\` section must be specific, and must not include a range character ` +
+            `(for example, write \`"${specificVersion}"\` instead of \`"${workspaceVersion}"\`).`
         );
       }
     }
