@@ -8630,7 +8630,61 @@ module.exports = compareBuild
 /***/ }),
 /* 466 */,
 /* 467 */,
-/* 468 */,
+/* 468 */
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.validateDependencies = void 0;
+const core = __importStar(__webpack_require__(470));
+const fs = __importStar(__webpack_require__(226));
+const path = __importStar(__webpack_require__(622));
+function validateDependencies(projectName) {
+    const basePath = path.join(process.cwd(), core.getInput('working-directory'));
+    const workspacePackageJsonPath = path.join(basePath, 'package.json');
+    const projectPackageJsonPath = path.join(basePath, `projects/${projectName}/package.json`);
+    const workspacePackageJson = fs.readJsonSync(workspacePackageJsonPath);
+    const projectPackageJson = fs.readJsonSync(projectPackageJsonPath);
+    const result = {};
+    // Validate peer dependencies.
+    if (projectPackageJson.peerDependencies) {
+        for (const packageName in projectPackageJson.peerDependencies) {
+            const specificVersion = packageName.replace(/^(\^|~)/, '');
+            if (specificVersion !== workspacePackageJson.dependencies[packageName]) {
+                result.error =
+                    `The version of the peer dependency "${packageName}" listed in '${projectPackageJsonPath.replace(basePath, '')}' ` +
+                        `does not match the version of the same dependency listed in '${workspacePackageJsonPath.replace(basePath, '')}'. ` +
+                        `The version provided in the \`dependencies\` section must be specific, and not include a range character ` +
+                        `(for example, write \`"5.1.2"\` instead of \`"^5.1.0"\`).`;
+            }
+        }
+    }
+    return result;
+}
+exports.validateDependencies = validateDependencies;
+
+
+/***/ }),
 /* 469 */
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
@@ -22020,6 +22074,7 @@ const screenshot_comparator_1 = __webpack_require__(453);
 const spawn_1 = __webpack_require__(820);
 const tag_skyux_packages_1 = __webpack_require__(293);
 const utils_1 = __webpack_require__(611);
+const validate_dependencies_1 = __webpack_require__(468);
 function getBrowserStackCliArguments(buildId) {
     return [
         `--browserstack-username=${core.getInput('browser-stack-username')}`,
@@ -22158,6 +22213,7 @@ function executeAngularCliSteps(buildId) {
     return __awaiter(this, void 0, void 0, function* () {
         const angularJson = fs.readJsonSync(path.join(process.cwd(), core.getInput('working-directory'), 'angular.json'));
         const projectName = angularJson.defaultProject;
+        validate_dependencies_1.validateDependencies(projectName);
         yield install();
         yield run_lifecycle_hook_1.runLifecycleHook('hook-before-script');
         yield buildLibrary(projectName);
