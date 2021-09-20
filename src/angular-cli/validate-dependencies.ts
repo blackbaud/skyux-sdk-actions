@@ -19,7 +19,7 @@ function validateDependencySection(
 
     if (workspaceVersion !== workspaceSpecificVersion) {
       errors.push(
-        `The version listed in 'package.json' for "${packageName}" must be set to a specific version (without a semver range character), and set to the minimum version satisfied by the range defined in the \`${section}\` section of 'projects/${projectName}/package.json'. Instead of (${workspaceVersion}), set it to (${workspaceSpecificVersion}).`
+        `The version listed in 'package.json' for "${packageName}@${workspaceVersion}" must be set to a specific version (without a semver range character), and set to the minimum version satisfied by the range defined in the \`${section}\` section of 'projects/${projectName}/package.json' (wanted "${packageName}@${peerVersion}"). To address this problem, set "${packageName}" to (${workspaceSpecificVersion}) in 'package.json'.`
       );
     } else if (specificPeerVersion !== workspaceVersion) {
       errors.push(
