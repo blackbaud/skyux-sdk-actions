@@ -63,5 +63,6 @@ jobs:
           npm-dry-run: true
           npm-token: ${{ secrets.NPM_TOKEN }}
           slack-webhook: ${{ secrets.SLACK_WEBHOOK }}
+          validate-dependencies: false
           visual-baselines-branch: ng-twelve-test-github-actions
           working-directory: ./ng-twelve-test-github-actions
