@@ -8808,6 +8808,10 @@ function validateDependencySection(section, projectName, projectPackageJson, wor
         const peerVersion = projectPackageJson[section][packageName];
         const specificPeerVersion = peerVersion.replace(/^(\^|~)/, '');
         const workspaceVersion = workspacePackageJson.dependencies[packageName];
+        if (!workspaceVersion) {
+            errors.push(`The package "${packageName}" listed in the \`${section}\` section of 'projects/${projectName}/package.json' was not found in the root 'package.json' \`dependencies\` section. Install the package at the root level and try again.`);
+            continue;
+        }
         const workspaceSpecificVersion = workspaceVersion.replace(/^(\^|~)/, '');
         if (workspaceVersion !== workspaceSpecificVersion) {
             errors.push(`The version listed in 'package.json' for "${packageName}@${workspaceVersion}" must be set to a specific version (without a semver range character), and set to the minimum version satisfied by the range defined in the \`${section}\` section of 'projects/${projectName}/package.json' (wanted "${packageName}@${peerVersion}"). To address this problem, set "${packageName}" to (${specificPeerVersion}) in the root 'package.json'.`);
@@ -8820,28 +8824,34 @@ function validateDependencySection(section, projectName, projectPackageJson, wor
 }
 function validateDependencies(projectName) {
     core.info('Validationg dependencies...');
-    const basePath = path.join(process.cwd(), core.getInput('working-directory'));
-    const workspacePackageJsonPath = path.join(basePath, 'package.json');
-    const projectPackageJsonPath = path.join(basePath, `projects/${projectName}/package.json`);
-    const workspacePackageJson = fs.readJsonSync(workspacePackageJsonPath);
-    const projectPackageJson = fs.readJsonSync(projectPackageJsonPath);
-    const errors = [];
-    // Validate peer dependencies.
-    if (projectPackageJson.peerDependencies) {
-        errors.push(...validateDependencySection('peerDependencies', projectName, projectPackageJson, workspacePackageJson));
+    try {
+        const basePath = path.join(process.cwd(), core.getInput('working-directory'));
+        const workspacePackageJsonPath = path.join(basePath, 'package.json');
+        const projectPackageJsonPath = path.join(basePath, `projects/${projectName}/package.json`);
+        const workspacePackageJson = fs.readJsonSync(workspacePackageJsonPath);
+        const projectPackageJson = fs.readJsonSync(projectPackageJsonPath);
+        const errors = [];
+        // Validate peer dependencies.
+        if (projectPackageJson.peerDependencies) {
+            errors.push(...validateDependencySection('peerDependencies', projectName, projectPackageJson, workspacePackageJson));
+        }
+        // Validate dependencies.
+        if (projectPackageJson.dependencies) {
+            errors.push(...validateDependencySection('dependencies', projectName, projectPackageJson, workspacePackageJson));
+        }
+        if (errors.length > 0) {
+            errors.forEach((error) => {
+                core.error(error);
+            });
+            throw new Error('Errors found with library dependencies.');
+        }
+        core.info(`Done validating dependencies.`);
     }
-    // Validate dependencies.
-    if (projectPackageJson.dependencies) {
-        errors.push(...validateDependencySection('dependencies', projectName, projectPackageJson, workspacePackageJson));
-    }
-    if (errors.length > 0) {
-        errors.forEach((error) => {
-            core.error(error);
-        });
-        core.setFailed('Errors found with library dependencies.');
+    catch (err) {
+        core.setFailed('Failed to validate library dependencies.');
+        console.error(err);
         process.exit(1);
     }
-    core.info(`Done validating dependencies.`);
 }
 exports.validateDependencies = validateDependencies;
 
