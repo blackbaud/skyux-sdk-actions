@@ -207,7 +207,9 @@ export async function executeAngularCliSteps(buildId: string): Promise<void> {
 
   const projectName = angularJson.defaultProject;
 
-  validateDependencies(projectName);
+  if (core.getInput('validate-dependencies') === 'true') {
+    validateDependencies(projectName);
+  }
 
   await install();
 

@@ -47,6 +47,10 @@ inputs:
   slack-webhook:
     description: 'The Slack webhook used to push notifications.'
     required: false
+  validate-dependencies:
+    description: "Validates the library's dependencies against what is provided in the workspace package.json."
+    default: 'true'
+    required: false
   visual-baselines-branch:
     description: 'The git branch to commit new baseline screenshots after a successful visual test.'
     required: false

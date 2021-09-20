@@ -17,9 +17,13 @@ function validateDependencySection(
     const workspaceVersion = workspacePackageJson.dependencies[packageName];
     const workspaceSpecificVersion = workspaceVersion.replace(/^(\^|~)/, '');
 
-    if (specificPeerVersion !== workspaceVersion) {
+    if (workspaceVersion !== workspaceSpecificVersion) {
       errors.push(
-        `The version (${workspaceVersion}) of the package "${packageName}" in the \`dependencies\` section of 'package.json' does not meet the minimum version requirements of the range defined in the \`${section}\` section of 'projects/${projectName}/package.json' (wanted "${packageName}@${peerVersion}"). The version listed in 'package.json' for "${packageName}" must be set to a specific version (without a semver range character), and set to the minimum version satisfied by the requested range. Either increase the minimum supported version in 'projects/${projectName}/package.json' to (^${workspaceSpecificVersion}), or downgrade the version installed in the root 'package.json' to (${specificPeerVersion}).`
+        `The version listed in 'package.json' for "${packageName}" must be set to a specific version (without a semver range character), and set to the minimum version satisfied by the range defined in the \`${section}\` section of 'projects/${projectName}/package.json'. Instead of (${workspaceVersion}), set it to (${workspaceSpecificVersion}).`
+      );
+    } else if (specificPeerVersion !== workspaceVersion) {
+      errors.push(
+        `The version (${workspaceVersion}) of the package "${packageName}" in the \`dependencies\` section of 'package.json' does not meet the minimum version requirements of the range defined in the \`${section}\` section of 'projects/${projectName}/package.json' (wanted "${packageName}@${peerVersion}"). Either increase the minimum supported version in 'projects/${projectName}/package.json' to (^${workspaceSpecificVersion}), or downgrade the version installed in the root 'package.json' to (${specificPeerVersion}).`
       );
     }
   }
@@ -54,19 +58,9 @@ export function validateDependencies(projectName: string): void {
         workspacePackageJson
       )
     );
-    // for (const packageName in projectPackageJson.peerDependencies) {
-    //   const peerVersion = projectPackageJson.peerDependencies[packageName];
-    //   const specificPeerVersion = peerVersion.replace(/^(\^|~)/, '');
-    //   const workspaceVersion = workspacePackageJson.dependencies[packageName];
-    //   const workspaceSpecificVersion = workspaceVersion.replace(/^(\^|~)/, '');
-    //   if (specificPeerVersion !== workspaceVersion) {
-    //     errors.push(
-    //       `The version (${workspaceVersion}) of the package "${packageName}" in the \`dependencies\` section of 'package.json' does not meet the minimum version requirements of the range defined in the \`peerDependencies\` section of 'projects/${projectName}/package.json' (wanted "${packageName}@${peerVersion}"). The version listed in 'package.json' for "${packageName}" must be set to a specific version (without a semver range character), and set to the minimum version satisfied by the peer dependency range. Either increase the minimum supported version in 'projects/${projectName}/package.json' to (^${workspaceSpecificVersion}), or downgrade the version installed in the root 'package.json' to (${specificPeerVersion}).`
-    //     );
-    //   }
-    // }
   }
 
+  // Validate dependencies.
   if (projectPackageJson.dependencies) {
     errors.push(
       ...validateDependencySection(
