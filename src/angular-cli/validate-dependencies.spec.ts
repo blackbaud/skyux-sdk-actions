@@ -12,6 +12,7 @@ describe('Validate dependencies', () => {
     mockPackageJson = {};
 
     spyOn(process, 'exit');
+    spyOn(console, 'error');
 
     coreSpyObj = jasmine.createSpyObj('core', [
       'error',
@@ -68,6 +69,25 @@ describe('Validate dependencies', () => {
         `(without a semver range character), and set to the minimum version satisfied by the range ` +
         `defined in the \`peerDependencies\` section of 'projects/my-lib/package.json' (wanted "foobar@^5.1.0"). ` +
         `To address this problem, set "foobar" to (5.1.0) in the root 'package.json'.`
+    );
+  });
+
+  it('should log error if dependency missing from root package.json', async () => {
+    mockPackageJson = {
+      dependencies: {},
+    };
+
+    mockProjectPackageJson = {
+      peerDependencies: {
+        foobar: '^5.1.0',
+      },
+    };
+
+    const { validateDependencies } = getUtil();
+    await validateDependencies('my-lib');
+
+    expect(coreSpyObj.error).toHaveBeenCalledWith(
+      `The package "foobar" listed in the \`peerDependencies\` section of 'projects/my-lib/package.json' was not found in the root 'package.json' \`dependencies\` section. Install the package at the root level and try again.`
     );
   });
 
