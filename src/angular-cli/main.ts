@@ -16,6 +16,8 @@ import { spawn } from '../spawn';
 import { tagSkyuxPackages } from '../tag-skyux-packages';
 import { isPullRequest, isPush, isTag } from '../utils';
 
+import { validateDependencies } from './validate-dependencies';
+
 function getBrowserStackCliArguments(buildId: string): string[] {
   return [
     `--browserstack-username=${core.getInput('browser-stack-username')}`,
@@ -204,6 +206,10 @@ export async function executeAngularCliSteps(buildId: string): Promise<void> {
   );
 
   const projectName = angularJson.defaultProject;
+
+  if (core.getInput('validate-dependencies') === 'true') {
+    validateDependencies(projectName);
+  }
 
   await install();
 

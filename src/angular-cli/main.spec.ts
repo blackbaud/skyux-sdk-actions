@@ -3,6 +3,7 @@ import path from 'path';
 
 describe('Angular CLI main', () => {
   let coreSpyObj: jasmine.SpyObj<any>;
+  let doValidateDependencies: 'true' | 'false';
   let e2eDirectoryExists: boolean;
   let fsExtraSpyObj: jasmine.SpyObj<any>;
   let isBrowserStackProjectDefined: boolean;
@@ -17,6 +18,7 @@ describe('Angular CLI main', () => {
   let spawnSpy: jasmine.Spy;
   let tagSkyuxPackagesSpy: jasmine.Spy;
   let utilsSpyObj: jasmine.SpyObj<any>;
+  let validateDependenciesSpy: jasmine.Spy;
 
   beforeEach(() => {
     process.env.GITHUB_REPOSITORY = 'org/repo';
@@ -31,10 +33,15 @@ describe('Angular CLI main', () => {
     ]);
 
     isBrowserStackProjectDefined = true;
+    doValidateDependencies = 'true';
 
     coreSpyObj.getInput.and.callFake((name: string) => {
       if (name === 'browser-stack-project' && !isBrowserStackProjectDefined) {
         return;
+      }
+
+      if (name === 'validate-dependencies') {
+        return doValidateDependencies;
       }
 
       return `MOCK_${name.toLocaleUpperCase()}`;
@@ -137,6 +144,12 @@ describe('Angular CLI main', () => {
       'isTag',
     ]);
     mock('../utils', utilsSpyObj);
+
+    validateDependenciesSpy = jasmine.createSpy('validateDependencies');
+
+    mock('./validate-dependencies', {
+      validateDependencies: validateDependenciesSpy,
+    });
   });
 
   afterEach(() => {
@@ -217,6 +230,19 @@ describe('Angular CLI main', () => {
     expect(runNgCommandSpy).toHaveBeenCalledWith('generate', [
       '@skyux-sdk/documentation-schematics:documentation',
     ]);
+  });
+
+  it('should validate dependencies', async () => {
+    const { executeAngularCliSteps } = getUtil();
+    await executeAngularCliSteps('BUILD_ID');
+    expect(validateDependenciesSpy).toHaveBeenCalledWith('my-lib');
+  });
+
+  it('should not validate dependencies if "validate-dependencies" is set to "false"', async () => {
+    doValidateDependencies = 'false';
+    const { executeAngularCliSteps } = getUtil();
+    await executeAngularCliSteps('BUILD_ID');
+    expect(validateDependenciesSpy).not.toHaveBeenCalled();
   });
 
   describe('code coverage', () => {
