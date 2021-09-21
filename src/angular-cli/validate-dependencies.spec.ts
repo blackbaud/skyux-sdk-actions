@@ -139,7 +139,7 @@ describe('Validate dependencies', () => {
     );
   });
 
-  it('should log if versions are correct', async () => {
+  it('should log if versions pass validation', async () => {
     mockPackageJson = {
       dependencies: {
         foobar: '5.1.0',
@@ -156,7 +156,28 @@ describe('Validate dependencies', () => {
     await validateDependencies('my-lib');
 
     expect(coreSpyObj.info).toHaveBeenCalledWith(
-      'Done validating dependencies.'
+      'Done validating dependencies. OK.'
+    );
+  });
+
+  it('should handle complex semver ranges', async () => {
+    mockPackageJson = {
+      dependencies: {
+        foobar: '5.0.0',
+      },
+    };
+
+    mockProjectPackageJson = {
+      peerDependencies: {
+        foobar: '^5 || ^6 || ^7',
+      },
+    };
+
+    const { validateDependencies } = getUtil();
+    await validateDependencies('my-lib');
+
+    expect(coreSpyObj.info).toHaveBeenCalledWith(
+      'Done validating dependencies. OK.'
     );
   });
 });
