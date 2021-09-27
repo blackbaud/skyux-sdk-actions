@@ -32,28 +32,46 @@ describe('Tag `@skyux/packages`', () => {
     mockSkyuxPackagesVersion = '2.0.0';
     mockSkyuxPackagesCheckoutVersion = '1.0.0';
 
-    fsSpyObj.readJsonSync.and.callFake(() => {
-      let packageJson: any = {
-        version: mockSkyuxPackagesVersion,
-        'ng-update': {
-          packageGroup: mockPackageGroup,
-        },
-      };
-
-      // The first time package.json is read return what's in the master branch.
-      // Subsequent reads will be from another major-version-specific branch (e.g. `4.x.x`).
-      if (readJsonSyncCounter > 0) {
-        packageJson = {
-          version: mockSkyuxPackagesCheckoutVersion,
+    fsSpyObj.readJsonSync.and.callFake((filePath: string) => {
+      const basename = path.basename(filePath);
+      if (basename === 'package.json') {
+        let packageJson: any = {
+          version: mockSkyuxPackagesVersion,
           'ng-update': {
             packageGroup: mockPackageGroup,
           },
         };
+
+        // The first time package.json is read return what's in the master branch.
+        // Subsequent reads will be from another major-version-specific branch (e.g. `4.x.x`).
+        if (readJsonSyncCounter > 0) {
+          packageJson = {
+            version: mockSkyuxPackagesCheckoutVersion,
+            'ng-update': {
+              packageGroup: mockPackageGroup,
+            },
+          };
+        }
+
+        readJsonSyncCounter++;
+
+        return packageJson;
       }
 
-      readJsonSyncCounter++;
-
-      return packageJson;
+      // migration-collection.json
+      return {
+        schematics: {
+          noop: {
+            version: 'ORIGINAL_VERSION',
+          },
+          'update-peer-dependencies': {
+            version: 'ORIGINAL_VERSION',
+          },
+          'setup-coverage-for-testing-module': {
+            version: 'ORIGINAL_VERSION',
+          },
+        },
+      };
     });
 
     spawnSpy = jasmine.createSpy('spawn');
@@ -116,7 +134,7 @@ describe('Tag `@skyux/packages`', () => {
     });
   }
 
-  it('should update and commit changelog/package.json to blackbaud/skyux-packages repo', async () => {
+  it('should update and commit changelog.md, collection.json, and package.json to blackbaud/skyux-packages repo', async () => {
     mockSkyuxPackagesVersion = '1.0.0';
 
     const { tagSkyuxPackages } = getUtil();
@@ -138,6 +156,7 @@ describe('Tag `@skyux/packages`', () => {
     const month = `${date.getMonth() + 1}`.padStart(2, '0');
     const day = `${date.getDate()}`.padStart(2, '0');
 
+    // CHANGELOG.md
     expect(fsSpyObj.writeFileSync).toHaveBeenCalledWith(
       path.join('mock-working-directory/.skyuxpackagestemp/CHANGELOG.md'),
       `# 1.0.1 (${year}-${month}-${day})
@@ -149,11 +168,27 @@ ORIGINAL_CHANGELOG_CONTENT
       { encoding: 'utf-8' }
     );
 
+    // package.json
     expect(fsSpyObj.writeJsonSync).toHaveBeenCalledWith(
       path.join('mock-working-directory/.skyuxpackagestemp/package.json'),
       {
         version: '1.0.1',
         'ng-update': { packageGroup: { '@skyux/foobar': '^5.0.0' } },
+      },
+      { spaces: 2 }
+    );
+
+    // migration-collection.json
+    expect(fsSpyObj.writeJsonSync).toHaveBeenCalledWith(
+      path.join(
+        'mock-working-directory/.skyuxpackagestemp/src/schematics/migrations/migration-collection.json'
+      ),
+      {
+        schematics: {
+          noop: { version: '1.0.1' },
+          'update-peer-dependencies': { version: '1.0.1' },
+          'setup-coverage-for-testing-module': { version: 'ORIGINAL_VERSION' }, // <-- should be unchanged
+        },
       },
       { spaces: 2 }
     );
