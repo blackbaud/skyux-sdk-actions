@@ -96,7 +96,6 @@ export function validateDependencies(projectName: string): void {
     }
 
     if (errors.length > 0) {
-      console.log('ERRORS:', errors, errors.length);
       errors.forEach((error) => {
         core.error(error);
       });

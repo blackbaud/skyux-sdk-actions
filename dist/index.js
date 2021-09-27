@@ -10579,7 +10579,6 @@ function validateDependencies(projectName) {
             errors.push(...validateDependencySection('dependencies', projectName, projectPackageJson, workspacePackageJson));
         }
         if (errors.length > 0) {
-            console.log('ERRORS:', errors, errors.length);
             errors.forEach((error) => {
                 core.error(error);
             });
