@@ -26404,7 +26404,7 @@ function install() {
             yield spawn_1.spawn('npm', [
                 'install',
                 '--no-save',
-                'blackbaud/skyux-sdk-pipeline-settings',
+                'blackbaud/skyux-sdk-pipeline-settings#webdriver-update',
             ]);
         }
         catch (err) {
