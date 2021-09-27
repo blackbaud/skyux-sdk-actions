@@ -16,6 +16,7 @@ import { spawn } from '../spawn';
 import { tagSkyuxPackages } from '../tag-skyux-packages';
 import { isPullRequest, isPush, isTag } from '../utils';
 
+import { updateChromeDriver } from './chromedriver-manager';
 import { validateDependencies } from './validate-dependencies';
 
 function getBrowserStackCliArguments(buildId: string): string[] {
@@ -176,6 +177,8 @@ async function visual(buildId: string, projectName: string, angularJson: any) {
 > Running Angular CLI command: 'e2e'
 =====================================================
 `);
+
+    await updateChromeDriver();
 
     await spawn('node', [
       path.join(

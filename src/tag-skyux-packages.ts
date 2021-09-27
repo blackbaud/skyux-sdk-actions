@@ -44,6 +44,25 @@ ${changelog}`;
   fs.writeFileSync(changelogPath, contents, { encoding: 'utf-8' });
 }
 
+/**
+ * Set the target version for certain `ng update` schematics to allow them to run
+ * for every release of `@skyux/packages`.
+ */
+function updateSchematicVersions(workingDirectory: string, newVersion: string) {
+  const collectionPath = path.join(
+    workingDirectory,
+    'src/schematics/migrations/migration-collection.json'
+  );
+  const contents = fs.readJsonSync(collectionPath);
+
+  const schematics = ['noop', 'update-peer-dependencies'];
+  for (const schematic of schematics) {
+    contents.schematics[schematic].version = newVersion;
+  }
+
+  fs.writeJsonSync(collectionPath, contents, { spaces: 2 });
+}
+
 async function commitAndTag(
   workingDirectory: string,
   newVersion: string,
@@ -187,6 +206,7 @@ export async function tagSkyuxPackages(
     packageJson.version = newVersion;
     fs.writeJsonSync(packageJsonPath, packageJson, { spaces: 2 });
 
+    updateSchematicVersions(workingDirectory, newVersion);
     updateChangelog(workingDirectory, newVersion, libPackage);
 
     if (!isDryRun) {

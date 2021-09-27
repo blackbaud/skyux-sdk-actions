@@ -2,6 +2,7 @@ import mock from 'mock-require';
 import path from 'path';
 
 describe('Angular CLI main', () => {
+  let chromeDriverManagerSpy: jasmine.Spy;
   let coreSpyObj: jasmine.SpyObj<any>;
   let doValidateDependencies: 'true' | 'false';
   let e2eDirectoryExists: boolean;
@@ -144,6 +145,12 @@ describe('Angular CLI main', () => {
       'isTag',
     ]);
     mock('../utils', utilsSpyObj);
+
+    chromeDriverManagerSpy = jasmine.createSpy('updateChromeDriver');
+
+    mock('./chromedriver-manager', {
+      updateChromeDriver: chromeDriverManagerSpy,
+    });
 
     validateDependenciesSpy = jasmine.createSpy('validateDependencies');
 
