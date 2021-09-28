@@ -26,12 +26,12 @@ describe('Tag `@skyux/packages`', () => {
     });
 
     readJsonSyncCounter = 0;
-    mockSkyuxPackagesVersion = '2.0.0';
-    mockSkyuxPackagesCheckoutVersion = '1.0.0';
 
     mockPackageGroup = {
       '@skyux/foobar': '^5.0.0',
     };
+    mockSkyuxPackagesVersion = '2.0.0';
+    mockSkyuxPackagesCheckoutVersion = '1.0.0';
 
     fsSpyObj.readJsonSync.and.callFake((filePath: string) => {
       const basename = path.basename(filePath);
