@@ -26,11 +26,12 @@ describe('Tag `@skyux/packages`', () => {
     });
 
     readJsonSyncCounter = 0;
+    mockSkyuxPackagesVersion = '2.0.0';
+    mockSkyuxPackagesCheckoutVersion = '1.0.0';
+
     mockPackageGroup = {
       '@skyux/foobar': '^5.0.0',
     };
-    mockSkyuxPackagesVersion = '2.0.0';
-    mockSkyuxPackagesCheckoutVersion = '1.0.0';
 
     fsSpyObj.readJsonSync.and.callFake((filePath: string) => {
       const basename = path.basename(filePath);
@@ -136,6 +137,7 @@ describe('Tag `@skyux/packages`', () => {
 
   it('should update and commit changelog.md, collection.json, and package.json to blackbaud/skyux-packages repo', async () => {
     mockSkyuxPackagesVersion = '1.0.0';
+    mockPackageGroup['@skyux/foobar'] = '^1.0.0';
 
     const { tagSkyuxPackages } = getUtil();
 
@@ -159,7 +161,7 @@ describe('Tag `@skyux/packages`', () => {
     // CHANGELOG.md
     expect(fsSpyObj.writeFileSync).toHaveBeenCalledWith(
       path.join('mock-working-directory/.skyuxpackagestemp/CHANGELOG.md'),
-      `# 1.0.1 (${year}-${month}-${day})
+      `# 1.1.0 (${year}-${month}-${day})
 
 - \`@skyux/foobar@1.0.0\` [Release notes](https://changelog.com)
 
@@ -172,8 +174,8 @@ ORIGINAL_CHANGELOG_CONTENT
     expect(fsSpyObj.writeJsonSync).toHaveBeenCalledWith(
       path.join('mock-working-directory/.skyuxpackagestemp/package.json'),
       {
-        version: '1.0.1',
-        'ng-update': { packageGroup: { '@skyux/foobar': '^5.0.0' } },
+        version: '1.1.0',
+        'ng-update': { packageGroup: { '@skyux/foobar': '^1.0.0' } },
       },
       { spaces: 2 }
     );
@@ -185,8 +187,8 @@ ORIGINAL_CHANGELOG_CONTENT
       ),
       {
         schematics: {
-          noop: { version: '1.0.1' },
-          'update-peer-dependencies': { version: '1.0.1' },
+          noop: { version: '1.1.0' },
+          'update-peer-dependencies': { version: '1.1.0' },
           'setup-coverage-for-testing-module': { version: 'ORIGINAL_VERSION' }, // <-- should be unchanged
         },
       },
@@ -197,13 +199,14 @@ ORIGINAL_CHANGELOG_CONTENT
     verifySpawn('git', [
       'commit',
       '-m',
-      'Updated changelog/package.json for 1.0.1 release',
+      'Updated changelog/package.json for 1.1.0 release',
     ]);
     verifySpawn('git', ['push', 'origin', 'master']);
   });
 
   it('should tag patch releases', async () => {
     mockSkyuxPackagesVersion = '5.2.0';
+    mockPackageGroup['@skyux/foobar'] = '^5.0.0-beta.0';
 
     const { tagSkyuxPackages } = getUtil();
 
@@ -213,27 +216,44 @@ ORIGINAL_CHANGELOG_CONTENT
       version: '5.0.1',
     });
 
-    verifySpawn('git', ['tag', '5.2.1']);
-    verifySpawn('git', ['push', 'origin', '5.2.1']);
+    verifySpawn('git', ['tag', '5.3.0']);
+    verifySpawn('git', ['push', 'origin', '5.3.0']);
   });
 
-  it('should tag prerelease versions in the same prerelease group', async () => {
+  it('should tag prerelease versions', async () => {
     mockSkyuxPackagesVersion = '5.0.0-alpha.0';
+    mockPackageGroup['@skyux/foobar'] = '^5.0.0-alpha.0';
 
     const { tagSkyuxPackages } = getUtil();
 
     await tagSkyuxPackages({
       changelogUrl: 'https://changelog.com',
       name: '@skyux/foobar',
-      version: '5.0.0-alpha.15',
+      version: '5.0.0-beta.15',
     });
 
     verifySpawn('git', ['tag', '5.0.0-alpha.1']);
   });
 
+  it('should tag prerelease versions if @skyux/packages is not on a pre-release', async () => {
+    mockSkyuxPackagesVersion = '5.92.0';
+    mockPackageGroup['@skyux/foobar'] = '^5.0.0-beta.0';
+
+    const { tagSkyuxPackages } = getUtil();
+
+    await tagSkyuxPackages({
+      changelogUrl: 'https://changelog.com',
+      name: '@skyux/foobar',
+      version: '5.0.0-beta.2',
+    });
+
+    verifySpawn('git', ['tag', '5.93.0']);
+  });
+
   it('should tag releases for prior major versions', async () => {
-    mockSkyuxPackagesVersion = '6.1.0';
+    mockSkyuxPackagesVersion = '6.23.0';
     mockSkyuxPackagesCheckoutVersion = '5.9.2';
+    mockPackageGroup['@skyux/foobar'] = '^6.0.0';
 
     const { tagSkyuxPackages } = getUtil();
 
@@ -244,60 +264,47 @@ ORIGINAL_CHANGELOG_CONTENT
     });
 
     verifySpawn('git', ['checkout', '5.x.x']);
-    verifySpawn('git', ['tag', '5.9.3']);
+    verifySpawn('git', ['tag', '5.10.0']);
   });
 
-  it('should throw error if prior major version does not have a matching dev branch', async () => {
+  it('should log warning if prior major version does not have a matching dev branch', async () => {
     mockSkyuxPackagesVersion = '5.3.0';
+    mockPackageGroup['@skyux/foobar'] = '^5.0.0';
     mockGitCheckoutResult = 'did not match any file(s) known to git';
 
     const { tagSkyuxPackages } = getUtil();
 
-    await expectAsync(
-      tagSkyuxPackages({
-        changelogUrl: 'https://changelog.com',
-        name: '@skyux/foobar',
-        version: '4.1.1',
-      })
-    ).toBeRejectedWithError(
+    await tagSkyuxPackages({
+      changelogUrl: 'https://changelog.com',
+      name: '@skyux/foobar',
+      version: '4.1.1',
+    });
+
+    expect(warningSpy).toHaveBeenCalledWith(
       "Failed to tag the repository 'blackbaud/skyux-packages'. A branch named '4.x.x' was not found."
     );
   });
 
-  it('should abort if library prerelease version not in the same prerelease group', async () => {
+  it('should abort if library prerelease version does not satisfy package group', async () => {
     mockSkyuxPackagesVersion = '5.0.0-alpha.3';
+    mockPackageGroup['@skyux/foobar'] = '^5.0.0-beta.0'; // <-- Use beta.
 
     const { tagSkyuxPackages } = getUtil();
 
     await tagSkyuxPackages({
       changelogUrl: 'https://changelog.com',
       name: '@skyux/foobar',
-      version: '5.0.0-beta.3', // <-- Important, not 'alpha'.
+      version: '5.0.0-alpha.3', // <-- Important, use alpha.
     });
 
     expect(warningSpy).toHaveBeenCalledWith(
-      "The '@skyux/foobar' package attempted to tag 'blackbaud/skyux-packages' with a version in the same range as (^5.0.0-beta.0) but a compatible version of '@skyux/packages' could not be found. Manually tag and release 'blackbaud/skyux-packages' with a version that is in the same range as '@skyux/foobar@^5.0.0-beta.0'."
-    );
-  });
-
-  it('should abort if library prerelease version less than @skyux/packages version', async () => {
-    mockSkyuxPackagesVersion = '6.1.0';
-
-    const { tagSkyuxPackages } = getUtil();
-
-    await tagSkyuxPackages({
-      changelogUrl: 'https://changelog.com',
-      name: '@skyux/foobar',
-      version: '5.1.1-beta.3',
-    });
-
-    expect(warningSpy).toHaveBeenCalledWith(
-      "The '@skyux/foobar' package attempted to tag 'blackbaud/skyux-packages' with a version in the same range as (^5.0.0-beta.0) but a compatible version of '@skyux/packages' could not be found. Manually tag and release 'blackbaud/skyux-packages' with a version that is in the same range as '@skyux/foobar@^5.0.0-beta.0'."
+      "Releasing '@skyux/packages' was aborted because the version tagged '@skyux/foobar@5.0.0-alpha.3' does not satisfy the range listed in `packageGroup` for '@skyux/foobar'. Wanted (^5.0.0-beta.0)."
     );
   });
 
   it('should abort if library major version is greater than @skyux/packages version', async () => {
     mockSkyuxPackagesVersion = '5.1.0';
+    mockPackageGroup['@skyux/foobar'] = '^5.0.0';
 
     const { tagSkyuxPackages } = getUtil();
 
@@ -308,23 +315,7 @@ ORIGINAL_CHANGELOG_CONTENT
     });
 
     expect(warningSpy).toHaveBeenCalledWith(
-      "The '@skyux/foobar' package attempted to tag 'blackbaud/skyux-packages' with a version in the same range as (^6.0.0) but a compatible version of '@skyux/packages' could not be found. Manually tag and release 'blackbaud/skyux-packages' with a version that is in the same range as '@skyux/foobar@^6.0.0'."
-    );
-  });
-
-  it('should abort if library major version is greater than @skyux/packages prerelease version', async () => {
-    mockSkyuxPackagesVersion = '5.0.0-alpha.0';
-
-    const { tagSkyuxPackages } = getUtil();
-
-    await tagSkyuxPackages({
-      changelogUrl: 'https://changelog.com',
-      name: '@skyux/foobar',
-      version: '5.0.0',
-    });
-
-    expect(warningSpy).toHaveBeenCalledWith(
-      "The '@skyux/foobar' package attempted to tag 'blackbaud/skyux-packages' with a version in the same range as (^5.0.0) but a compatible version of '@skyux/packages' could not be found. Manually tag and release 'blackbaud/skyux-packages' with a version that is in the same range as '@skyux/foobar@^5.0.0'."
+      "Releasing '@skyux/packages' was aborted because the version tagged '@skyux/foobar@6.0.0' does not satisfy the range listed in `packageGroup` for '@skyux/foobar'. Wanted (^5.0.0)."
     );
   });
 
@@ -355,7 +346,7 @@ ORIGINAL_CHANGELOG_CONTENT
     });
 
     expect(warningSpy).toHaveBeenCalledWith(
-      "Tagging was aborted because the 'npm-dry-run' flag is set. The 'blackbaud/skyux-packages' repository would have been tagged with (5.0.1)."
+      "Tagging was aborted because the 'npm-dry-run' flag is set. The 'blackbaud/skyux-packages' repository would have been tagged with (5.1.0)."
     );
   });
 });

@@ -5,6 +5,7 @@ describe('Chrome driver manager', () => {
   let spawnSpy: jasmine.Spy;
 
   beforeEach(() => {
+    spyOn(console, 'error');
     spyOn(console, 'log');
 
     mock('chromedriver-version-matcher', {
