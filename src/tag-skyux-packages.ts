@@ -15,7 +15,7 @@ const SKYUX_PACKAGES_REPO_BRANCH = 'master';
 function bumpVersion(version: string): string {
   const releaseType = (version as string).includes('-')
     ? 'prerelease'
-    : 'patch';
+    : 'minor';
 
   const newVersion = semver.inc(version, releaseType) as string;
 
@@ -115,11 +115,9 @@ function checkoutBranch(
  * Executing this command will update all component libraries the consumer has
  * installed at once.
  *
- * NOTE: Every release group (major, premajor, prerelease group, etc.) must be initiated manually on the
- * @skyux/packages repo before its version can be automatically bumped by this script.
- * For example, to allow for a new major version of '5.0.0' to be released, we need to manually
- * tag @skyux/packages with '5.0.0' (this would be the same for prerelease versions, '5.0.0-alpha.0' to
- * '5.0.0-beta.0', etc.). This is done so that each release group is made available to our consumers deliberately.
+ * - If the library version is within the range specified in `packageGroup`, then bump the version of `@skyux/packages`.
+ * - If the library version is greater than the version specified in `packageGroup`, abort.
+ * - If the library version is less than the version specified in `packageGroup`, attempt to checkout the branch assigned to that major version (e.g. `4.x.x`).
  *
  * @param libPackage Metadata describing the recently released SKY UX component library.
  */
@@ -149,51 +147,47 @@ export async function tagSkyuxPackages(
 
   let packageJson = fs.readJsonSync(packageJsonPath);
 
+  const packageGroupVersionRange: string =
+    packageJson['ng-update'].packageGroup[libPackage.name] || '';
+
   // Abort if the library is not whitelisted on the `@skyux/packages` repo.
-  if (!packageJson['ng-update'].packageGroup[libPackage.name]) {
+  if (!packageGroupVersionRange) {
     core.warning(
       `Tagging '${repository}' was aborted because the library '${libPackage.name}' is not listed in the \`packageGroup\` section of '${repository}' package.json file.`
     );
     return;
   }
 
-  const versionDiff = semver.diff(libPackage.version, packageJson.version);
-
-  const prereleaseData = semver.prerelease(packageJson.version);
-  const prereleaseGroup = prereleaseData && prereleaseData[0];
-
-  const libPrereleaseData = semver.prerelease(libPackage.version);
-  const libPrereleaseGroup = libPrereleaseData && libPrereleaseData[0];
+  const libVersion = libPackage.version;
 
   let enableTagging = false;
 
   let branch = SKYUX_PACKAGES_REPO_BRANCH;
 
-  if (
-    versionDiff === null || // versions are exactly the same
-    versionDiff === 'minor' ||
-    versionDiff === 'patch' ||
-    (versionDiff === 'prerelease' && prereleaseGroup === libPrereleaseGroup)
-  ) {
+  if (semver.satisfies(libVersion, packageGroupVersionRange)) {
     enableTagging = true;
-  } else if (versionDiff === 'major') {
-    const majorVersion = semver.major(packageJson.version);
-    const libMajorVersion = semver.major(libPackage.version);
+  } else {
+    const libMajorVersion = semver.major(libVersion);
+    const packageGroupMajorVersion = semver.minVersion(
+      packageGroupVersionRange
+    )!.major;
 
     // If the library version is a prior major version, attempt to checkout
     // the respective major version branch (e.g. `5.x.x`).
-    if (libMajorVersion < majorVersion) {
+    if (libMajorVersion < packageGroupMajorVersion) {
       branch = getMajorVersionBranch(libMajorVersion);
 
       const result = await checkoutBranch(branch, workingDirectory);
 
       // Does the major version branch exist?
       if (result.includes('did not match any file(s) known to git')) {
-        throw new Error(
+        core.warning(
           `Failed to tag the repository '${repository}'. A branch named '${branch}' was not found.`
         );
+        return;
       }
 
+      // Assign the checkout version of package.json.
       packageJson = fs.readJsonSync(packageJsonPath);
 
       enableTagging = true;
@@ -217,22 +211,9 @@ export async function tagSkyuxPackages(
       );
     }
   } else {
-    const parsedVersion = semver.parse(libPackage.version)!;
-
-    let targetRange = `^${parsedVersion.major}.0.0`;
-
-    const prereleaseGroup =
-      parsedVersion.prerelease && parsedVersion.prerelease[0];
-
-    if (prereleaseGroup) {
-      targetRange += `-${prereleaseGroup}.0`;
-    }
-
     core.warning(
-      `The '${libPackage.name}' package attempted to tag '${repository}' with a version ` +
-        `in the same range as (${targetRange}) but a compatible version of '@skyux/packages' ` +
-        `could not be found. Manually tag and release '${repository}' with a version that is in the ` +
-        `same range as '${libPackage.name}@${targetRange}'.`
+      `Releasing '@skyux/packages' was aborted because the version tagged '${libPackage.name}@${libVersion}' ` +
+        `does not satisfy the range listed in \`packageGroup\` for '${libPackage.name}'. Wanted (${packageGroupVersionRange}).`
     );
   }
 }
