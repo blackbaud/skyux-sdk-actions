@@ -4,7 +4,9 @@ import path from 'path';
 describe('Tag `@skyux/packages`', () => {
   let cloneRepoAsAdminSpy: jasmine.Spy;
   let fsSpyObj: jasmine.SpyObj<any>;
+  let infoSpy: jasmine.Spy;
   let mockGitCheckoutResult: string;
+  let mockMigrationCollectionJson: any;
   let mockNpmDryRun: string;
   let mockPackageGroup: any;
   let mockSkyuxPackagesCheckoutVersion: string;
@@ -33,6 +35,20 @@ describe('Tag `@skyux/packages`', () => {
     mockSkyuxPackagesVersion = '2.0.0';
     mockSkyuxPackagesCheckoutVersion = '1.0.0';
 
+    mockMigrationCollectionJson = {
+      schematics: {
+        noop: {
+          version: 'ORIGINAL_VERSION',
+        },
+        'update-peer-dependencies': {
+          version: 'ORIGINAL_VERSION',
+        },
+        'setup-coverage-for-testing-module': {
+          version: 'ORIGINAL_VERSION',
+        },
+      },
+    };
+
     fsSpyObj.readJsonSync.and.callFake((filePath: string) => {
       const basename = path.basename(filePath);
       if (basename === 'package.json') {
@@ -60,19 +76,7 @@ describe('Tag `@skyux/packages`', () => {
       }
 
       // migration-collection.json
-      return {
-        schematics: {
-          noop: {
-            version: 'ORIGINAL_VERSION',
-          },
-          'update-peer-dependencies': {
-            version: 'ORIGINAL_VERSION',
-          },
-          'setup-coverage-for-testing-module': {
-            version: 'ORIGINAL_VERSION',
-          },
-        },
-      };
+      return mockMigrationCollectionJson;
     });
 
     spawnSpy = jasmine.createSpy('spawn');
@@ -89,6 +93,7 @@ describe('Tag `@skyux/packages`', () => {
 
     cloneRepoAsAdminSpy = jasmine.createSpy('cloneRepoAsAdmin');
 
+    infoSpy = jasmine.createSpy('info');
     warningSpy = jasmine.createSpy('warning');
 
     mockNpmDryRun = '';
@@ -106,6 +111,7 @@ describe('Tag `@skyux/packages`', () => {
             return '';
         }
       },
+      info: infoSpy,
       warning: warningSpy,
     });
 
@@ -188,7 +194,7 @@ ORIGINAL_CHANGELOG_CONTENT
       {
         schematics: {
           noop: { version: '1.1.0' },
-          'update-peer-dependencies': { version: '1.1.0' },
+          'update-peer-dependencies': { version: 'ORIGINAL_VERSION' },
           'setup-coverage-for-testing-module': { version: 'ORIGINAL_VERSION' }, // <-- should be unchanged
         },
       },
@@ -202,6 +208,30 @@ ORIGINAL_CHANGELOG_CONTENT
       'Updated changelog/package.json for 1.1.0 release',
     ]);
     verifySpawn('git', ['push', 'origin', 'master']);
+  });
+
+  it('should warn if schematic not found', async () => {
+    mockSkyuxPackagesVersion = '1.0.0';
+    mockPackageGroup['@skyux/foobar'] = '^1.0.0';
+
+    // Empty migration-collection.json file.
+    mockMigrationCollectionJson = {
+      schematics: {},
+    };
+
+    const { tagSkyuxPackages } = getUtil();
+
+    await tagSkyuxPackages({
+      changelogUrl: 'https://changelog.com',
+      name: '@skyux/foobar',
+      version: '1.0.0',
+    });
+
+    expect(warningSpy).toHaveBeenCalledWith(
+      `The schematic "noop" was not listed in '${path.join(
+        'mock-working-directory/.skyuxpackagestemp/src/schematics/migrations/migration-collection.json'
+      )}'. Skipping.`
+    );
   });
 
   it('should tag patch releases', async () => {
