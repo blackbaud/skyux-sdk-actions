@@ -55,9 +55,18 @@ function updateSchematicVersions(workingDirectory: string, newVersion: string) {
   );
   const contents = fs.readJsonSync(collectionPath);
 
-  const schematics = ['noop', 'update-peer-dependencies'];
+  const schematics = ['noop'];
   for (const schematic of schematics) {
-    contents.schematics[schematic].version = newVersion;
+    if (contents.schematics[schematic]) {
+      core.info(
+        `Updating the target version for the "${schematic}" schematic to "${newVersion}". (was "${contents.schematics[schematic].version}")`
+      );
+      contents.schematics[schematic].version = newVersion;
+    } else {
+      core.warning(
+        `The schematic "${schematic}" was not listed in '${collectionPath}'. Skipping.`
+      );
+    }
   }
 
   fs.writeJsonSync(collectionPath, contents, { spaces: 2 });

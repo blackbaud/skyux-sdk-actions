@@ -6952,9 +6952,15 @@ ${changelog}`;
 function updateSchematicVersions(workingDirectory, newVersion) {
     const collectionPath = path_1.default.join(workingDirectory, 'src/schematics/migrations/migration-collection.json');
     const contents = fs_extra_1.default.readJsonSync(collectionPath);
-    const schematics = ['noop', 'update-peer-dependencies'];
+    const schematics = ['noop'];
     for (const schematic of schematics) {
-        contents.schematics[schematic].version = newVersion;
+        if (contents.schematics[schematic]) {
+            core.info(`Updating the target version for the "${schematic}" schematic to "${newVersion}". (was "${contents.schematics[schematic].version}")`);
+            contents.schematics[schematic].version = newVersion;
+        }
+        else {
+            core.warning(`The schematic "${schematic}" was not listed in '${collectionPath}'. Skipping.`);
+        }
     }
     fs_extra_1.default.writeJsonSync(collectionPath, contents, { spaces: 2 });
 }
