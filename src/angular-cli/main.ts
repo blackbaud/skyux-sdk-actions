@@ -47,7 +47,7 @@ async function install(): Promise<void> {
     await spawn('npm', [
       'install',
       '--no-save',
-      'blackbaud/skyux-sdk-pipeline-settings',
+      'blackbaud/skyux-sdk-pipeline-settings#browserstack-e2e',
     ]);
   } catch (err) {
     console.error(err);
@@ -187,6 +187,7 @@ async function visual(buildId: string, projectName: string, angularJson: any) {
       '--platform=gh-actions',
       `--project-name=${projectName}`,
       `--project-root=${projectRoot}`,
+      ...getBrowserStackCliArguments(`${buildId}-visual`),
     ]);
 
     if (isPush()) {
