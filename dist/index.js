@@ -26494,6 +26494,7 @@ function visual(buildId, projectName, angularJson) {
                 '--platform=gh-actions',
                 `--project-name=${projectName}`,
                 `--project-root=${projectRoot}`,
+                ...getBrowserStackCliArguments(`${buildId}-visual`),
             ]);
             if (utils_1.isPush()) {
                 yield screenshot_comparator_1.checkNewBaselineScreenshots(repository, buildId);
