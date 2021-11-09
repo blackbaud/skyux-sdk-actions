@@ -54,6 +54,10 @@ inputs:
   visual-baselines-branch:
     description: 'The git branch to commit new baseline screenshots after a successful visual test.'
     required: false
+  visual-baselines-enable-browserstack:
+    description: "Set to 'false' to disable running BrowerStack for visual tests."
+    required: false
+    default: 'true'
   working-directory:
     description: 'Run the action in a different subdirectory.'
     default: './'
