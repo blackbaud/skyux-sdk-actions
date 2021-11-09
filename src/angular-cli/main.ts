@@ -178,7 +178,8 @@ async function visual(buildId: string, projectName: string, angularJson: any) {
 =====================================================
 `);
 
-    await updateChromeDriver();
+    const enableBrowserStack =
+      core.getInput('visual-baselines-enable-browserstack') === 'true';
 
     const args = [
       path.join(
@@ -189,8 +190,10 @@ async function visual(buildId: string, projectName: string, angularJson: any) {
       `--project-root=${projectRoot}`,
     ];
 
-    if (core.getInput('visual-baselines-enable-browserstack') === 'true') {
+    if (enableBrowserStack) {
       args.push(...getBrowserStackCliArguments(`${buildId}-visual`));
+    } else {
+      await updateChromeDriver();
     }
 
     await spawn('node', args);

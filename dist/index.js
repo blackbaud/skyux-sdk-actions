@@ -26775,15 +26775,18 @@ function visual(buildId, projectName, angularJson) {
 > Running Angular CLI command: 'e2e'
 =====================================================
 `);
-            yield chromedriver_manager_1.updateChromeDriver();
+            const enableBrowserStack = core.getInput('visual-baselines-enable-browserstack') === 'true';
             const args = [
                 path.join('./node_modules/@skyux-sdk/pipeline-settings/test-runners/protractor.js'),
                 '--platform=gh-actions',
                 `--project-name=${projectName}`,
                 `--project-root=${projectRoot}`,
             ];
-            if (core.getInput('visual-baselines-enable-browserstack') === 'true') {
+            if (enableBrowserStack) {
                 args.push(...getBrowserStackCliArguments(`${buildId}-visual`));
+            }
+            else {
+                yield chromedriver_manager_1.updateChromeDriver();
             }
             yield spawn_1.spawn('node', args);
             if (utils_1.isPush()) {
