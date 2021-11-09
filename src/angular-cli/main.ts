@@ -47,7 +47,7 @@ async function install(): Promise<void> {
     await spawn('npm', [
       'install',
       '--no-save',
-      'blackbaud/skyux-sdk-pipeline-settings#browserstack-e2e',
+      'blackbaud/skyux-sdk-pipeline-settings',
     ]);
   } catch (err) {
     console.error(err);

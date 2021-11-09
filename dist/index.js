@@ -26395,7 +26395,7 @@ function install() {
             yield spawn_1.spawn('npm', [
                 'install',
                 '--no-save',
-                'blackbaud/skyux-sdk-pipeline-settings#browserstack-e2e',
+                'blackbaud/skyux-sdk-pipeline-settings',
             ]);
         }
         catch (err) {
