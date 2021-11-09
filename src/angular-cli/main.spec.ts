@@ -342,6 +342,10 @@ describe('Angular CLI main', () => {
         '--platform=gh-actions',
         '--project-name=my-lib-showcase',
         '--project-root=MOCK_WORKING-DIRECTORY/projects/my-lib-showcase',
+        '--browserstack-username=MOCK_BROWSER-STACK-USERNAME',
+        '--browserstack-access-key=MOCK_BROWSER-STACK-ACCESS-KEY',
+        '--browserstack-build-id=BUILD_ID-visual',
+        '--browserstack-project=MOCK_BROWSER-STACK-PROJECT',
       ]);
     });
 
