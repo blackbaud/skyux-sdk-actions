@@ -26785,8 +26785,10 @@ function visual(buildId, projectName, angularJson) {
             core.info(`[DEBUG] visual-baselines-enable-browserstack set to: ${core.getInput('visual-baselines-enable-browserstack')}`);
             if (enableBrowserStack) {
                 args.push(...getBrowserStackCliArguments(`${buildId}-visual`));
+                args.push('--visual-baselines-enable-browserstack=true');
             }
             else {
+                args.push('--visual-baselines-enable-browserstack=false');
                 yield chromedriver_manager_1.updateChromeDriver();
             }
             yield spawn_1.spawn('node', args);

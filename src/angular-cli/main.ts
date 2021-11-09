@@ -198,7 +198,9 @@ async function visual(buildId: string, projectName: string, angularJson: any) {
 
     if (enableBrowserStack) {
       args.push(...getBrowserStackCliArguments(`${buildId}-visual`));
+      args.push('--visual-baselines-enable-browserstack=true');
     } else {
+      args.push('--visual-baselines-enable-browserstack=false');
       await updateChromeDriver();
     }
 
