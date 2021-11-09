@@ -26782,6 +26782,7 @@ function visual(buildId, projectName, angularJson) {
                 `--project-name=${projectName}`,
                 `--project-root=${projectRoot}`,
             ];
+            core.info(`[DEBUG] visual-baselines-enable-browserstack set to: ${core.getInput('visual-baselines-enable-browserstack')}`);
             if (enableBrowserStack) {
                 args.push(...getBrowserStackCliArguments(`${buildId}-visual`));
             }
