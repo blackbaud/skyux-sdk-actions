@@ -26782,13 +26782,11 @@ function visual(buildId, projectName, angularJson) {
                 `--project-name=${projectName}`,
                 `--project-root=${projectRoot}`,
             ];
-            core.info(`[DEBUG] visual-baselines-enable-browserstack set to: ${core.getInput('visual-baselines-enable-browserstack')}`);
+            core.info(`[DEBUG] 'visual-baselines-enable-browserstack' set to: '${core.getInput('visual-baselines-enable-browserstack')}'`);
             if (enableBrowserStack) {
                 args.push(...getBrowserStackCliArguments(`${buildId}-visual`));
-                args.push('--visual-baselines-enable-browserstack=true');
             }
             else {
-                args.push('--visual-baselines-enable-browserstack=false');
                 yield chromedriver_manager_1.updateChromeDriver();
             }
             yield spawn_1.spawn('node', args);
@@ -26822,7 +26820,7 @@ function executeAngularCliSteps(buildId) {
             yield tag_skyux_packages_1.tagSkyuxPackages(packageMetadata);
         }
         else {
-            // await coverage(buildId, projectName);
+            yield coverage(buildId, projectName);
             yield visual(buildId, `${projectName}-showcase`, angularJson);
         }
     });

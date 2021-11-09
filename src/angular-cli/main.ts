@@ -191,16 +191,14 @@ async function visual(buildId: string, projectName: string, angularJson: any) {
     ];
 
     core.info(
-      `[DEBUG] visual-baselines-enable-browserstack set to: ${core.getInput(
+      `[DEBUG] 'visual-baselines-enable-browserstack' set to: '${core.getInput(
         'visual-baselines-enable-browserstack'
-      )}`
+      )}'`
     );
 
     if (enableBrowserStack) {
       args.push(...getBrowserStackCliArguments(`${buildId}-visual`));
-      args.push('--visual-baselines-enable-browserstack=true');
     } else {
-      args.push('--visual-baselines-enable-browserstack=false');
       await updateChromeDriver();
     }
 
@@ -242,7 +240,7 @@ export async function executeAngularCliSteps(buildId: string): Promise<void> {
     const packageMetadata = await publishLibrary(projectName);
     await tagSkyuxPackages(packageMetadata);
   } else {
-    // await coverage(buildId, projectName);
+    await coverage(buildId, projectName);
     await visual(buildId, `${projectName}-showcase`, angularJson);
   }
 }
