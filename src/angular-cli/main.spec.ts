@@ -8,6 +8,7 @@ describe('Angular CLI main', () => {
   let e2eDirectoryExists: boolean;
   let fsExtraSpyObj: jasmine.SpyObj<any>;
   let isBrowserStackProjectDefined: boolean;
+  let isE2eBrowserStackEnabled: 'true' | 'false';
   let mockAngularJson: any;
   let mockGlobResults: string[];
   let mockPackageJson: any;
@@ -35,8 +36,13 @@ describe('Angular CLI main', () => {
 
     isBrowserStackProjectDefined = true;
     doValidateDependencies = 'true';
+    isE2eBrowserStackEnabled = 'true';
 
     coreSpyObj.getInput.and.callFake((name: string) => {
+      if (name === 'visual-baselines-enable-browserstack') {
+        return isE2eBrowserStackEnabled;
+      }
+
       if (name === 'browser-stack-project' && !isBrowserStackProjectDefined) {
         return;
       }
@@ -346,6 +352,22 @@ describe('Angular CLI main', () => {
         '--browserstack-access-key=MOCK_BROWSER-STACK-ACCESS-KEY',
         '--browserstack-build-id=BUILD_ID-visual',
         '--browserstack-project=MOCK_BROWSER-STACK-PROJECT',
+      ]);
+    });
+
+    it('should allow disabling BrowserStack', async () => {
+      isE2eBrowserStackEnabled = 'false';
+
+      const { executeAngularCliSteps } = getUtil();
+      await executeAngularCliSteps('BUILD_ID');
+
+      expect(spawnSpy).toHaveBeenCalledWith('node', [
+        path.join(
+          './node_modules/@skyux-sdk/pipeline-settings/test-runners/protractor.js'
+        ),
+        '--platform=gh-actions',
+        '--project-name=my-lib-showcase',
+        '--project-root=MOCK_WORKING-DIRECTORY/projects/my-lib-showcase',
       ]);
     });
 

@@ -178,17 +178,25 @@ async function visual(buildId: string, projectName: string, angularJson: any) {
 =====================================================
 `);
 
-    await updateChromeDriver();
+    const enableBrowserStack =
+      core.getInput('visual-baselines-enable-browserstack') === 'true';
 
-    await spawn('node', [
+    const args = [
       path.join(
         './node_modules/@skyux-sdk/pipeline-settings/test-runners/protractor.js'
       ),
       '--platform=gh-actions',
       `--project-name=${projectName}`,
       `--project-root=${projectRoot}`,
-      ...getBrowserStackCliArguments(`${buildId}-visual`),
-    ]);
+    ];
+
+    if (enableBrowserStack) {
+      args.push(...getBrowserStackCliArguments(`${buildId}-visual`));
+    } else {
+      await updateChromeDriver();
+    }
+
+    await spawn('node', args);
 
     if (isPush()) {
       await checkNewBaselineScreenshots(repository, buildId);
