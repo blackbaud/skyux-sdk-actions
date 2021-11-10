@@ -8,16 +8,13 @@ import { npmPublish } from '../npm-publish';
 import { PackageMetadata } from '../package-metadata';
 import { runLifecycleHook } from '../run-lifecycle-hook';
 import { runNgCommand } from '../run-ng-command';
-import {
-  checkNewBaselineScreenshots,
-  checkNewFailureScreenshots,
-} from '../screenshot-comparator';
 import { spawn } from '../spawn';
 import { tagSkyuxPackages } from '../tag-skyux-packages';
-import { isPullRequest, isPush, isTag } from '../utils';
+import { isTag } from '../utils';
 
-import { updateChromeDriver } from './chromedriver-manager';
 import { validateDependencies } from './validate-dependencies';
+
+// import { visual } from './visual';
 
 function getBrowserStackCliArguments(buildId: string): string[] {
   return [
@@ -148,70 +145,6 @@ async function coverage(buildId: string, projectName: string) {
   }
 }
 
-async function visual(buildId: string, projectName: string, angularJson: any) {
-  const repository = process.env.GITHUB_REPOSITORY!;
-  const projectDefinition = angularJson.projects[projectName];
-
-  try {
-    if (!projectDefinition) {
-      core.warning(
-        `Skipping visual tests because a project named "${projectName}" was not found in the workspace configuration.`
-      );
-      return;
-    }
-
-    const projectRoot = path.join(
-      core.getInput('working-directory'),
-      projectDefinition.root
-    );
-
-    const e2ePath = path.join(projectRoot, 'e2e');
-
-    if (!fs.existsSync(e2ePath)) {
-      core.warning(`Skipping visual tests because "${e2ePath}" was not found.`);
-      return;
-    }
-
-    core.info(`
-=====================================================
-> Running Angular CLI command: 'e2e'
-=====================================================
-`);
-
-    const enableBrowserStack =
-      core.getInput('visual-baselines-enable-browserstack') === 'true';
-
-    const args = [
-      path.join(
-        './node_modules/@skyux-sdk/pipeline-settings/test-runners/protractor.js'
-      ),
-      '--platform=gh-actions',
-      `--project-name=${projectName}`,
-      `--project-root=${projectRoot}`,
-    ];
-
-    if (enableBrowserStack) {
-      args.push(...getBrowserStackCliArguments(`${buildId}-visual`));
-    } else {
-      await updateChromeDriver();
-    }
-
-    await spawn('node', args);
-
-    if (isPush()) {
-      await checkNewBaselineScreenshots(repository, buildId);
-    }
-  } catch (err) {
-    if (isPullRequest()) {
-      await checkNewFailureScreenshots(buildId);
-    }
-
-    console.error('[SKY UX ERROR]:', err);
-    core.setFailed('End-to-end tests failed.');
-    process.exit(1);
-  }
-}
-
 export async function executeAngularCliSteps(buildId: string): Promise<void> {
   const angularJson = fs.readJsonSync(
     path.join(process.cwd(), core.getInput('working-directory'), 'angular.json')
@@ -235,6 +168,8 @@ export async function executeAngularCliSteps(buildId: string): Promise<void> {
     await tagSkyuxPackages(packageMetadata);
   } else {
     await coverage(buildId, projectName);
-    await visual(buildId, `${projectName}-showcase`, angularJson);
+
+    // Disabling visual tests until we can replace Protractor with Cypress.
+    // await visual(buildId, `${projectName}-showcase`, angularJson);
   }
 }

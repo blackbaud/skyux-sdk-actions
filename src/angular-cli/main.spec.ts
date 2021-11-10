@@ -2,13 +2,10 @@ import mock from 'mock-require';
 import path from 'path';
 
 describe('Angular CLI main', () => {
-  let chromeDriverManagerSpy: jasmine.Spy;
   let coreSpyObj: jasmine.SpyObj<any>;
   let doValidateDependencies: 'true' | 'false';
-  let e2eDirectoryExists: boolean;
   let fsExtraSpyObj: jasmine.SpyObj<any>;
   let isBrowserStackProjectDefined: boolean;
-  let isE2eBrowserStackEnabled: 'true' | 'false';
   let mockAngularJson: any;
   let mockGlobResults: string[];
   let mockPackageJson: any;
@@ -16,7 +13,6 @@ describe('Angular CLI main', () => {
   let packageLockExists: boolean;
   let runLifecycleHookSpy: jasmine.Spy;
   let runNgCommandSpy: jasmine.Spy;
-  let screenshotComparatorSpyObj: jasmine.SpyObj<any>;
   let spawnSpy: jasmine.Spy;
   let tagSkyuxPackagesSpy: jasmine.Spy;
   let utilsSpyObj: jasmine.SpyObj<any>;
@@ -36,13 +32,8 @@ describe('Angular CLI main', () => {
 
     isBrowserStackProjectDefined = true;
     doValidateDependencies = 'true';
-    isE2eBrowserStackEnabled = 'true';
 
     coreSpyObj.getInput.and.callFake((name: string) => {
-      if (name === 'visual-baselines-enable-browserstack') {
-        return isE2eBrowserStackEnabled;
-      }
-
       if (name === 'browser-stack-project' && !isBrowserStackProjectDefined) {
         return;
       }
@@ -61,14 +52,9 @@ describe('Angular CLI main', () => {
       'readJsonSync',
     ]);
 
-    e2eDirectoryExists = true;
     packageLockExists = true;
 
     fsExtraSpyObj.existsSync.and.callFake((filePath: string) => {
-      if (filePath.includes('e2e')) {
-        return e2eDirectoryExists;
-      }
-
       if (filePath.includes('package-lock.json')) {
         return packageLockExists;
       }
@@ -129,12 +115,6 @@ describe('Angular CLI main', () => {
       runNgCommand: runNgCommandSpy,
     });
 
-    screenshotComparatorSpyObj = jasmine.createSpyObj('screenshot-comparator', [
-      'checkNewBaselineScreenshots',
-      'checkNewFailureScreenshots',
-    ]);
-    mock('../screenshot-comparator', screenshotComparatorSpyObj);
-
     spawnSpy = jasmine.createSpy('spawn');
     mock('../spawn', {
       spawn: spawnSpy,
@@ -151,12 +131,6 @@ describe('Angular CLI main', () => {
       'isTag',
     ]);
     mock('../utils', utilsSpyObj);
-
-    chromeDriverManagerSpy = jasmine.createSpy('updateChromeDriver');
-
-    mock('./chromedriver-manager', {
-      updateChromeDriver: chromeDriverManagerSpy,
-    });
 
     validateDependenciesSpy = jasmine.createSpy('validateDependencies');
 
@@ -333,113 +307,6 @@ describe('Angular CLI main', () => {
       expect(coreSpyObj.warning).toHaveBeenCalledWith(
         'Skipping code coverage because spec files were not found.'
       );
-    });
-  });
-
-  describe('visual tests', () => {
-    it('should run visual tests', async () => {
-      const { executeAngularCliSteps } = getUtil();
-      await executeAngularCliSteps('BUILD_ID');
-
-      expect(spawnSpy).toHaveBeenCalledWith('node', [
-        path.join(
-          './node_modules/@skyux-sdk/pipeline-settings/test-runners/protractor.js'
-        ),
-        '--platform=gh-actions',
-        '--project-name=my-lib-showcase',
-        '--project-root=MOCK_WORKING-DIRECTORY/projects/my-lib-showcase',
-        '--browserstack-username=MOCK_BROWSER-STACK-USERNAME',
-        '--browserstack-access-key=MOCK_BROWSER-STACK-ACCESS-KEY',
-        '--browserstack-build-id=BUILD_ID-visual',
-        '--browserstack-project=MOCK_BROWSER-STACK-PROJECT',
-      ]);
-    });
-
-    it('should allow disabling BrowserStack', async () => {
-      isE2eBrowserStackEnabled = 'false';
-
-      const { executeAngularCliSteps } = getUtil();
-      await executeAngularCliSteps('BUILD_ID');
-
-      expect(spawnSpy).toHaveBeenCalledWith('node', [
-        path.join(
-          './node_modules/@skyux-sdk/pipeline-settings/test-runners/protractor.js'
-        ),
-        '--platform=gh-actions',
-        '--project-name=my-lib-showcase',
-        '--project-root=MOCK_WORKING-DIRECTORY/projects/my-lib-showcase',
-      ]);
-    });
-
-    it('should abort visual tests if e2e directory not found', async () => {
-      e2eDirectoryExists = false;
-
-      const { executeAngularCliSteps } = getUtil();
-      await executeAngularCliSteps('BUILD_ID');
-
-      expect(coreSpyObj.warning).toHaveBeenCalledWith(
-        'Skipping visual tests because "MOCK_WORKING-DIRECTORY/projects/my-lib-showcase/e2e" was not found.'
-      );
-    });
-
-    it('should abort visual tests if showcase app not found', async () => {
-      delete mockAngularJson.projects['my-lib-showcase'];
-
-      const { executeAngularCliSteps } = getUtil();
-      await executeAngularCliSteps('BUILD_ID');
-
-      expect(coreSpyObj.warning).toHaveBeenCalledWith(
-        'Skipping visual tests because a project named "my-lib-showcase" was not found in the workspace configuration.'
-      );
-    });
-
-    it('should handle errors when running visual tests', async () => {
-      const { executeAngularCliSteps } = getUtil();
-
-      spawnSpy.and.callFake((command: string, args: string[]) => {
-        if (command === 'node' && args.join('').includes('protractor')) {
-          throw new Error('something bad happened');
-        }
-      });
-      spyOn(process, 'exit');
-
-      await executeAngularCliSteps('BUILD_ID');
-
-      expect(coreSpyObj.setFailed).toHaveBeenCalledWith(
-        'End-to-end tests failed.'
-      );
-    });
-
-    it('should check baselines on a push', async () => {
-      utilsSpyObj.isPush.and.returnValue(true);
-
-      const { executeAngularCliSteps } = getUtil();
-
-      await executeAngularCliSteps('BUILD_ID');
-
-      expect(
-        screenshotComparatorSpyObj.checkNewBaselineScreenshots
-      ).toHaveBeenCalledWith('org/repo', 'BUILD_ID');
-    });
-
-    it('should commit failure screenshots for pull requests', async () => {
-      utilsSpyObj.isPullRequest.and.returnValue(true);
-
-      const { executeAngularCliSteps } = getUtil();
-
-      spawnSpy.and.callFake((command: string, args: string[]) => {
-        if (command === 'node' && args.join('').includes('protractor')) {
-          throw new Error('something bad happened');
-        }
-      });
-
-      spyOn(process, 'exit');
-
-      await executeAngularCliSteps('BUILD_ID');
-
-      expect(
-        screenshotComparatorSpyObj.checkNewFailureScreenshots
-      ).toHaveBeenCalledWith('BUILD_ID');
     });
   });
 
