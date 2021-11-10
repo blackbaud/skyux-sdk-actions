@@ -47,7 +47,7 @@ async function install(): Promise<void> {
     await spawn('npm', [
       'install',
       '--no-save',
-      'blackbaud/skyux-sdk-pipeline-settings#chrome-args',
+      'blackbaud/skyux-sdk-pipeline-settings',
     ]);
   } catch (err) {
     console.error(err);
@@ -189,12 +189,6 @@ async function visual(buildId: string, projectName: string, angularJson: any) {
       `--project-name=${projectName}`,
       `--project-root=${projectRoot}`,
     ];
-
-    core.info(
-      `[DEBUG] 'visual-baselines-enable-browserstack' set to: '${core.getInput(
-        'visual-baselines-enable-browserstack'
-      )}'`
-    );
 
     if (enableBrowserStack) {
       args.push(...getBrowserStackCliArguments(`${buildId}-visual`));
