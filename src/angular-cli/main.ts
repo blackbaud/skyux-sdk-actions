@@ -166,6 +166,7 @@ export async function executeAngularCliSteps(buildId: string): Promise<void> {
     await tagSkyuxPackages(packageMetadata);
   } else {
     await coverage(buildId, projectName);
+
     // Disabling visual tests until we can replace Protractor with Cypress.
     // await visual(buildId, `${projectName}-showcase`, angularJson);
   }
