@@ -21,9 +21,12 @@ describe('Angular CLI main', () => {
   beforeEach(() => {
     process.env.GITHUB_REPOSITORY = 'org/repo';
 
+    spyOn(process, 'exit');
+
     spyOn(console, 'error');
 
     coreSpyObj = jasmine.createSpyObj('core', [
+      'exportVariable',
       'getInput',
       'info',
       'setFailed',
@@ -71,7 +74,6 @@ describe('Angular CLI main', () => {
           root: 'projects/my-lib-showcase',
         },
       },
-      defaultProject: 'my-lib',
     };
 
     mockPackageJson = {
@@ -163,7 +165,6 @@ describe('Angular CLI main', () => {
 
   it('should handle installation errors', async () => {
     spawnSpy.and.throwError(new Error('something bad happened'));
-    spyOn(process, 'exit');
 
     const { executeAngularCliSteps } = getUtil();
 
@@ -190,7 +191,7 @@ describe('Angular CLI main', () => {
     const { executeAngularCliSteps } = getUtil();
     await executeAngularCliSteps();
     expect(runNgCommandSpy).toHaveBeenCalledWith('build', [
-      'my-lib',
+      '--project=MOCK_PROJECT',
       '--configuration=production',
     ]);
   });
@@ -199,7 +200,6 @@ describe('Angular CLI main', () => {
     const { executeAngularCliSteps } = getUtil();
 
     runNgCommandSpy.and.throwError(new Error('something bad happened'));
-    spyOn(process, 'exit');
 
     await executeAngularCliSteps();
 
@@ -222,7 +222,7 @@ describe('Angular CLI main', () => {
   it('should validate dependencies', async () => {
     const { executeAngularCliSteps } = getUtil();
     await executeAngularCliSteps();
-    expect(validateDependenciesSpy).toHaveBeenCalledWith('my-lib');
+    expect(validateDependenciesSpy).toHaveBeenCalledWith('MOCK_PROJECT');
   });
 
   it('should not validate dependencies if "validate-dependencies" is set to "false"', async () => {
@@ -237,64 +237,29 @@ describe('Angular CLI main', () => {
       const { executeAngularCliSteps } = getUtil();
       await executeAngularCliSteps();
 
-      expect(spawnSpy).toHaveBeenCalledWith('node', [
-        path.join(
-          './node_modules/@skyux-sdk/pipeline-settings/test-runners/karma.js'
-        ),
-        '--platform=gh-actions',
-        '--project-name=my-lib',
-        '--browserstack-username=MOCK_BROWSER-STACK-USERNAME',
-        '--browserstack-access-key=MOCK_BROWSER-STACK-ACCESS-KEY',
-        '--browserstack-build-id=BUILD_ID-coverage',
-        '--browserstack-project=MOCK_BROWSER-STACK-PROJECT',
-        '--code-coverage-browser-set=MOCK_CODE-COVERAGE-BROWSER-SET',
-        '--code-coverage-threshold-branches=MOCK_CODE-COVERAGE-THRESHOLD-BRANCHES',
-        '--code-coverage-threshold-functions=MOCK_CODE-COVERAGE-THRESHOLD-FUNCTIONS',
-        '--code-coverage-threshold-lines=MOCK_CODE-COVERAGE-THRESHOLD-LINES',
-        '--code-coverage-threshold-statements=MOCK_CODE-COVERAGE-THRESHOLD-STATEMENTS',
+      expect(runNgCommandSpy).toHaveBeenCalledWith('test', [
+        '--karma-config=./node_modules/@skyux-sdk/pipeline-settings/platforms/gh-actions/karma/karma.angular-cli.conf.js',
+        '--progress=false',
+        '--project=MOCK_PROJECT',
+        '--source-map',
+        '--watch=false',
       ]);
     });
 
     it('should handle errors when running code coverage', async () => {
       const { executeAngularCliSteps } = getUtil();
 
-      spawnSpy.and.callFake((command: string) => {
-        if (command === 'node') {
+      runNgCommandSpy.and.callFake((command: string) => {
+        if (command === 'test') {
           throw new Error('something bad happened');
         }
       });
-      spyOn(process, 'exit');
 
       await executeAngularCliSteps();
 
       expect(coreSpyObj.setFailed).toHaveBeenCalledWith(
         'Code coverage failed.'
       );
-    });
-
-    it('should default "browser-stack-project" to the GitHub repository if undefined', async () => {
-      isBrowserStackProjectDefined = false;
-
-      const { executeAngularCliSteps } = getUtil();
-
-      await executeAngularCliSteps();
-
-      expect(spawnSpy).toHaveBeenCalledWith('node', [
-        path.join(
-          './node_modules/@skyux-sdk/pipeline-settings/test-runners/karma.js'
-        ),
-        '--platform=gh-actions',
-        '--project-name=my-lib',
-        '--browserstack-username=MOCK_BROWSER-STACK-USERNAME',
-        '--browserstack-access-key=MOCK_BROWSER-STACK-ACCESS-KEY',
-        '--browserstack-build-id=BUILD_ID-coverage',
-        '--browserstack-project=org/repo',
-        '--code-coverage-browser-set=MOCK_CODE-COVERAGE-BROWSER-SET',
-        '--code-coverage-threshold-branches=MOCK_CODE-COVERAGE-THRESHOLD-BRANCHES',
-        '--code-coverage-threshold-functions=MOCK_CODE-COVERAGE-THRESHOLD-FUNCTIONS',
-        '--code-coverage-threshold-lines=MOCK_CODE-COVERAGE-THRESHOLD-LINES',
-        '--code-coverage-threshold-statements=MOCK_CODE-COVERAGE-THRESHOLD-STATEMENTS',
-      ]);
     });
 
     it('should abort if no specs', async () => {
@@ -318,7 +283,7 @@ describe('Angular CLI main', () => {
     await executeAngularCliSteps();
 
     expect(npmPublishSpy).toHaveBeenCalledWith(
-      path.join(process.cwd(), 'MOCK_WORKING-DIRECTORY/dist/my-lib')
+      path.join(process.cwd(), 'MOCK_WORKING-DIRECTORY/dist/MOCK_PROJECT')
     );
 
     expect(tagSkyuxPackagesSpy).toHaveBeenCalledWith({});
