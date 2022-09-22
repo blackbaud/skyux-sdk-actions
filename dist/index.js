@@ -5772,7 +5772,7 @@ async function run() {
     // Determine if running Angular CLI.
     if (!packageJson.devDependencies['@skyux-sdk/builder']) {
         core.info('Angular CLI detected.');
-        await (0, main_1.executeAngularCliSteps)(BUILD_ID);
+        await (0, main_1.executeAngularCliSteps)();
         return;
     }
     await install();
@@ -25986,7 +25986,7 @@ async function publishLibrary(projectName) {
     const distPath = path.join(process.cwd(), core.getInput('working-directory'), 'dist', projectName);
     return (0, npm_publish_1.npmPublish)(distPath);
 }
-async function coverage(buildId, projectName) {
+async function coverage(projectName) {
     core.info(`
 =====================================================
 > Running Angular CLI command: 'test'
@@ -26020,7 +26020,7 @@ async function coverage(buildId, projectName) {
         process.exit(1);
     }
 }
-async function executeAngularCliSteps(buildId) {
+async function executeAngularCliSteps() {
     const projectName = core.getInput('project');
     if (core.getInput('validate-dependencies') === 'true') {
         (0, validate_dependencies_1.validateDependencies)(projectName);
@@ -26034,7 +26034,7 @@ async function executeAngularCliSteps(buildId) {
         await (0, tag_skyux_packages_1.tagSkyuxPackages)(packageMetadata);
     }
     else {
-        await coverage(buildId, projectName);
+        await coverage(projectName);
         // Disabling visual tests until we can replace Protractor with Cypress.
         // await visual(buildId, `${projectName}-showcase`, angularJson);
     }
