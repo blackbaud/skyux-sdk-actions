@@ -153,9 +153,14 @@ export async function executeAngularCliSteps(buildId: string): Promise<void> {
     validateDependencies(projectName);
   }
 
+  // Needed to get WebkitHeadless working.
+  await spawn('sudo', ['apt-get', 'install', 'opus-tools', 'libharfbuzz-icu']);
+
   await install();
 
   await runLifecycleHook('hook-before-script');
+
+  await coverage(buildId, projectName);
 
   await buildLibrary(projectName);
 
@@ -164,8 +169,7 @@ export async function executeAngularCliSteps(buildId: string): Promise<void> {
     const packageMetadata = await publishLibrary(projectName);
     await tagSkyuxPackages(packageMetadata);
   } else {
-    await coverage(buildId, projectName);
-
+    // await coverage(buildId, projectName);
     // Disabling visual tests until we can replace Protractor with Cypress.
     // await visual(buildId, `${projectName}-showcase`, angularJson);
   }
