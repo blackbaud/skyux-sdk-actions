@@ -154,7 +154,7 @@ export async function executeAngularCliSteps(buildId: string): Promise<void> {
   }
 
   // Needed to get WebkitHeadless working.
-  await spawn('sudo', ['apt-get', 'install', 'opus-tools', 'libharfbuzz-icu']);
+  await spawn('sudo', ['apt-get', 'install', 'opus-tools', 'libharfbuzz']);
 
   await install();
 
