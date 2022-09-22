@@ -150,14 +150,14 @@ describe('Angular CLI main', () => {
 
   it('should run `npm ci` if package-lock exists', async () => {
     const { executeAngularCliSteps } = getUtil();
-    await executeAngularCliSteps('BUILD_ID');
+    await executeAngularCliSteps();
     expect(spawnSpy).toHaveBeenCalledWith('npm', ['ci']);
   });
 
   it('should run `npm install` if package-lock not found', async () => {
     packageLockExists = false;
     const { executeAngularCliSteps } = getUtil();
-    await executeAngularCliSteps('BUILD_ID');
+    await executeAngularCliSteps();
     expect(spawnSpy).toHaveBeenCalledWith('npm', ['install']);
   });
 
@@ -167,7 +167,7 @@ describe('Angular CLI main', () => {
 
     const { executeAngularCliSteps } = getUtil();
 
-    await executeAngularCliSteps('BUILD_ID');
+    await executeAngularCliSteps();
 
     expect(coreSpyObj.setFailed).toHaveBeenCalledWith(
       'Packages installation failed.'
@@ -177,7 +177,7 @@ describe('Angular CLI main', () => {
   it('should run lifecycle hooks', async () => {
     const { executeAngularCliSteps } = getUtil();
 
-    await executeAngularCliSteps('BUILD_ID');
+    await executeAngularCliSteps();
 
     expect(runLifecycleHookSpy.calls.allArgs()).toEqual([
       ['hook-before-script'],
@@ -188,7 +188,7 @@ describe('Angular CLI main', () => {
 
   it('should build the library', async () => {
     const { executeAngularCliSteps } = getUtil();
-    await executeAngularCliSteps('BUILD_ID');
+    await executeAngularCliSteps();
     expect(runNgCommandSpy).toHaveBeenCalledWith('build', [
       'my-lib',
       '--configuration=production',
@@ -201,7 +201,7 @@ describe('Angular CLI main', () => {
     runNgCommandSpy.and.throwError(new Error('something bad happened'));
     spyOn(process, 'exit');
 
-    await executeAngularCliSteps('BUILD_ID');
+    await executeAngularCliSteps();
 
     expect(coreSpyObj.setFailed).toHaveBeenCalledWith('Library build failed.');
   });
@@ -212,7 +212,7 @@ describe('Angular CLI main', () => {
 
     const { executeAngularCliSteps } = getUtil();
 
-    await executeAngularCliSteps('BUILD_ID');
+    await executeAngularCliSteps();
 
     expect(runNgCommandSpy).toHaveBeenCalledWith('generate', [
       '@skyux-sdk/documentation-schematics:documentation',
@@ -221,21 +221,21 @@ describe('Angular CLI main', () => {
 
   it('should validate dependencies', async () => {
     const { executeAngularCliSteps } = getUtil();
-    await executeAngularCliSteps('BUILD_ID');
+    await executeAngularCliSteps();
     expect(validateDependenciesSpy).toHaveBeenCalledWith('my-lib');
   });
 
   it('should not validate dependencies if "validate-dependencies" is set to "false"', async () => {
     doValidateDependencies = 'false';
     const { executeAngularCliSteps } = getUtil();
-    await executeAngularCliSteps('BUILD_ID');
+    await executeAngularCliSteps();
     expect(validateDependenciesSpy).not.toHaveBeenCalled();
   });
 
   describe('code coverage', () => {
     it('should run code coverage', async () => {
       const { executeAngularCliSteps } = getUtil();
-      await executeAngularCliSteps('BUILD_ID');
+      await executeAngularCliSteps();
 
       expect(spawnSpy).toHaveBeenCalledWith('node', [
         path.join(
@@ -265,7 +265,7 @@ describe('Angular CLI main', () => {
       });
       spyOn(process, 'exit');
 
-      await executeAngularCliSteps('BUILD_ID');
+      await executeAngularCliSteps();
 
       expect(coreSpyObj.setFailed).toHaveBeenCalledWith(
         'Code coverage failed.'
@@ -277,7 +277,7 @@ describe('Angular CLI main', () => {
 
       const { executeAngularCliSteps } = getUtil();
 
-      await executeAngularCliSteps('BUILD_ID');
+      await executeAngularCliSteps();
 
       expect(spawnSpy).toHaveBeenCalledWith('node', [
         path.join(
@@ -302,7 +302,7 @@ describe('Angular CLI main', () => {
 
       const { executeAngularCliSteps } = getUtil();
 
-      await executeAngularCliSteps('BUILD_ID');
+      await executeAngularCliSteps();
 
       expect(coreSpyObj.warning).toHaveBeenCalledWith(
         'Skipping code coverage because spec files were not found.'
@@ -315,7 +315,7 @@ describe('Angular CLI main', () => {
     npmPublishSpy.and.returnValue({});
 
     const { executeAngularCliSteps } = getUtil();
-    await executeAngularCliSteps('BUILD_ID');
+    await executeAngularCliSteps();
 
     expect(npmPublishSpy).toHaveBeenCalledWith(
       path.join(process.cwd(), 'MOCK_WORKING-DIRECTORY/dist/my-lib')

@@ -171,7 +171,7 @@ async function run(): Promise<void> {
   // Determine if running Angular CLI.
   if (!packageJson.devDependencies['@skyux-sdk/builder']) {
     core.info('Angular CLI detected.');
-    await executeAngularCliSteps(BUILD_ID);
+    await executeAngularCliSteps();
     return;
   }
 

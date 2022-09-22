@@ -80,7 +80,7 @@ async function publishLibrary(projectName: string): Promise<PackageMetadata> {
   return npmPublish(distPath);
 }
 
-async function coverage(buildId: string, projectName: string) {
+async function coverage(projectName: string) {
   core.info(`
 =====================================================
 > Running Angular CLI command: 'test'
@@ -147,7 +147,7 @@ async function coverage(buildId: string, projectName: string) {
   }
 }
 
-export async function executeAngularCliSteps(buildId: string): Promise<void> {
+export async function executeAngularCliSteps(): Promise<void> {
   const projectName = core.getInput('project');
 
   if (core.getInput('validate-dependencies') === 'true') {
@@ -165,7 +165,7 @@ export async function executeAngularCliSteps(buildId: string): Promise<void> {
     const packageMetadata = await publishLibrary(projectName);
     await tagSkyuxPackages(packageMetadata);
   } else {
-    await coverage(buildId, projectName);
+    await coverage(projectName);
 
     // Disabling visual tests until we can replace Protractor with Cypress.
     // await visual(buildId, `${projectName}-showcase`, angularJson);
