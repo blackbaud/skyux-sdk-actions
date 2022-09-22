@@ -5653,10 +5653,13 @@ const spawn_1 = __webpack_require__(820);
 const tag_skyux_packages_1 = __webpack_require__(5);
 const utils_1 = __webpack_require__(611);
 // Generate a unique build name to be used by BrowserStack.
-const repoName = process.env.GITHUB_REPOSITORY
-    ? process.env.GITHUB_REPOSITORY.split('/')[1]
-    : 'github-';
-const BUILD_ID = `${repoName}-${process.env.GITHUB_EVENT_NAME}-${process.env.GITHUB_RUN_ID}-${Date.now()}`;
+const BUILD_ID = generateBuildId();
+function generateBuildId() {
+    const repoName = process.env.GITHUB_REPOSITORY
+        ? process.env.GITHUB_REPOSITORY.split('/')[1]
+        : 'github-';
+    return `${repoName}-${process.env.GITHUB_EVENT_NAME}-${process.env.GITHUB_RUN_ID}-${Date.now()}`;
+}
 async function installCerts() {
     try {
         await (0, run_skyux_command_1.runSkyUxCommand)('certs', ['install']);
@@ -25934,16 +25937,6 @@ const tag_skyux_packages_1 = __webpack_require__(5);
 const utils_1 = __webpack_require__(611);
 const validate_dependencies_1 = __webpack_require__(468);
 // import { visual } from './visual';
-// function getBrowserStackCliArguments(buildId: string): string[] {
-//   return [
-//     `--browserstack-username=${core.getInput('browser-stack-username')}`,
-//     `--browserstack-access-key=${core.getInput('browser-stack-access-key')}`,
-//     `--browserstack-build-id=${buildId}`,
-//     `--browserstack-project=${
-//       core.getInput('browser-stack-project') || process.env.GITHUB_REPOSITORY
-//     }`,
-//   ];
-// }
 async function install() {
     try {
         const packageLock = path.join(process.cwd(), core.getInput('working-directory'), 'package-lock.json');
@@ -26006,11 +25999,11 @@ async function coverage(buildId, projectName) {
             core.warning('Skipping code coverage because spec files were not found.');
             return;
         }
-        process.env.SKY_UX_CODE_COVERAGE_THRESHOLD_BRANCHES = core.getInput('code-coverage-threshold-branches');
-        process.env.SKY_UX_CODE_COVERAGE_THRESHOLD_FUNCTIONS = core.getInput('code-coverage-threshold-functions');
-        process.env.SKY_UX_CODE_COVERAGE_THRESHOLD_LINES = core.getInput('code-coverage-threshold-lines');
-        process.env.SKY_UX_CODE_COVERAGE_THRESHOLD_STATEMENTS = core.getInput('code-coverage-threshold-statements');
-        process.env.SKY_UX_CODE_COVERAGE_BROWSER_SET = core.getInput('code-coverage-browser-set');
+        core.exportVariable('SKY_UX_CODE_COVERAGE_THRESHOLD_BRANCHES', core.getInput('code-coverage-threshold-branches'));
+        core.exportVariable('SKY_UX_CODE_COVERAGE_THRESHOLD_FUNCTIONS', core.getInput('code-coverage-threshold-functions'));
+        core.exportVariable('SKY_UX_CODE_COVERAGE_THRESHOLD_LINES', core.getInput('code-coverage-threshold-lines'));
+        core.exportVariable('SKY_UX_CODE_COVERAGE_THRESHOLD_STATEMENTS', core.getInput('code-coverage-threshold-statements'));
+        core.exportVariable('SKY_UX_CODE_COVERAGE_BROWSER_SET', core.getInput('code-coverage-browser-set'));
         await (0, run_ng_command_1.runNgCommand)('test', [
             `--project=${projectName}`,
             '--watch=false',
@@ -26026,53 +26019,6 @@ async function coverage(buildId, projectName) {
         process.exit(1);
     }
 }
-// Since we've migrated to the monorepo, exclude the following projects from executing this action.
-// const EXCLUDE_PROJECTS = [
-//   'a11y',
-//   'action-bars',
-//   'ag-grid',
-//   'angular-tree-component',
-//   'animations',
-//   'assets',
-//   'autonumeric',
-//   'avatar',
-//   'colorpicker',
-//   'config',
-//   'core',
-//   'data-manager',
-//   'datetime',
-//   'errors',
-//   'flyout',
-//   'forms',
-//   'grids',
-//   'http',
-//   'i18n',
-//   'indicators',
-//   'inline-form',
-//   'layout',
-//   'list-builder',
-//   'list-builder-common',
-//   'list-builder-view-checklist',
-//   'list-builder-view-grids',
-//   'lists',
-//   'lookup',
-//   'modals',
-//   'navbar',
-//   'omnibar-interop',
-//   'pages',
-//   'phone-field',
-//   'popovers',
-//   'progress-indicator',
-//   'router',
-//   'select-field',
-//   'split-view',
-//   'tabs',
-//   'text-editor',
-//   'theme',
-//   'tiles',
-//   'toast',
-//   'validation',
-// ];
 async function executeAngularCliSteps(buildId) {
     const projectName = core.getInput('project');
     if (core.getInput('validate-dependencies') === 'true') {

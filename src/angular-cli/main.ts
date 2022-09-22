@@ -16,17 +16,6 @@ import { validateDependencies } from './validate-dependencies';
 
 // import { visual } from './visual';
 
-// function getBrowserStackCliArguments(buildId: string): string[] {
-//   return [
-//     `--browserstack-username=${core.getInput('browser-stack-username')}`,
-//     `--browserstack-access-key=${core.getInput('browser-stack-access-key')}`,
-//     `--browserstack-build-id=${buildId}`,
-//     `--browserstack-project=${
-//       core.getInput('browser-stack-project') || process.env.GITHUB_REPOSITORY
-//     }`,
-//   ];
-// }
-
 async function install(): Promise<void> {
   try {
     const packageLock = path.join(
@@ -116,24 +105,29 @@ async function coverage(buildId: string, projectName: string) {
       return;
     }
 
-    process.env.SKY_UX_CODE_COVERAGE_THRESHOLD_BRANCHES = core.getInput(
-      'code-coverage-threshold-branches'
+    core.exportVariable(
+      'SKY_UX_CODE_COVERAGE_THRESHOLD_BRANCHES',
+      core.getInput('code-coverage-threshold-branches')
     );
 
-    process.env.SKY_UX_CODE_COVERAGE_THRESHOLD_FUNCTIONS = core.getInput(
-      'code-coverage-threshold-functions'
+    core.exportVariable(
+      'SKY_UX_CODE_COVERAGE_THRESHOLD_FUNCTIONS',
+      core.getInput('code-coverage-threshold-functions')
     );
 
-    process.env.SKY_UX_CODE_COVERAGE_THRESHOLD_LINES = core.getInput(
-      'code-coverage-threshold-lines'
+    core.exportVariable(
+      'SKY_UX_CODE_COVERAGE_THRESHOLD_LINES',
+      core.getInput('code-coverage-threshold-lines')
     );
 
-    process.env.SKY_UX_CODE_COVERAGE_THRESHOLD_STATEMENTS = core.getInput(
-      'code-coverage-threshold-statements'
+    core.exportVariable(
+      'SKY_UX_CODE_COVERAGE_THRESHOLD_STATEMENTS',
+      core.getInput('code-coverage-threshold-statements')
     );
 
-    process.env.SKY_UX_CODE_COVERAGE_BROWSER_SET = core.getInput(
-      'code-coverage-browser-set'
+    core.exportVariable(
+      'SKY_UX_CODE_COVERAGE_BROWSER_SET',
+      core.getInput('code-coverage-browser-set')
     );
 
     await runNgCommand('test', [
@@ -151,54 +145,6 @@ async function coverage(buildId: string, projectName: string) {
     process.exit(1);
   }
 }
-
-// Since we've migrated to the monorepo, exclude the following projects from executing this action.
-// const EXCLUDE_PROJECTS = [
-//   'a11y',
-//   'action-bars',
-//   'ag-grid',
-//   'angular-tree-component',
-//   'animations',
-//   'assets',
-//   'autonumeric',
-//   'avatar',
-//   'colorpicker',
-//   'config',
-//   'core',
-//   'data-manager',
-//   'datetime',
-//   'errors',
-//   'flyout',
-//   'forms',
-//   'grids',
-//   'http',
-//   'i18n',
-//   'indicators',
-//   'inline-form',
-//   'layout',
-//   'list-builder',
-//   'list-builder-common',
-//   'list-builder-view-checklist',
-//   'list-builder-view-grids',
-//   'lists',
-//   'lookup',
-//   'modals',
-//   'navbar',
-//   'omnibar-interop',
-//   'pages',
-//   'phone-field',
-//   'popovers',
-//   'progress-indicator',
-//   'router',
-//   'select-field',
-//   'split-view',
-//   'tabs',
-//   'text-editor',
-//   'theme',
-//   'tiles',
-//   'toast',
-//   'validation',
-// ];
 
 export async function executeAngularCliSteps(buildId: string): Promise<void> {
   const projectName = core.getInput('project');

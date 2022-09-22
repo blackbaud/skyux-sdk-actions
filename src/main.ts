@@ -18,12 +18,17 @@ import { tagSkyuxPackages } from './tag-skyux-packages';
 import { isPullRequest, isPush, isTag } from './utils';
 
 // Generate a unique build name to be used by BrowserStack.
-const repoName = process.env.GITHUB_REPOSITORY
-  ? process.env.GITHUB_REPOSITORY.split('/')[1]
-  : 'github-';
-const BUILD_ID = `${repoName}-${process.env.GITHUB_EVENT_NAME}-${
-  process.env.GITHUB_RUN_ID
-}-${Date.now()}`;
+const BUILD_ID = generateBuildId();
+
+function generateBuildId() {
+  const repoName = process.env.GITHUB_REPOSITORY
+    ? process.env.GITHUB_REPOSITORY.split('/')[1]
+    : 'github-';
+
+  return `${repoName}-${process.env.GITHUB_EVENT_NAME}-${
+    process.env.GITHUB_RUN_ID
+  }-${Date.now()}`;
+}
 
 async function installCerts(): Promise<void> {
   try {
