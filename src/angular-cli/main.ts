@@ -131,11 +131,11 @@ async function coverage(buildId: string, projectName: string) {
     );
 
     await runNgCommand('test', [
-      `--project=${projectName}`,
-      '--watch=false',
-      '--source-map=false',
-      '--progress=false',
       '--karma-config=./node_modules/@skyux-sdk/pipeline-settings/platforms/gh-actions/karma/karma.angular-cli.conf.js',
+      '--progress=false',
+      `--project=${projectName}`,
+      '--source-map',
+      '--watch=false',
     ]);
 
     await runLifecycleHook('hook-after-code-coverage-success');

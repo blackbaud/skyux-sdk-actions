@@ -26005,11 +26005,11 @@ async function coverage(buildId, projectName) {
         core.exportVariable('SKY_UX_CODE_COVERAGE_THRESHOLD_STATEMENTS', core.getInput('code-coverage-threshold-statements'));
         core.exportVariable('SKY_UX_CODE_COVERAGE_BROWSER_SET', core.getInput('code-coverage-browser-set'));
         await (0, run_ng_command_1.runNgCommand)('test', [
-            `--project=${projectName}`,
-            '--watch=false',
-            '--source-map=false',
-            '--progress=false',
             '--karma-config=./node_modules/@skyux-sdk/pipeline-settings/platforms/gh-actions/karma/karma.angular-cli.conf.js',
+            '--progress=false',
+            `--project=${projectName}`,
+            '--source-map',
+            '--watch=false',
         ]);
         await (0, run_lifecycle_hook_1.runLifecycleHook)('hook-after-code-coverage-success');
     }
