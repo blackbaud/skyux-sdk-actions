@@ -26025,7 +26025,7 @@ async function executeAngularCliSteps(buildId) {
         (0, validate_dependencies_1.validateDependencies)(projectName);
     }
     // Needed to get WebkitHeadless working.
-    await (0, spawn_1.spawn)('sudo', ['apt-get', 'install', 'opus-tools', 'libharfbuzz-dev']);
+    // await spawn('sudo', ['apt-get', 'install', 'opus-tools', 'libharfbuzz-dev']);
     await install();
     await (0, run_lifecycle_hook_1.runLifecycleHook)('hook-before-script');
     await coverage(buildId, projectName);
