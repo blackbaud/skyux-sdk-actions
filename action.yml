@@ -44,6 +44,9 @@ inputs:
   npm-token:
     description: 'The NPM token used to publish libraries.'
     required: true
+  project:
+    description: 'The name of the project in angular.json.'
+    required: true
   slack-webhook:
     description: 'The Slack webhook used to push notifications.'
     required: false

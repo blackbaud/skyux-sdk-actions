@@ -61,7 +61,7 @@ export async function npmPublish(distPath?: string): Promise<PackageMetadata> {
     }
   } catch (err) {
     const errorMessage = `\`${packageName}@${version}\` failed to publish to NPM.`;
-    core.setFailed(err.message);
+    core.setFailed((err as Error).message);
     core.setFailed(errorMessage);
     if (!isDryRun) {
       await notifySlack(errorMessage);

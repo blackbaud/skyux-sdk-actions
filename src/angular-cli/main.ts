@@ -16,16 +16,16 @@ import { validateDependencies } from './validate-dependencies';
 
 // import { visual } from './visual';
 
-function getBrowserStackCliArguments(buildId: string): string[] {
-  return [
-    `--browserstack-username=${core.getInput('browser-stack-username')}`,
-    `--browserstack-access-key=${core.getInput('browser-stack-access-key')}`,
-    `--browserstack-build-id=${buildId}`,
-    `--browserstack-project=${
-      core.getInput('browser-stack-project') || process.env.GITHUB_REPOSITORY
-    }`,
-  ];
-}
+// function getBrowserStackCliArguments(buildId: string): string[] {
+//   return [
+//     `--browserstack-username=${core.getInput('browser-stack-username')}`,
+//     `--browserstack-access-key=${core.getInput('browser-stack-access-key')}`,
+//     `--browserstack-build-id=${buildId}`,
+//     `--browserstack-project=${
+//       core.getInput('browser-stack-project') || process.env.GITHUB_REPOSITORY
+//     }`,
+//   ];
+// }
 
 async function install(): Promise<void> {
   try {
@@ -44,7 +44,7 @@ async function install(): Promise<void> {
     await spawn('npm', [
       'install',
       '--no-save',
-      'blackbaud/skyux-sdk-pipeline-settings',
+      'blackbaud/skyux-sdk-pipeline-settings#update-dependencies',
     ]);
   } catch (err) {
     console.error(err);
@@ -59,7 +59,10 @@ async function buildLibrary(projectName: string) {
   );
 
   try {
-    await runNgCommand('build', [projectName, '--configuration=production']);
+    await runNgCommand('build', [
+      `--project=${projectName}`,
+      '--configuration=production',
+    ]);
     if (packageJson.devDependencies['@skyux-sdk/documentation-schematics']) {
       await runNgCommand('generate', [
         '@skyux-sdk/documentation-schematics:documentation',
@@ -113,28 +116,32 @@ async function coverage(buildId: string, projectName: string) {
       return;
     }
 
-    await spawn('node', [
-      path.join(
-        './node_modules/@skyux-sdk/pipeline-settings/test-runners/karma.js'
-      ),
-      '--platform=gh-actions',
-      `--project-name=${projectName}`,
-      ...getBrowserStackCliArguments(`${buildId}-coverage`),
-      `--code-coverage-browser-set=${core.getInput(
-        'code-coverage-browser-set'
-      )}`,
-      `--code-coverage-threshold-branches=${core.getInput(
-        'code-coverage-threshold-branches'
-      )}`,
-      `--code-coverage-threshold-functions=${core.getInput(
-        'code-coverage-threshold-functions'
-      )}`,
-      `--code-coverage-threshold-lines=${core.getInput(
-        'code-coverage-threshold-lines'
-      )}`,
-      `--code-coverage-threshold-statements=${core.getInput(
-        'code-coverage-threshold-statements'
-      )}`,
+    process.env.SKY_UX_CODE_COVERAGE_THRESHOLD_BRANCHES = core.getInput(
+      'code-coverage-threshold-branches'
+    );
+
+    process.env.SKY_UX_CODE_COVERAGE_THRESHOLD_FUNCTIONS = core.getInput(
+      'code-coverage-threshold-functions'
+    );
+
+    process.env.SKY_UX_CODE_COVERAGE_THRESHOLD_LINES = core.getInput(
+      'code-coverage-threshold-lines'
+    );
+
+    process.env.SKY_UX_CODE_COVERAGE_THRESHOLD_STATEMENTS = core.getInput(
+      'code-coverage-threshold-statements'
+    );
+
+    process.env.SKY_UX_CODE_COVERAGE_BROWSER_SET = core.getInput(
+      'code-coverage-browser-set'
+    );
+
+    await runNgCommand('test', [
+      `--project=${projectName}`,
+      '--watch=false',
+      '--source-map=false',
+      '--progress=false',
+      '--karma-config=./node_modules/@skyux-sdk/pipeline-settings/platforms/gh-actions/karma/karma.angular-cli.conf.js',
     ]);
 
     await runLifecycleHook('hook-after-code-coverage-success');
@@ -145,12 +152,56 @@ async function coverage(buildId: string, projectName: string) {
   }
 }
 
-export async function executeAngularCliSteps(buildId: string): Promise<void> {
-  const angularJson = fs.readJsonSync(
-    path.join(process.cwd(), core.getInput('working-directory'), 'angular.json')
-  );
+// Since we've migrated to the monorepo, exclude the following projects from executing this action.
+// const EXCLUDE_PROJECTS = [
+//   'a11y',
+//   'action-bars',
+//   'ag-grid',
+//   'angular-tree-component',
+//   'animations',
+//   'assets',
+//   'autonumeric',
+//   'avatar',
+//   'colorpicker',
+//   'config',
+//   'core',
+//   'data-manager',
+//   'datetime',
+//   'errors',
+//   'flyout',
+//   'forms',
+//   'grids',
+//   'http',
+//   'i18n',
+//   'indicators',
+//   'inline-form',
+//   'layout',
+//   'list-builder',
+//   'list-builder-common',
+//   'list-builder-view-checklist',
+//   'list-builder-view-grids',
+//   'lists',
+//   'lookup',
+//   'modals',
+//   'navbar',
+//   'omnibar-interop',
+//   'pages',
+//   'phone-field',
+//   'popovers',
+//   'progress-indicator',
+//   'router',
+//   'select-field',
+//   'split-view',
+//   'tabs',
+//   'text-editor',
+//   'theme',
+//   'tiles',
+//   'toast',
+//   'validation',
+// ];
 
-  const projectName = angularJson.defaultProject;
+export async function executeAngularCliSteps(buildId: string): Promise<void> {
+  const projectName = core.getInput('project');
 
   if (core.getInput('validate-dependencies') === 'true') {
     validateDependencies(projectName);
