@@ -153,6 +153,10 @@ export async function executeAngularCliSteps(): Promise<void> {
     validateDependencies(projectName);
   }
 
+  // TODO: Figure out way to install more browsers without too much slowdown.
+  core.exportVariable('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD', 1);
+  await spawn('npx', ['playwright', 'install', '--with-deps', 'chrome']);
+
   await install();
 
   await runLifecycleHook('hook-before-script');

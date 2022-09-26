@@ -26024,6 +26024,8 @@ async function executeAngularCliSteps() {
     if (core.getInput('validate-dependencies') === 'true') {
         (0, validate_dependencies_1.validateDependencies)(projectName);
     }
+    core.exportVariable('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD', 1);
+    await (0, spawn_1.spawn)('npx', ['playwright', 'install', '--with-deps', 'chrome']);
     await install();
     await (0, run_lifecycle_hook_1.runLifecycleHook)('hook-before-script');
     await buildLibrary(projectName);
