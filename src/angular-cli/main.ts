@@ -86,6 +86,9 @@ async function coverage(projectName: string) {
 =====================================================
 `);
 
+  // TODO: Figure out way to install more browsers without too much slowdown.
+  await spawn('npx', ['playwright', 'install', '--with-deps', 'chrome']);
+
   try {
     const specs = glob.sync(
       path.join(
@@ -153,9 +156,8 @@ export async function executeAngularCliSteps(): Promise<void> {
     validateDependencies(projectName);
   }
 
-  // TODO: Figure out way to install more browsers without too much slowdown.
+  // Don't install browsers right away.
   core.exportVariable('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD', 1);
-  await spawn('npx', ['playwright', 'install', '--with-deps', 'chrome']);
 
   await install();
 
