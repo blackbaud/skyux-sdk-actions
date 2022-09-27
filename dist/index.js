@@ -25936,7 +25936,6 @@ const spawn_1 = __webpack_require__(820);
 const tag_skyux_packages_1 = __webpack_require__(5);
 const utils_1 = __webpack_require__(611);
 const validate_dependencies_1 = __webpack_require__(468);
-// import { visual } from './visual';
 async function install() {
     try {
         const packageLock = path.join(process.cwd(), core.getInput('working-directory'), 'package-lock.json');
@@ -25949,8 +25948,19 @@ async function install() {
         await (0, spawn_1.spawn)('npm', [
             'install',
             '--no-save',
-            'blackbaud/skyux-sdk-pipeline-settings',
+            '--omit=dev',
+            'blackbaud/skyux-sdk-pipeline-settings#browsers',
         ]);
+        await (0, spawn_1.spawn)('npx', [
+            'playwright',
+            'install',
+            '--with-deps',
+            'chromium',
+            'msedge',
+            'firefox',
+            'webkit',
+        ]);
+        throw new Error('DONE.');
     }
     catch (err) {
         console.error(err);
@@ -25991,8 +26001,6 @@ async function coverage(projectName) {
 > Running Angular CLI command: 'test'
 =====================================================
 `);
-    // TODO: Figure out way to install more browsers without too much slowdown.
-    await (0, spawn_1.spawn)('npx', ['playwright', 'install', '--with-deps', 'chrome']);
     try {
         const specs = glob.sync(path.join(process.cwd(), core.getInput('working-directory'), 'projects', projectName, '**/*.spec.ts'), {
             nodir: true,
@@ -26026,8 +26034,6 @@ async function executeAngularCliSteps() {
     if (core.getInput('validate-dependencies') === 'true') {
         (0, validate_dependencies_1.validateDependencies)(projectName);
     }
-    // Don't install browsers right away.
-    core.exportVariable('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD', 1);
     await install();
     await (0, run_lifecycle_hook_1.runLifecycleHook)('hook-before-script');
     await buildLibrary(projectName);
@@ -26038,8 +26044,6 @@ async function executeAngularCliSteps() {
     }
     else {
         await coverage(projectName);
-        // Disabling visual tests until we can replace Protractor with Cypress.
-        // await visual(buildId, `${projectName}-showcase`, angularJson);
     }
 }
 exports.executeAngularCliSteps = executeAngularCliSteps;

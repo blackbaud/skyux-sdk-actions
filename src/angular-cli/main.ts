@@ -14,8 +14,6 @@ import { isTag } from '../utils';
 
 import { validateDependencies } from './validate-dependencies';
 
-// import { visual } from './visual';
-
 async function install(): Promise<void> {
   try {
     const packageLock = path.join(
@@ -33,8 +31,21 @@ async function install(): Promise<void> {
     await spawn('npm', [
       'install',
       '--no-save',
-      'blackbaud/skyux-sdk-pipeline-settings',
+      '--omit=dev',
+      'blackbaud/skyux-sdk-pipeline-settings#browsers',
     ]);
+
+    await spawn('npx', [
+      'playwright',
+      'install',
+      '--with-deps',
+      'chromium',
+      'msedge',
+      'firefox',
+      'webkit',
+    ]);
+
+    throw new Error('DONE.');
   } catch (err) {
     console.error(err);
     core.setFailed('Packages installation failed.');
@@ -85,9 +96,6 @@ async function coverage(projectName: string) {
 > Running Angular CLI command: 'test'
 =====================================================
 `);
-
-  // TODO: Figure out way to install more browsers without too much slowdown.
-  await spawn('npx', ['playwright', 'install', '--with-deps', 'chrome']);
 
   try {
     const specs = glob.sync(
@@ -156,9 +164,6 @@ export async function executeAngularCliSteps(): Promise<void> {
     validateDependencies(projectName);
   }
 
-  // Don't install browsers right away.
-  core.exportVariable('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD', 1);
-
   await install();
 
   await runLifecycleHook('hook-before-script');
@@ -171,8 +176,5 @@ export async function executeAngularCliSteps(): Promise<void> {
     await tagSkyuxPackages(packageMetadata);
   } else {
     await coverage(projectName);
-
-    // Disabling visual tests until we can replace Protractor with Cypress.
-    // await visual(buildId, `${projectName}-showcase`, angularJson);
   }
 }
