@@ -90,10 +90,14 @@ jobs:
         run: npm ci
       - name: Install pipeline settings
         run: npm install --no-save --omit=dev blackbaud/skyux-sdk-pipeline-settings#browsers
+      - run: npx playwright install --with-deps chromium
+        if: ${{ inputs.code-coverage-browser-set === 'speedy' }}
+      - run: npx playwright install --with-deps chromium msedge
+        if: ${{ inputs.code-coverage-browser-set === 'quirky' }}
+      - run: npx playwright install --with-deps chromium msedge firefox webkit
+        if: ${{ inputs.code-coverage-browser-set === 'paranoid' }}
       - name: Run code coverage
-        run: |
-          npx playwright install --with-deps chromium msedge firefox webkit
-          npx ng test --project=${{ inputs.project }} --code-coverage --watch=false --progress=false --source-map --karma-config=--karma-config=./node_modules/@skyux-sdk/pipeline-settings/platforms/gh-actions/karma/karma.angular-cli.conf.js
+        run: npx ng test --project=${{ inputs.project }} --code-coverage --watch=false --progress=false --source-map --karma-config=--karma-config=./node_modules/@skyux-sdk/pipeline-settings/platforms/gh-actions/karma/karma.angular-cli.conf.js
         env:
           SKY_UX_CODE_COVERAGE_THRESHOLD_BRANCHES: ${{ inputs.code-coverage-threshold-branches }}
           SKY_UX_CODE_COVERAGE_THRESHOLD_FUNCTIONS: ${{ inputs.code-coverage-threshold-functions }}
