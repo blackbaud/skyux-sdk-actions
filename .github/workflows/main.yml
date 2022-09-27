@@ -23,22 +23,13 @@ on:
         description: 'Specifies the minimum required code coverage threshold for statements (e.g. "80").'
         required: false
         default: '100'
-      github-token:
-        description: 'The GitHub personal access token used to commit visual test results.'
-        required: true
       npm-dry-run:
         description: 'Passes the `--dry-run` flag to `npm publish` for testing purposes.'
         default: 'false'
         required: false
-      npm-token:
-        description: 'The NPM token used to publish libraries.'
-        required: true
       project:
         description: 'The name of the project in angular.json.'
         required: true
-      slack-webhook:
-        description: 'The Slack webhook used to push notifications.'
-        required: false
       validate-dependencies:
         description: "Validates the library's dependencies against what is provided in the workspace package.json."
         default: 'true'
