@@ -32,6 +32,7 @@ async function install(): Promise<void> {
       'install',
       '--no-save',
       '--omit=dev',
+      '--audit=false',
       'blackbaud/skyux-sdk-pipeline-settings#browsers',
     ]);
   } catch (err) {
