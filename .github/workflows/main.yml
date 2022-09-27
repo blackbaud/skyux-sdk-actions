@@ -88,7 +88,18 @@ jobs:
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: npm ci
+      - name: Install pipeline settings
+        run: npm install --no-save --omit=dev blackbaud/skyux-sdk-pipeline-settings#browsers
       - name: Run code coverage
-        run: npx ng test ${{ inputs.project }} --code-coverage --watch=false --progress=false
+        run: |
+          npx playwright install --with-deps chromium msedge firefox webkit
+          npx ng test --project=${{ inputs.project }} --code-coverage --watch=false --progress=false --source-map --karma-config=--karma-config=./node_modules/@skyux-sdk/pipeline-settings/platforms/gh-actions/karma/karma.angular-cli.conf.js
+        env:
+          SKY_UX_CODE_COVERAGE_THRESHOLD_BRANCHES: ${{ inputs.code-coverage-threshold-branches }}
+          SKY_UX_CODE_COVERAGE_THRESHOLD_FUNCTIONS: ${{ inputs.code-coverage-threshold-functions }}
+          SKY_UX_CODE_COVERAGE_THRESHOLD_LINES: ${{ inputs.code-coverage-threshold-lines }}
+          SKY_UX_CODE_COVERAGE_THRESHOLD_STATEMENTS: ${{ inputs.code-coverage-threshold-statements }}
+      - run: npx ng build --project=${{ inputs.project }} --configuration=production
+      - run: npx ng lint --project=${{ inputs.project }}
       - name: Upload coverage report
         run: bash <(curl -s https://codecov.io/bash)
