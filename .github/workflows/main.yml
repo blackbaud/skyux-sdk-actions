@@ -1,0 +1,91 @@
+name: SKY UX Main
+
+on:
+  workflow_call:
+    inputs:
+      browser-stack-access-key:
+        description: 'The BrowserStack access key.'
+        required: true
+      browser-stack-project:
+        description: 'The BrowserStack project name. The value is arbitrary and used to identify the appropriate logs.'
+        required: false
+      browser-stack-username:
+        description: 'The BrowserStack username.'
+        required: true
+      code-coverage-browser-set:
+        description: 'The named set of browsers to run against. Possible values: "speedy", "quirky", or "paranoid".'
+        required: false
+        default: 'paranoid'
+      code-coverage-threshold-branches:
+        description: 'Specifies the minimum required code coverage threshold for branches (e.g. "80").'
+        required: false
+        default: '100'
+      code-coverage-threshold-functions:
+        description: 'Specifies the minimum required code coverage threshold for functions (e.g. "80").'
+        required: false
+        default: '100'
+      code-coverage-threshold-lines:
+        description: 'Specifies the minimum required code coverage threshold for lines (e.g. "80").'
+        required: false
+        default: '100'
+      code-coverage-threshold-statements:
+        description: 'Specifies the minimum required code coverage threshold for statements (e.g. "80").'
+        required: false
+        default: '100'
+      github-token:
+        description: 'The GitHub personal access token used to commit visual test results.'
+        required: true
+      npm-dry-run:
+        description: 'Passes the `--dry-run` flag to `npm publish` for testing purposes.'
+        default: 'false'
+        required: false
+      npm-token:
+        description: 'The NPM token used to publish libraries.'
+        required: true
+      project:
+        description: 'The name of the project in angular.json.'
+        required: true
+      slack-webhook:
+        description: 'The Slack webhook used to push notifications.'
+        required: false
+      validate-dependencies:
+        description: "Validates the library's dependencies against what is provided in the workspace package.json."
+        default: 'true'
+        required: false
+      visual-baselines-branch:
+        description: 'The git branch to commit new baseline screenshots after a successful visual test.'
+        required: false
+      working-directory:
+        description: 'Run the action in a different subdirectory.'
+        default: './'
+        required: false
+      hook-after-build-public-library-success:
+        description: 'The path to a Node.js script to run after the SKY UX library is successfully built.'
+        required: false
+      hook-after-code-coverage-success:
+        description: 'The path to a Node.js script to run after code coverage passes.'
+        required: false
+      hook-before-script:
+        description: 'The path to a Node.js script to run before the primary script is executed.'
+        required: false
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    name: Coverage
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+      - name: Cache node modules
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: cache-node-modules-${{ hashFiles('package-lock.json') }}
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: npm ci
+      - name: Run code coverage
+        run: npx ng test ${{ inputs.project }} --code-coverage --watch=false --progress=false
