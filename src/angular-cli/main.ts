@@ -86,6 +86,8 @@ async function coverage(projectName: string) {
 `);
 
   try {
+    await spawn('npx', ['playwright', 'install-deps']);
+
     const specs = glob.sync(
       path.join(
         process.cwd(),
