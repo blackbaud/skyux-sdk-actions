@@ -34,18 +34,6 @@ async function install(): Promise<void> {
       '--omit=dev',
       'blackbaud/skyux-sdk-pipeline-settings#browsers',
     ]);
-
-    await spawn('npx', [
-      'playwright',
-      'install',
-      '--with-deps',
-      'chromium',
-      'msedge',
-      'firefox',
-      'webkit',
-    ]);
-
-    throw new Error('DONE.');
   } catch (err) {
     console.error(err);
     core.setFailed('Packages installation failed.');
@@ -98,6 +86,16 @@ async function coverage(projectName: string) {
 `);
 
   try {
+    await spawn('npx', [
+      'playwright',
+      'install',
+      '--with-deps',
+      'chromium',
+      'msedge',
+      'firefox',
+      'webkit',
+    ]);
+
     const specs = glob.sync(
       path.join(
         process.cwd(),
