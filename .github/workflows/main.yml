@@ -3,15 +3,6 @@ name: SKY UX Main
 on:
   workflow_call:
     inputs:
-      browser-stack-access-key:
-        description: 'The BrowserStack access key.'
-        required: true
-      browser-stack-project:
-        description: 'The BrowserStack project name. The value is arbitrary and used to identify the appropriate logs.'
-        required: false
-      browser-stack-username:
-        description: 'The BrowserStack username.'
-        required: true
       code-coverage-browser-set:
         description: 'The named set of browsers to run against. Possible values: "speedy", "quirky", or "paranoid".'
         required: false
@@ -68,7 +59,13 @@ on:
       hook-before-script:
         description: 'The path to a Node.js script to run before the primary script is executed.'
         required: false
-
+    secrets:
+      GH_PERSONAL_ACCESS_TOKEN:
+        required: false
+      NPM_TOKEN:
+        required: false
+      SLACK_WEBHOOK:
+        required: false
 jobs:
   main:
     runs-on: ubuntu-latest
@@ -89,3 +86,5 @@ jobs:
         run: npm ci
       - name: Run code coverage
         run: npx ng test ${{ inputs.project }} --code-coverage --watch=false --progress=false
+      - name: Upload coverage report
+        run: bash <(curl -s https://codecov.io/bash)
