@@ -25949,7 +25949,7 @@ async function install() {
             '--no-save',
             '--omit=dev',
             '--audit=false',
-            'blackbaud/skyux-sdk-pipeline-settings#browsers',
+            'blackbaud/skyux-sdk-pipeline-settings',
         ]);
     }
     catch (err) {
@@ -25992,15 +25992,6 @@ async function coverage(projectName) {
 =====================================================
 `);
     try {
-        await (0, spawn_1.spawn)('npx', [
-            'playwright',
-            'install',
-            '--with-deps',
-            'chromium',
-            'msedge',
-            'firefox',
-            'webkit',
-        ]);
         const specs = glob.sync(path.join(process.cwd(), core.getInput('working-directory'), 'projects', projectName, '**/*.spec.ts'), {
             nodir: true,
         });

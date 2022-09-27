@@ -9,7 +9,6 @@ import { PackageMetadata } from '../package-metadata';
 import { runLifecycleHook } from '../run-lifecycle-hook';
 import { runNgCommand } from '../run-ng-command';
 import { spawn } from '../spawn';
-import { tagSkyuxPackages } from '../tag-skyux-packages';
 import { isTag } from '../utils';
 
 import { validateDependencies } from './validate-dependencies';
@@ -33,7 +32,7 @@ async function install(): Promise<void> {
       '--no-save',
       '--omit=dev',
       '--audit=false',
-      'blackbaud/skyux-sdk-pipeline-settings#browsers',
+      'blackbaud/skyux-sdk-pipeline-settings',
     ]);
   } catch (err) {
     console.error(err);
@@ -87,16 +86,6 @@ async function coverage(projectName: string) {
 `);
 
   try {
-    await spawn('npx', [
-      'playwright',
-      'install',
-      '--with-deps',
-      'chromium',
-      'msedge',
-      'firefox',
-      'webkit',
-    ]);
-
     const specs = glob.sync(
       path.join(
         process.cwd(),
