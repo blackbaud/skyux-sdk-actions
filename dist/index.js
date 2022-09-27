@@ -25933,7 +25933,6 @@ const npm_publish_1 = __webpack_require__(96);
 const run_lifecycle_hook_1 = __webpack_require__(797);
 const run_ng_command_1 = __webpack_require__(585);
 const spawn_1 = __webpack_require__(820);
-const tag_skyux_packages_1 = __webpack_require__(5);
 const utils_1 = __webpack_require__(611);
 const validate_dependencies_1 = __webpack_require__(468);
 async function install() {
@@ -26038,8 +26037,7 @@ async function executeAngularCliSteps() {
     await buildLibrary(projectName);
     // Don't run tests for tags.
     if ((0, utils_1.isTag)()) {
-        const packageMetadata = await publishLibrary(projectName);
-        await (0, tag_skyux_packages_1.tagSkyuxPackages)(packageMetadata);
+        await publishLibrary(projectName);
     }
     else {
         await coverage(projectName);

@@ -170,8 +170,7 @@ export async function executeAngularCliSteps(): Promise<void> {
 
   // Don't run tests for tags.
   if (isTag()) {
-    const packageMetadata = await publishLibrary(projectName);
-    await tagSkyuxPackages(packageMetadata);
+    await publishLibrary(projectName);
   } else {
     await coverage(projectName);
   }
