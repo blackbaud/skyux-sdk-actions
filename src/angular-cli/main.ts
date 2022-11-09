@@ -30,8 +30,7 @@ async function install(): Promise<void> {
     await spawn('npm', [
       'install',
       '--no-save',
-      '--omit=dev',
-      '--audit=false',
+      '--no-audit',
       'blackbaud/skyux-sdk-pipeline-settings',
     ]);
   } catch (err) {

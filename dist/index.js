@@ -25947,8 +25947,7 @@ async function install() {
         await (0, spawn_1.spawn)('npm', [
             'install',
             '--no-save',
-            '--omit=dev',
-            '--audit=false',
+            '--no-audit',
             'blackbaud/skyux-sdk-pipeline-settings',
         ]);
     }
