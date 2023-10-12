@@ -5,15 +5,6 @@ branding:
   icon: 'box'
   color: 'gray-dark'
 inputs:
-  browser-stack-access-key:
-    description: 'The BrowserStack access key.'
-    required: true
-  browser-stack-project:
-    description: 'The BrowserStack project name. The value is arbitrary and used to identify the appropriate logs.'
-    required: false
-  browser-stack-username:
-    description: 'The BrowserStack username.'
-    required: true
   code-coverage-browser-set:
     description: 'The named set of browsers to run against. Possible values: "speedy", "quirky", or "paranoid".'
     required: false
@@ -53,9 +44,6 @@ inputs:
   validate-dependencies:
     description: "Validates the library's dependencies against what is provided in the workspace package.json."
     default: 'true'
-    required: false
-  visual-baselines-branch:
-    description: 'The git branch to commit new baseline screenshots after a successful visual test.'
     required: false
   working-directory:
     description: 'Run the action in a different subdirectory.'

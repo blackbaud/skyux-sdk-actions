@@ -1,7 +1,7 @@
 import * as github from '@actions/github';
 import { Context } from '@actions/github/lib/context';
 
-import * as utils from './utils';
+import * as utils from './context-utils';
 
 describe('Utils', () => {
   let originalContext: Context;

@@ -42,10 +42,6 @@ on:
         default: true
         required: false
         type: boolean
-      visual-baselines-branch:
-        description: 'The git branch to commit new baseline screenshots after a successful visual test.'
-        required: false
-        type: string
       working-directory:
         description: 'Run the action in a different subdirectory.'
         default: './'
@@ -89,7 +85,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: npm ci
       - name: Install pipeline settings
-        run: npm install --no-save --omit=dev blackbaud/skyux-sdk-pipeline-settings#browsers
+        run: npm install --no-save --omit=dev blackbaud/skyux-sdk-pipeline-settings#cleanup
       - run: npx playwright install --with-deps chromium
         if: ${{ inputs.code-coverage-browser-set == 'speedy' }}
       - run: npx playwright install --with-deps chromium msedge

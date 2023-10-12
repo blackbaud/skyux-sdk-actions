@@ -4,14 +4,13 @@ import * as fs from 'fs-extra';
 import * as glob from 'glob';
 import * as path from 'path';
 
-import { npmPublish } from '../npm-publish';
-import { PackageMetadata } from '../package-metadata';
-import { runLifecycleHook } from '../run-lifecycle-hook';
-import { runNgCommand } from '../run-ng-command';
-import { spawn } from '../spawn';
-import { isTag } from '../utils';
-
-import { validateDependencies } from './validate-dependencies';
+import { isTag } from './utility/context-utils';
+import { npmPublish } from './utility/npm-publish';
+import { PackageMetadata } from './utility/package-metadata';
+import { runLifecycleHook } from './utility/run-lifecycle-hook';
+import { runNgCommand } from './utility/run-ng-command';
+import { spawn } from './utility/spawn';
+import { validateDependencies } from './utility/validate-dependencies';
 
 async function install(): Promise<void> {
   try {

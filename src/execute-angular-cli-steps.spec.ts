@@ -5,7 +5,6 @@ describe('Angular CLI main', () => {
   let coreSpyObj: jasmine.SpyObj<any>;
   let doValidateDependencies: 'true' | 'false';
   let fsExtraSpyObj: jasmine.SpyObj<any>;
-  let isBrowserStackProjectDefined: boolean;
   let mockAngularJson: any;
   let mockGlobResults: string[];
   let mockPackageJson: any;
@@ -33,14 +32,9 @@ describe('Angular CLI main', () => {
       'warning',
     ]);
 
-    isBrowserStackProjectDefined = true;
     doValidateDependencies = 'true';
 
     coreSpyObj.getInput.and.callFake((name: string) => {
-      if (name === 'browser-stack-project' && !isBrowserStackProjectDefined) {
-        return;
-      }
-
       if (name === 'validate-dependencies') {
         return doValidateDependencies;
       }

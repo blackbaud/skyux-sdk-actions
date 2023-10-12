@@ -3,10 +3,10 @@ import * as core from '@actions/core';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 
+import { getTag } from './context-utils';
 import { notifySlack } from './notify-slack';
 import { PackageMetadata } from './package-metadata';
 import { spawn } from './spawn';
-import { getTag } from './utils';
 
 export async function npmPublish(distPath?: string): Promise<PackageMetadata> {
   distPath =
