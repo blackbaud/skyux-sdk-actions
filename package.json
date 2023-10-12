@@ -34,6 +34,7 @@
     "@types/semver": "7.5.3",
     "@typescript-eslint/eslint-plugin": "5.38.0",
     "@typescript-eslint/parser": "5.38.0",
+    "@vercel/ncc": "0.38.0",
     "cross-spawn": "7.0.3",
     "eslint": "8.50.0",
     "eslint-config-prettier": "9.0.0",

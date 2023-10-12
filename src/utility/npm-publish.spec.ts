@@ -87,14 +87,14 @@ describe('npmPublish', () => {
 
     expect(fsSpyObj.writeFileSync).toHaveBeenCalledWith(
       `${path.join(process.cwd(), 'MOCK_WORKING_DIRECTORY', 'dist', '.npmrc')}`,
-      '//registry.npmjs.org/:_authToken=MOCK_TOKEN'
+      '//registry.npmjs.org/:_authToken=MOCK_TOKEN',
     );
 
     expect(infoSpy).toHaveBeenCalledWith(
-      'Successfully published `foo-package@1.2.3` to NPM.'
+      'Successfully published `foo-package@1.2.3` to NPM.',
     );
     expect(slackSpy).toHaveBeenCalledWith(
-      'Successfully published `foo-package@1.2.3` to NPM.\nhttps://github.com/org/repo/blob/1.2.3/CHANGELOG.md'
+      'Successfully published `foo-package@1.2.3` to NPM.\nhttps://github.com/org/repo/blob/1.2.3/CHANGELOG.md',
     );
     expect(spawnSpy).toHaveBeenCalledWith(
       'npm',
@@ -102,7 +102,7 @@ describe('npmPublish', () => {
       {
         cwd: path.join(process.cwd(), 'MOCK_WORKING_DIRECTORY', 'dist'),
         stdio: 'inherit',
-      }
+      },
     );
 
     done();
@@ -122,7 +122,7 @@ describe('npmPublish', () => {
       {
         cwd: path.join(process.cwd(), 'MOCK_WORKING_DIRECTORY', 'dist'),
         stdio: 'inherit',
-      }
+      },
     );
 
     done();
@@ -141,7 +141,7 @@ describe('npmPublish', () => {
       {
         cwd: path.join(process.cwd(), 'MOCK_WORKING_DIRECTORY', 'dist'),
         stdio: 'inherit',
-      }
+      },
     );
 
     done();
@@ -156,10 +156,10 @@ describe('npmPublish', () => {
 
     expect(failedLogSpy).toHaveBeenCalledWith('Something bad happened.');
     expect(failedLogSpy).toHaveBeenCalledWith(
-      '`foo-package@1.2.3` failed to publish to NPM.'
+      '`foo-package@1.2.3` failed to publish to NPM.',
     );
     expect(slackSpy).toHaveBeenCalledWith(
-      '`foo-package@1.2.3` failed to publish to NPM.'
+      '`foo-package@1.2.3` failed to publish to NPM.',
     );
     done();
   });
@@ -174,7 +174,7 @@ describe('npmPublish', () => {
 
     expect(failedLogSpy).toHaveBeenCalledWith('Something bad happened.');
     expect(failedLogSpy).toHaveBeenCalledWith(
-      '`foo-package@1.2.3` failed to publish to NPM.'
+      '`foo-package@1.2.3` failed to publish to NPM.',
     );
     expect(slackSpy).not.toHaveBeenCalled();
     done();
@@ -189,7 +189,7 @@ describe('npmPublish', () => {
     await npmPublish();
 
     expect(failedLogSpy).toHaveBeenCalledWith(
-      'Aborted publishing to NPM because the version listed in package.json (1.0.0) does not match the git tag (1.1.0)!'
+      'Aborted publishing to NPM because the version listed in package.json (1.0.0) does not match the git tag (1.1.0)!',
     );
   });
 });

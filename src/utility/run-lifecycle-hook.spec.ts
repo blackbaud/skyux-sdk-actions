@@ -52,7 +52,7 @@ describe('Run lifecycle hook', () => {
     const { runLifecycleHook } = getUtil();
     await runLifecycleHook('my-lifecycle-hook');
     expect(coreSpyObj.info).toHaveBeenCalledWith(
-      `Lifecycle hook 'my-lifecycle-hook' successfully executed.`
+      `Lifecycle hook 'my-lifecycle-hook' successfully executed.`,
     );
   });
 
@@ -67,7 +67,7 @@ describe('Run lifecycle hook', () => {
     const { runLifecycleHook } = getUtil();
     await runLifecycleHook('my-invalid-lifecycle-hook');
     expect(coreSpyObj.setFailed).toHaveBeenCalledWith(
-      `The lifecycle hook 'my-invalid-lifecycle-hook' was not found or was not exported correctly.`
+      `The lifecycle hook 'my-invalid-lifecycle-hook' was not found or was not exported correctly.`,
     );
   });
 });

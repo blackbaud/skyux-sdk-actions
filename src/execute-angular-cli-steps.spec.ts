@@ -165,7 +165,7 @@ describe('Angular CLI main', () => {
     await executeAngularCliSteps();
 
     expect(coreSpyObj.setFailed).toHaveBeenCalledWith(
-      'Packages installation failed.'
+      'Packages installation failed.',
     );
   });
 
@@ -252,7 +252,7 @@ describe('Angular CLI main', () => {
       await executeAngularCliSteps();
 
       expect(coreSpyObj.setFailed).toHaveBeenCalledWith(
-        'Code coverage failed.'
+        'Code coverage failed.',
       );
     });
 
@@ -264,7 +264,7 @@ describe('Angular CLI main', () => {
       await executeAngularCliSteps();
 
       expect(coreSpyObj.warning).toHaveBeenCalledWith(
-        'Skipping code coverage because spec files were not found.'
+        'Skipping code coverage because spec files were not found.',
       );
     });
   });
@@ -277,7 +277,7 @@ describe('Angular CLI main', () => {
     await executeAngularCliSteps();
 
     expect(npmPublishSpy).toHaveBeenCalledWith(
-      path.join(process.cwd(), 'MOCK_WORKING-DIRECTORY/dist/MOCK_PROJECT')
+      path.join(process.cwd(), 'MOCK_WORKING-DIRECTORY/dist/MOCK_PROJECT'),
     );
 
     expect(tagSkyuxPackagesSpy).toHaveBeenCalledWith({});

@@ -26,7 +26,7 @@ describe('notifySlack', () => {
     const infoStub = spyOn(core, 'info');
     await notifySlack('');
     expect(infoStub).toHaveBeenCalledWith(
-      'No webhook available for Slack notification.'
+      'No webhook available for Slack notification.',
     );
     done();
   });

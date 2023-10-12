@@ -13,12 +13,12 @@ async function run(): Promise<void> {
       ['log', '-1', '--pretty=%B', '--oneline'],
       {
         cwd: process.cwd(),
-      }
+      },
     );
 
     if (message.indexOf('[ci skip]') > -1) {
       core.info(
-        'Found "[ci skip]" in last commit message. Aborting build and test run.'
+        'Found "[ci skip]" in last commit message. Aborting build and test run.',
       );
       process.exit(0);
     }
