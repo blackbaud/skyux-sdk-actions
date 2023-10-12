@@ -85,7 +85,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: npm ci
       - name: Install pipeline settings
-        run: npm install --no-save --omit=dev blackbaud/skyux-sdk-pipeline-settings#cleanup
+        run: npm install --no-save --omit=dev blackbaud/skyux-sdk-pipeline-settings
       - run: npx playwright install --with-deps chromium
         if: ${{ inputs.code-coverage-browser-set == 'speedy' }}
       - run: npx playwright install --with-deps chromium msedge
