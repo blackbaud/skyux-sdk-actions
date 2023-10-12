@@ -51,7 +51,7 @@ function validateDependencySection(
 }
 
 export function validateDependencies(projectName: string): void {
-  core.info('Validationg dependencies...');
+  core.info('Validating dependencies...');
 
   try {
     const basePath = path.join(

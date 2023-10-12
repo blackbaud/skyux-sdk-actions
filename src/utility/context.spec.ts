@@ -1,9 +1,9 @@
 import * as github from '@actions/github';
 import { Context } from '@actions/github/lib/context';
 
-import * as utils from './context-utils';
+import * as utils from './context';
 
-describe('Utils', () => {
+describe('Context', () => {
   let originalContext: Context;
 
   beforeEach(() => {

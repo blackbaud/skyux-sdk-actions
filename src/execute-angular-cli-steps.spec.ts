@@ -13,7 +13,6 @@ describe('Angular CLI main', () => {
   let runLifecycleHookSpy: jasmine.Spy;
   let runNgCommandSpy: jasmine.Spy;
   let spawnSpy: jasmine.Spy;
-  let tagSkyuxPackagesSpy: jasmine.Spy;
   let utilsSpyObj: jasmine.SpyObj<any>;
   let validateDependenciesSpy: jasmine.Spy;
 
@@ -97,28 +96,23 @@ describe('Angular CLI main', () => {
     });
 
     npmPublishSpy = jasmine.createSpy('npmPublish');
-    mock('../npm-publish', {
+    mock('./utility/npm-publish', {
       npmPublish: npmPublishSpy,
     });
 
     runLifecycleHookSpy = jasmine.createSpy('runLifecycleHook');
-    mock('../run-lifecycle-hook', {
+    mock('./utility/run-lifecycle-hook', {
       runLifecycleHook: runLifecycleHookSpy,
     });
 
     runNgCommandSpy = jasmine.createSpy('runNgCommand');
-    mock('../run-ng-command', {
+    mock('./utility/run-ng-command', {
       runNgCommand: runNgCommandSpy,
     });
 
     spawnSpy = jasmine.createSpy('spawn');
-    mock('../spawn', {
+    mock('./utility/spawn', {
       spawn: spawnSpy,
-    });
-
-    tagSkyuxPackagesSpy = jasmine.createSpy('tagSkyuxPackages');
-    mock('../tag-skyux-packages', {
-      tagSkyuxPackages: tagSkyuxPackagesSpy,
     });
 
     utilsSpyObj = jasmine.createSpyObj('utils', [
@@ -126,11 +120,11 @@ describe('Angular CLI main', () => {
       'isPush',
       'isTag',
     ]);
-    mock('../utils', utilsSpyObj);
+    mock('./utility/context', utilsSpyObj);
 
     validateDependenciesSpy = jasmine.createSpy('validateDependencies');
 
-    mock('./validate-dependencies', {
+    mock('./utility/validate-dependencies', {
       validateDependencies: validateDependenciesSpy,
     });
   });
@@ -141,7 +135,7 @@ describe('Angular CLI main', () => {
   });
 
   function getUtil() {
-    return mock.reRequire('./main');
+    return mock.reRequire('./execute-angular-cli-steps');
   }
 
   it('should run `npm ci` if package-lock exists', async () => {
@@ -269,7 +263,7 @@ describe('Angular CLI main', () => {
     });
   });
 
-  it('should release tags', async () => {
+  it('should publish', async () => {
     utilsSpyObj.isTag.and.returnValue(true);
     npmPublishSpy.and.returnValue({});
 
@@ -279,7 +273,5 @@ describe('Angular CLI main', () => {
     expect(npmPublishSpy).toHaveBeenCalledWith(
       path.join(process.cwd(), 'MOCK_WORKING-DIRECTORY/dist/MOCK_PROJECT'),
     );
-
-    expect(tagSkyuxPackagesSpy).toHaveBeenCalledWith({});
   });
 });

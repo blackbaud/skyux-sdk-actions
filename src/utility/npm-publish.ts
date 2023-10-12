@@ -3,7 +3,7 @@ import * as core from '@actions/core';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 
-import { getTag } from './context-utils';
+import { getTag } from './context';
 import { notifySlack } from './notify-slack';
 import { PackageMetadata } from './package-metadata';
 import { spawn } from './spawn';
@@ -28,13 +28,13 @@ export async function npmPublish(distPath?: string): Promise<PackageMetadata> {
 
   if (gitTag !== version) {
     core.setFailed(
-      `Aborted publishing to NPM because the version listed in package.json (${version}) does not match the git tag (${gitTag})!`,
+      `Aborted publishing to NPM because the version listed in package.json (${version}) does not match the git tag (${gitTag})!`
     );
     process.exit(1);
   }
 
   core.info(
-    `Preparing to publish ${packageName}@${version} to NPM from ${distPath}...`,
+    `Preparing to publish ${packageName}@${version} to NPM from ${distPath}...`
   );
 
   await fs.ensureFile(npmFilePath);

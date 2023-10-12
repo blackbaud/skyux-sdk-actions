@@ -3,6 +3,7 @@ import * as slack from '@slack/webhook';
 
 export async function notifySlack(message: string): Promise<void> {
   const url = core.getInput('slack-webhook');
+
   if (url) {
     core.info('Notifying Slack.');
     const webhook = new slack.IncomingWebhook(url);

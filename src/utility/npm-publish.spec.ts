@@ -66,7 +66,7 @@ describe('npmPublish', () => {
 
     getTagSpy = jasmine.createSpy('getTag').and.returnValue('1.2.3');
 
-    mock('./utils', {
+    mock('./context', {
       getTag: getTagSpy,
     });
   });
@@ -80,7 +80,7 @@ describe('npmPublish', () => {
     return mock.reRequire('./npm-publish');
   }
 
-  it('should publish to NPM', async (done: DoneFn) => {
+  it('should publish to NPM', async () => {
     const { npmPublish } = getUtil();
 
     await npmPublish();
@@ -93,9 +93,11 @@ describe('npmPublish', () => {
     expect(infoSpy).toHaveBeenCalledWith(
       'Successfully published `foo-package@1.2.3` to NPM.',
     );
+
     expect(slackSpy).toHaveBeenCalledWith(
       'Successfully published `foo-package@1.2.3` to NPM.\nhttps://github.com/org/repo/blob/1.2.3/CHANGELOG.md',
     );
+
     expect(spawnSpy).toHaveBeenCalledWith(
       'npm',
       ['publish', '--access', 'public', '--tag', 'latest'],
@@ -104,11 +106,9 @@ describe('npmPublish', () => {
         stdio: 'inherit',
       },
     );
-
-    done();
   });
 
-  it('should publish using the `next` tag', async (done: DoneFn) => {
+  it('should publish using the `next` tag', async () => {
     getTagSpy.and.callThrough();
     getTagSpy.and.returnValue('1.0.0-rc.0');
 
@@ -124,11 +124,9 @@ describe('npmPublish', () => {
         stdio: 'inherit',
       },
     );
-
-    done();
   });
 
-  it('should allow running `npm publish --dry-run`', async (done: DoneFn) => {
+  it('should allow running `npm publish --dry-run`', async () => {
     mockNpmDryRun = 'true';
 
     const { npmPublish } = getUtil();
@@ -143,11 +141,9 @@ describe('npmPublish', () => {
         stdio: 'inherit',
       },
     );
-
-    done();
   });
 
-  it('should handle errors', async (done: DoneFn) => {
+  it('should handle errors', async () => {
     spawnSpy.and.throwError('Something bad happened.');
 
     const { npmPublish } = getUtil();
@@ -161,10 +157,9 @@ describe('npmPublish', () => {
     expect(slackSpy).toHaveBeenCalledWith(
       '`foo-package@1.2.3` failed to publish to NPM.',
     );
-    done();
   });
 
-  it('should not notify Slack of errors if `--dry-run`', async (done: DoneFn) => {
+  it('should not notify Slack of errors if `--dry-run`', async () => {
     mockNpmDryRun = 'true';
     spawnSpy.and.throwError('Something bad happened.');
 
@@ -177,7 +172,6 @@ describe('npmPublish', () => {
       '`foo-package@1.2.3` failed to publish to NPM.',
     );
     expect(slackSpy).not.toHaveBeenCalled();
-    done();
   });
 
   it('should throw an error if tag does not match package.json version', async () => {

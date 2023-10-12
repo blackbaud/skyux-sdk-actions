@@ -19,7 +19,9 @@ export async function runLifecycleHook(name: string): Promise<void> {
       process.cwd(),
       core.getInput('working-directory'),
     );
+
     const fullPath = path.join(basePath, scriptPath);
+
     core.info(`Running '${name}' lifecycle hook: ${fullPath}`);
 
     try {

@@ -29,11 +29,11 @@ describe('Run lifecycle hook', () => {
 
     mock('@actions/core', coreSpyObj);
 
-    mock(path.join('../MOCK_WORKING_DIRECTORY/MOCK_LIFECYCLE_HOOK.js'), {
+    mock(path.resolve('./MOCK_WORKING_DIRECTORY/MOCK_LIFECYCLE_HOOK.js'), {
       runAsync() {},
     });
 
-    mock(path.join('../MOCK_WORKING_DIRECTORY/INVALID_SCRIPT.js'), {
+    mock(path.resolve('./MOCK_WORKING_DIRECTORY/INVALID_SCRIPT.js'), {
       runAsync() {
         throw new Error('something bad happened');
       },

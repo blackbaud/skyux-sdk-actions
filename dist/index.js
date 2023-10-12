@@ -35,7 +35,7 @@ const core = __importStar(__nccwpck_require__(2186));
 const fs = __importStar(__nccwpck_require__(5630));
 const glob = __importStar(__nccwpck_require__(1957));
 const path = __importStar(__nccwpck_require__(1017));
-const context_utils_1 = __nccwpck_require__(6506);
+const context_1 = __nccwpck_require__(102);
 const npm_publish_1 = __nccwpck_require__(8382);
 const run_lifecycle_hook_1 = __nccwpck_require__(5543);
 const run_ng_command_1 = __nccwpck_require__(7289);
@@ -134,7 +134,7 @@ async function executeAngularCliSteps() {
     await (0, run_lifecycle_hook_1.runLifecycleHook)('hook-before-script');
     await buildLibrary(projectName);
     // Don't run tests for tags.
-    if ((0, context_utils_1.isTag)()) {
+    if ((0, context_1.isTag)()) {
         await publishLibrary(projectName);
     }
     else {
@@ -177,10 +177,10 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const execute_angular_cli_steps_1 = __nccwpck_require__(8260);
-const context_utils_1 = __nccwpck_require__(6506);
+const context_1 = __nccwpck_require__(102);
 const spawn_1 = __nccwpck_require__(1060);
 async function run() {
-    if ((0, context_utils_1.isPush)()) {
+    if ((0, context_1.isPush)()) {
         // Get the last commit message.
         // See: https://stackoverflow.com/a/7293026/6178885
         const message = await (0, spawn_1.spawn)('git', ['log', '-1', '--pretty=%B', '--oneline'], {
@@ -198,7 +198,7 @@ run();
 
 /***/ }),
 
-/***/ 6506:
+/***/ 102:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -332,7 +332,7 @@ exports.npmPublish = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const fs = __importStar(__nccwpck_require__(5630));
 const path = __importStar(__nccwpck_require__(1017));
-const context_utils_1 = __nccwpck_require__(6506);
+const context_1 = __nccwpck_require__(102);
 const notify_slack_1 = __nccwpck_require__(1754);
 const spawn_1 = __nccwpck_require__(1060);
 async function npmPublish(distPath) {
@@ -343,7 +343,7 @@ async function npmPublish(distPath) {
     const packageJson = fs.readJsonSync(packageJsonPath);
     const packageName = packageJson.name;
     const version = packageJson.version;
-    const gitTag = (0, context_utils_1.getTag)();
+    const gitTag = (0, context_1.getTag)();
     const npmTag = gitTag.indexOf('-') > -1 ? 'next' : 'latest';
     const npmFilePath = path.join(distPath, '.npmrc');
     const npmToken = core.getInput('npm-token');
@@ -655,7 +655,7 @@ function validateDependencySection(section, projectName, projectPackageJson, wor
     return errors;
 }
 function validateDependencies(projectName) {
-    core.info('Validationg dependencies...');
+    core.info('Validating dependencies...');
     try {
         const basePath = path.join(process.cwd(), core.getInput('working-directory'));
         const workspacePackageJsonPath = path.join(basePath, 'package.json');
