@@ -31,6 +31,7 @@ jobs:
       - name: Run action
         uses: ./
         with:
+          code-coverage-browser-set: 'speedy'
           code-coverage-threshold-branches: 100
           code-coverage-threshold-functions: 100
           code-coverage-threshold-lines: 100
