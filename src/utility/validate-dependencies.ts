@@ -8,7 +8,7 @@ function validateDependencySection(
   section: string,
   projectName: string,
   projectPackageJson: any,
-  workspacePackageJson: any
+  workspacePackageJson: any,
 ): string[] {
   const errors: string[] = [];
 
@@ -22,7 +22,7 @@ function validateDependencySection(
     if (!workspaceVersion) {
       errors.push(
         `The package "${packageName}" listed in the \`${section}\` section of 'projects/${projectName}/package.json' ` +
-          `was not found in the root 'package.json' \`dependencies\` section. Install the package at the root level and try again.`
+          `was not found in the root 'package.json' \`dependencies\` section. Install the package at the root level and try again.`,
       );
       continue;
     }
@@ -34,7 +34,7 @@ function validateDependencySection(
         `The version listed in 'package.json' for "${packageName}@${workspaceVersion}" must be set to a specific version ` +
           `(without a semver range character), and set to the minimum version satisfied by the range defined in the \`${section}\` ` +
           `section of 'projects/${projectName}/package.json' (wanted "${packageName}@${targetVersion}"). To address this problem, set ` +
-          `"${packageName}" to (${minTargetVersion}) in the root 'package.json'.`
+          `"${packageName}" to (${minTargetVersion}) in the root 'package.json'.`,
       );
     } else if (workspaceVersion !== minTargetVersion) {
       errors.push(
@@ -42,7 +42,7 @@ function validateDependencySection(
           `does not meet the minimum version requirements of the range defined in the \`${section}\` section of ` +
           `'projects/${projectName}/package.json' (wanted "${packageName}@${targetVersion}"). Either increase the minimum ` +
           `supported version in 'projects/${projectName}/package.json' to (^${minWorkspaceVersion}), or downgrade the ` +
-          `version installed in the root 'package.json' to (${minTargetVersion}).`
+          `version installed in the root 'package.json' to (${minTargetVersion}).`,
       );
     }
   }
@@ -51,19 +51,19 @@ function validateDependencySection(
 }
 
 export function validateDependencies(projectName: string): void {
-  core.info('Validationg dependencies...');
+  core.info('Validating dependencies...');
 
   try {
     const basePath = path.join(
       process.cwd(),
-      core.getInput('working-directory')
+      core.getInput('working-directory'),
     );
 
     const workspacePackageJsonPath = path.join(basePath, 'package.json');
 
     const projectPackageJsonPath = path.join(
       basePath,
-      `projects/${projectName}/package.json`
+      `projects/${projectName}/package.json`,
     );
 
     const workspacePackageJson = fs.readJsonSync(workspacePackageJsonPath);
@@ -78,8 +78,8 @@ export function validateDependencies(projectName: string): void {
           'peerDependencies',
           projectName,
           projectPackageJson,
-          workspacePackageJson
-        )
+          workspacePackageJson,
+        ),
       );
     }
 
@@ -90,8 +90,8 @@ export function validateDependencies(projectName: string): void {
           'dependencies',
           projectName,
           projectPackageJson,
-          workspacePackageJson
-        )
+          workspacePackageJson,
+        ),
       );
     }
 

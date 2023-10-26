@@ -29,11 +29,11 @@ describe('Run lifecycle hook', () => {
 
     mock('@actions/core', coreSpyObj);
 
-    mock(path.join('../MOCK_WORKING_DIRECTORY/MOCK_LIFECYCLE_HOOK.js'), {
+    mock(path.resolve('./MOCK_WORKING_DIRECTORY/MOCK_LIFECYCLE_HOOK.js'), {
       runAsync() {},
     });
 
-    mock(path.join('../MOCK_WORKING_DIRECTORY/INVALID_SCRIPT.js'), {
+    mock(path.resolve('./MOCK_WORKING_DIRECTORY/INVALID_SCRIPT.js'), {
       runAsync() {
         throw new Error('something bad happened');
       },
@@ -52,7 +52,7 @@ describe('Run lifecycle hook', () => {
     const { runLifecycleHook } = getUtil();
     await runLifecycleHook('my-lifecycle-hook');
     expect(coreSpyObj.info).toHaveBeenCalledWith(
-      `Lifecycle hook 'my-lifecycle-hook' successfully executed.`
+      `Lifecycle hook 'my-lifecycle-hook' successfully executed.`,
     );
   });
 
@@ -67,7 +67,7 @@ describe('Run lifecycle hook', () => {
     const { runLifecycleHook } = getUtil();
     await runLifecycleHook('my-invalid-lifecycle-hook');
     expect(coreSpyObj.setFailed).toHaveBeenCalledWith(
-      `The lifecycle hook 'my-invalid-lifecycle-hook' was not found or was not exported correctly.`
+      `The lifecycle hook 'my-invalid-lifecycle-hook' was not found or was not exported correctly.`,
     );
   });
 });

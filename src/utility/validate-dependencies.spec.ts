@@ -68,7 +68,7 @@ describe('Validate dependencies', () => {
       `The version listed in 'package.json' for "foobar@^5.6.1" must be set to a specific version ` +
         `(without a semver range character), and set to the minimum version satisfied by the range ` +
         `defined in the \`peerDependencies\` section of 'projects/my-lib/package.json' (wanted "foobar@^5.1.0"). ` +
-        `To address this problem, set "foobar" to (5.1.0) in the root 'package.json'.`
+        `To address this problem, set "foobar" to (5.1.0) in the root 'package.json'.`,
     );
   });
 
@@ -87,7 +87,7 @@ describe('Validate dependencies', () => {
     await validateDependencies('my-lib');
 
     expect(coreSpyObj.error).toHaveBeenCalledWith(
-      `The package "foobar" listed in the \`peerDependencies\` section of 'projects/my-lib/package.json' was not found in the root 'package.json' \`dependencies\` section. Install the package at the root level and try again.`
+      `The package "foobar" listed in the \`peerDependencies\` section of 'projects/my-lib/package.json' was not found in the root 'package.json' \`dependencies\` section. Install the package at the root level and try again.`,
     );
   });
 
@@ -111,7 +111,7 @@ describe('Validate dependencies', () => {
       `The version (5.6.1) of the package "foobar" in the \`dependencies\` section of 'package.json' does not ` +
         `meet the minimum version requirements of the range defined in the \`peerDependencies\` section of ` +
         `'projects/my-lib/package.json' (wanted "foobar@^5.1.0"). Either increase the minimum supported version ` +
-        `in 'projects/my-lib/package.json' to (^5.6.1), or downgrade the version installed in the root 'package.json' to (5.1.0).`
+        `in 'projects/my-lib/package.json' to (^5.6.1), or downgrade the version installed in the root 'package.json' to (5.1.0).`,
     );
   });
 
@@ -135,7 +135,7 @@ describe('Validate dependencies', () => {
       `The version (5.6.1) of the package "foobar" in the \`dependencies\` section of 'package.json' does not ` +
         `meet the minimum version requirements of the range defined in the \`dependencies\` section of ` +
         `'projects/my-lib/package.json' (wanted "foobar@^5.1.0"). Either increase the minimum supported version ` +
-        `in 'projects/my-lib/package.json' to (^5.6.1), or downgrade the version installed in the root 'package.json' to (5.1.0).`
+        `in 'projects/my-lib/package.json' to (^5.6.1), or downgrade the version installed in the root 'package.json' to (5.1.0).`,
     );
   });
 
@@ -156,7 +156,7 @@ describe('Validate dependencies', () => {
     await validateDependencies('my-lib');
 
     expect(coreSpyObj.info).toHaveBeenCalledWith(
-      'Done validating dependencies. OK.'
+      'Done validating dependencies. OK.',
     );
   });
 
@@ -177,7 +177,7 @@ describe('Validate dependencies', () => {
     await validateDependencies('my-lib');
 
     expect(coreSpyObj.info).toHaveBeenCalledWith(
-      'Done validating dependencies. OK.'
+      'Done validating dependencies. OK.',
     );
   });
 });

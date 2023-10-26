@@ -78,7 +78,7 @@ describe('spawn', () => {
     });
   });
 
-  it('should output errors from processes', async (done: DoneFn) => {
+  it('should output errors from processes', async () => {
     const errorMessage = 'The error message.';
 
     delete mockChildProcess.stdout;
@@ -97,17 +97,10 @@ describe('spawn', () => {
 
     const { spawn } = getUtil();
 
-    spawn('foo', ['bar', 'baz'])
-      .then(() => {
-        fail('Expected test to throw exception');
-      })
-      .catch((err: any) => {
-        expect(err).toEqual(errorMessage);
-        done();
-      });
+    await expectAsync(spawn('foo', ['bar', 'baz'])).toBeRejectedWith(errorMessage);
   });
 
-  it('should output child_process errors', async (done: DoneFn) => {
+  it('should output child_process errors', async () => {
     const errorMessage = 'The error message.';
 
     mockChildProcess.on = (event: string, cb: (data: any) => void) => {
@@ -120,13 +113,6 @@ describe('spawn', () => {
 
     const { spawn } = getUtil();
 
-    spawn('foo', ['bar', 'baz'])
-      .then(() => {
-        fail('Expected test to throw exception');
-      })
-      .catch((err: any) => {
-        expect(err).toEqual(errorMessage);
-        done();
-      });
+    await expectAsync(spawn('foo', ['bar', 'baz'])).toBeRejectedWith(errorMessage);
   });
 });

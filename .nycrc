@@ -2,15 +2,7 @@
   "extends": "@istanbuljs/nyc-config-typescript",
   "all": true,
   "check-coverage": true,
-  "reporter": [
-    "html",
-    "text"
-  ],
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "src/main.ts",
-    "src/**/*.spec.ts"
-  ]
+  "reporter": ["html", "text"],
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/main.ts", "src/**/*.spec.ts"]
 }

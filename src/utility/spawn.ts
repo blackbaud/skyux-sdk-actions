@@ -7,7 +7,7 @@ import * as path from 'path';
 export async function spawn(
   command: string,
   args: string[],
-  spawnOptions?: child_process.SpawnOptions
+  spawnOptions?: child_process.SpawnOptions,
 ): Promise<string> {
   const defaults: child_process.SpawnOptions = {
     stdio: 'pipe',

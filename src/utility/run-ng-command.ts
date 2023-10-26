@@ -10,7 +10,7 @@ import { spawn } from './spawn';
  */
 export function runNgCommand(
   command: string,
-  args: string[] = []
+  args: string[] = [],
 ): Promise<string> {
   core.info(`
 =====================================================

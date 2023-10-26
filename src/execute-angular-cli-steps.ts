@@ -4,28 +4,13 @@ import * as fs from 'fs-extra';
 import * as glob from 'glob';
 import * as path from 'path';
 
-import { npmPublish } from '../npm-publish';
-import { PackageMetadata } from '../package-metadata';
-import { runLifecycleHook } from '../run-lifecycle-hook';
-import { runNgCommand } from '../run-ng-command';
-import { spawn } from '../spawn';
-import { tagSkyuxPackages } from '../tag-skyux-packages';
-import { isTag } from '../utils';
-
-import { validateDependencies } from './validate-dependencies';
-
-// import { visual } from './visual';
-
-function getBrowserStackCliArguments(buildId: string): string[] {
-  return [
-    `--browserstack-username=${core.getInput('browser-stack-username')}`,
-    `--browserstack-access-key=${core.getInput('browser-stack-access-key')}`,
-    `--browserstack-build-id=${buildId}`,
-    `--browserstack-project=${
-      core.getInput('browser-stack-project') || process.env.GITHUB_REPOSITORY
-    }`,
-  ];
-}
+import { isTag } from './utility/context';
+import { npmPublish } from './utility/npm-publish';
+import { PackageMetadata } from './utility/package-metadata';
+import { runLifecycleHook } from './utility/run-lifecycle-hook';
+import { runNgCommand } from './utility/run-ng-command';
+import { spawn } from './utility/spawn';
+import { validateDependencies } from './utility/validate-dependencies';
 
 async function install(): Promise<void> {
   try {
@@ -44,6 +29,7 @@ async function install(): Promise<void> {
     await spawn('npm', [
       'install',
       '--no-save',
+      '--no-audit',
       'blackbaud/skyux-sdk-pipeline-settings',
     ]);
   } catch (err) {
@@ -59,7 +45,10 @@ async function buildLibrary(projectName: string) {
   );
 
   try {
-    await runNgCommand('build', [projectName, '--configuration=production']);
+    await runNgCommand('build', [
+      `--project=${projectName}`,
+      '--configuration=production',
+    ]);
     if (packageJson.devDependencies['@skyux-sdk/documentation-schematics']) {
       await runNgCommand('generate', [
         '@skyux-sdk/documentation-schematics:documentation',
@@ -87,7 +76,7 @@ async function publishLibrary(projectName: string): Promise<PackageMetadata> {
   return npmPublish(distPath);
 }
 
-async function coverage(buildId: string, projectName: string) {
+async function coverage(projectName: string) {
   core.info(`
 =====================================================
 > Running Angular CLI command: 'test'
@@ -95,6 +84,8 @@ async function coverage(buildId: string, projectName: string) {
 `);
 
   try {
+    await spawn('npx', ['playwright', 'install-deps']);
+
     const specs = glob.sync(
       path.join(
         process.cwd(),
@@ -113,28 +104,37 @@ async function coverage(buildId: string, projectName: string) {
       return;
     }
 
-    await spawn('node', [
-      path.join(
-        './node_modules/@skyux-sdk/pipeline-settings/test-runners/karma.js'
-      ),
-      '--platform=gh-actions',
-      `--project-name=${projectName}`,
-      ...getBrowserStackCliArguments(`${buildId}-coverage`),
-      `--code-coverage-browser-set=${core.getInput(
-        'code-coverage-browser-set'
-      )}`,
-      `--code-coverage-threshold-branches=${core.getInput(
-        'code-coverage-threshold-branches'
-      )}`,
-      `--code-coverage-threshold-functions=${core.getInput(
-        'code-coverage-threshold-functions'
-      )}`,
-      `--code-coverage-threshold-lines=${core.getInput(
-        'code-coverage-threshold-lines'
-      )}`,
-      `--code-coverage-threshold-statements=${core.getInput(
-        'code-coverage-threshold-statements'
-      )}`,
+    core.exportVariable(
+      'SKY_UX_CODE_COVERAGE_THRESHOLD_BRANCHES',
+      core.getInput('code-coverage-threshold-branches')
+    );
+
+    core.exportVariable(
+      'SKY_UX_CODE_COVERAGE_THRESHOLD_FUNCTIONS',
+      core.getInput('code-coverage-threshold-functions')
+    );
+
+    core.exportVariable(
+      'SKY_UX_CODE_COVERAGE_THRESHOLD_LINES',
+      core.getInput('code-coverage-threshold-lines')
+    );
+
+    core.exportVariable(
+      'SKY_UX_CODE_COVERAGE_THRESHOLD_STATEMENTS',
+      core.getInput('code-coverage-threshold-statements')
+    );
+
+    core.exportVariable(
+      'SKY_UX_CODE_COVERAGE_BROWSER_SET',
+      core.getInput('code-coverage-browser-set')
+    );
+
+    await runNgCommand('test', [
+      '--karma-config=./node_modules/@skyux-sdk/pipeline-settings/platforms/gh-actions/karma/karma.angular-cli.conf.js',
+      '--progress=false',
+      `--project=${projectName}`,
+      '--source-map',
+      '--watch=false',
     ]);
 
     await runLifecycleHook('hook-after-code-coverage-success');
@@ -145,12 +145,8 @@ async function coverage(buildId: string, projectName: string) {
   }
 }
 
-export async function executeAngularCliSteps(buildId: string): Promise<void> {
-  const angularJson = fs.readJsonSync(
-    path.join(process.cwd(), core.getInput('working-directory'), 'angular.json')
-  );
-
-  const projectName = angularJson.defaultProject;
+export async function executeAngularCliSteps(): Promise<void> {
+  const projectName = core.getInput('project');
 
   if (core.getInput('validate-dependencies') === 'true') {
     validateDependencies(projectName);
@@ -164,12 +160,8 @@ export async function executeAngularCliSteps(buildId: string): Promise<void> {
 
   // Don't run tests for tags.
   if (isTag()) {
-    const packageMetadata = await publishLibrary(projectName);
-    await tagSkyuxPackages(packageMetadata);
+    await publishLibrary(projectName);
   } else {
-    await coverage(buildId, projectName);
-
-    // Disabling visual tests until we can replace Protractor with Cypress.
-    // await visual(buildId, `${projectName}-showcase`, angularJson);
+    await coverage(projectName);
   }
 }

@@ -17,9 +17,11 @@ export async function runLifecycleHook(name: string): Promise<void> {
   if (scriptPath) {
     const basePath = path.join(
       process.cwd(),
-      core.getInput('working-directory')
+      core.getInput('working-directory'),
     );
+
     const fullPath = path.join(basePath, scriptPath);
+
     core.info(`Running '${name}' lifecycle hook: ${fullPath}`);
 
     try {
@@ -32,7 +34,7 @@ export async function runLifecycleHook(name: string): Promise<void> {
     } catch (err) {
       console.error('[SKY UX ERROR]:', err);
       core.setFailed(
-        `The lifecycle hook '${name}' was not found or was not exported correctly.`
+        `The lifecycle hook '${name}' was not found or was not exported correctly.`,
       );
     }
   }
