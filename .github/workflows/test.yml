@@ -20,9 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v4
         with:
-          node-version: '14.x'
+          node-version-file: '.nvmrc'
       - name: Create workspace
         run: npx -p @angular/cli@12 ng new ng-twelve-test-github-actions --create-application=false --strict
       - name: Create library
