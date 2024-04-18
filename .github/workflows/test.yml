@@ -10,7 +10,7 @@ jobs:
   coverage: # make sure build/ci work properly
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - run: |
           npm ci
           npm run build
@@ -19,15 +19,15 @@ jobs:
   e2e-angular-cli: # make sure the action works on a clean machine without building
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
       - name: Create workspace
-        run: npx -p @angular/cli@12 ng new ng-twelve-test-github-actions --create-application=false --strict
+        run: npx -p @angular/cli@17 ng new ng-seventeen-test-github-actions --create-application=false --strict
       - name: Create library
-        run: npx -p @angular/cli@12 ng generate library my-lib
-        working-directory: 'ng-twelve-test-github-actions'
+        run: npx -p @angular/cli@17 ng generate library my-lib
+        working-directory: 'ng-seventeen-test-github-actions'
       - name: Run action
         uses: ./
         with:
@@ -41,4 +41,4 @@ jobs:
           npm-token: ${{ secrets.NPM_TOKEN }}
           slack-webhook: ${{ secrets.SLACK_WEBHOOK }}
           validate-dependencies: false
-          working-directory: ./ng-twelve-test-github-actions
+          working-directory: ./ng-seventeen-test-github-actions
