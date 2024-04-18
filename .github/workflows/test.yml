@@ -39,6 +39,7 @@ jobs:
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
           npm-dry-run: true
           npm-token: ${{ secrets.NPM_TOKEN }}
+          project: my-lib
           slack-webhook: ${{ secrets.SLACK_WEBHOOK }}
           validate-dependencies: false
           working-directory: ./ng-seventeen-test-github-actions
