@@ -6,6 +6,7 @@ describe('Angular CLI main', () => {
   let doValidateDependencies: 'true' | 'false';
   let fsExtraSpyObj: jasmine.SpyObj<any>;
   let mockAngularJson: any;
+  let mockBrowserSet = 'paranoid';
   let mockGlobResults: string[];
   let mockPackageJson: any;
   let npmPublishSpy: jasmine.Spy;
@@ -32,10 +33,14 @@ describe('Angular CLI main', () => {
     ]);
 
     doValidateDependencies = 'true';
+    mockBrowserSet = 'paranoid';
 
     coreSpyObj.getInput.and.callFake((name: string) => {
       if (name === 'validate-dependencies') {
         return doValidateDependencies;
+      }
+      if (name === 'code-coverage-browser-set') {
+        return mockBrowserSet;
       }
 
       return `MOCK_${name.toLocaleUpperCase()}`;
@@ -259,6 +264,18 @@ describe('Angular CLI main', () => {
 
       expect(coreSpyObj.warning).toHaveBeenCalledWith(
         'Skipping code coverage because spec files were not found.',
+      );
+    });
+
+    it('should skip playwright install-deps for speedy', async () => {
+      mockBrowserSet = 'speedy';
+
+      const { executeAngularCliSteps } = getUtil();
+
+      await executeAngularCliSteps();
+
+      expect(spawnSpy).not.toHaveBeenCalledWith(
+        'npx', ['playwright', 'install-deps'],
       );
     });
   });
