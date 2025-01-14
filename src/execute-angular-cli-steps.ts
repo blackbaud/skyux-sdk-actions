@@ -86,7 +86,10 @@ async function coverage(projectName: string) {
   try {
     // Chromium is pre-installed in the GitHub Actions environment.
     if (core.getInput('code-coverage-browser-set') !== 'speedy') {
-      await spawn('npx', ['playwright', 'install-deps']);
+      await spawn('npx', ['playwright', 'install-deps']).catch((err) => {
+        console.error(err);
+        console.info('Failed to install Playwright dependencies. Optimistically continuing.');
+      });
     }
 
     const specs = glob.sync(
