@@ -17,7 +17,7 @@ async function install(): Promise<void> {
     const packageLock = path.join(
       process.cwd(),
       core.getInput('working-directory'),
-      'package-lock.json'
+      'package-lock.json',
     );
 
     if (fs.existsSync(packageLock)) {
@@ -41,7 +41,7 @@ async function install(): Promise<void> {
 
 async function buildLibrary(projectName: string) {
   const packageJson = fs.readJsonSync(
-    path.join(core.getInput('working-directory'), 'package.json')
+    path.join(core.getInput('working-directory'), 'package.json'),
   );
 
   try {
@@ -55,7 +55,7 @@ async function buildLibrary(projectName: string) {
       ]);
     } else {
       core.warning(
-        'Skip generating "documentation.json" because the npm package "@skyux-sdk/documentation-schematics" is not installed.'
+        'Skip generating "documentation.json" because the npm package "@skyux-sdk/documentation-schematics" is not installed.',
       );
     }
     await runLifecycleHook('hook-after-build-public-library-success');
@@ -71,7 +71,7 @@ async function publishLibrary(projectName: string): Promise<PackageMetadata> {
     process.cwd(),
     core.getInput('working-directory'),
     'dist',
-    projectName
+    projectName,
   );
   return npmPublish(distPath);
 }
@@ -84,7 +84,15 @@ async function coverage(projectName: string) {
 `);
 
   try {
-    await spawn('npx', ['playwright', 'install-deps']);
+    // Chromium is pre-installed in the GitHub Actions environment.
+    if (core.getInput('code-coverage-browser-set') !== 'speedy') {
+      await spawn('npx', ['playwright', 'install-deps']).catch((err) => {
+        console.error(err);
+        console.info(
+          'Failed to install Playwright dependencies. Optimistically continuing.',
+        );
+      });
+    }
 
     const specs = glob.sync(
       path.join(
@@ -92,11 +100,11 @@ async function coverage(projectName: string) {
         core.getInput('working-directory'),
         'projects',
         projectName,
-        '**/*.spec.ts'
+        '**/*.spec.ts',
       ),
       {
         nodir: true,
-      }
+      },
     );
 
     if (specs.length === 0) {
@@ -106,27 +114,27 @@ async function coverage(projectName: string) {
 
     core.exportVariable(
       'SKY_UX_CODE_COVERAGE_THRESHOLD_BRANCHES',
-      core.getInput('code-coverage-threshold-branches')
+      core.getInput('code-coverage-threshold-branches'),
     );
 
     core.exportVariable(
       'SKY_UX_CODE_COVERAGE_THRESHOLD_FUNCTIONS',
-      core.getInput('code-coverage-threshold-functions')
+      core.getInput('code-coverage-threshold-functions'),
     );
 
     core.exportVariable(
       'SKY_UX_CODE_COVERAGE_THRESHOLD_LINES',
-      core.getInput('code-coverage-threshold-lines')
+      core.getInput('code-coverage-threshold-lines'),
     );
 
     core.exportVariable(
       'SKY_UX_CODE_COVERAGE_THRESHOLD_STATEMENTS',
-      core.getInput('code-coverage-threshold-statements')
+      core.getInput('code-coverage-threshold-statements'),
     );
 
     core.exportVariable(
       'SKY_UX_CODE_COVERAGE_BROWSER_SET',
-      core.getInput('code-coverage-browser-set')
+      core.getInput('code-coverage-browser-set'),
     );
 
     await runNgCommand('test', [

@@ -24,10 +24,15 @@ jobs:
         with:
           node-version-file: '.nvmrc'
       - name: Create workspace
-        run: npx -p @angular/cli@17 ng new ng-seventeen-test-github-actions --create-application=false --strict
+        run: npx -p @angular/cli@20 ng new e2e-angular-cli-project --defaults --no-create-application --skip-git --no-zoneless
       - name: Create library
-        run: npx -p @angular/cli@17 ng generate library my-lib
-        working-directory: 'ng-seventeen-test-github-actions'
+        run: |
+          set -x
+          npx ng generate library my-lib
+          npm i -D @angular-devkit/build-angular@20 zone.js@~0.15.1
+          npx ng config projects.my-lib.architect.test.builder @angular-devkit/build-angular:karma
+          npx ng config projects.my-lib.architect.test.options.polyfills '["zone.js", "zone.js/testing"]'
+        working-directory: 'e2e-angular-cli-project'
       - name: Run action
         uses: ./
         with:
@@ -38,8 +43,7 @@ jobs:
           code-coverage-threshold-statements: 100
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
           npm-dry-run: true
-          npm-token: ${{ secrets.NPM_TOKEN }}
           project: my-lib
           slack-webhook: ${{ secrets.SLACK_WEBHOOK }}
           validate-dependencies: false
-          working-directory: ./ng-seventeen-test-github-actions
+          working-directory: ./e2e-angular-cli-project

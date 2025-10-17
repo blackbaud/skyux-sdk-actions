@@ -6,6 +6,7 @@ describe('Angular CLI main', () => {
   let doValidateDependencies: 'true' | 'false';
   let fsExtraSpyObj: jasmine.SpyObj<any>;
   let mockAngularJson: any;
+  let mockBrowserSet = 'paranoid';
   let mockGlobResults: string[];
   let mockPackageJson: any;
   let npmPublishSpy: jasmine.Spy;
@@ -22,6 +23,7 @@ describe('Angular CLI main', () => {
     spyOn(process, 'exit');
 
     spyOn(console, 'error');
+    spyOn(console, 'info');
 
     coreSpyObj = jasmine.createSpyObj('core', [
       'exportVariable',
@@ -32,10 +34,14 @@ describe('Angular CLI main', () => {
     ]);
 
     doValidateDependencies = 'true';
+    mockBrowserSet = 'paranoid';
 
     coreSpyObj.getInput.and.callFake((name: string) => {
       if (name === 'validate-dependencies') {
         return doValidateDependencies;
+      }
+      if (name === 'code-coverage-browser-set') {
+        return mockBrowserSet;
       }
 
       return `MOCK_${name.toLocaleUpperCase()}`;
@@ -110,7 +116,7 @@ describe('Angular CLI main', () => {
       runNgCommand: runNgCommandSpy,
     });
 
-    spawnSpy = jasmine.createSpy('spawn');
+    spawnSpy = jasmine.createSpy('spawn').and.resolveTo();
     mock('./utility/spawn', {
       spawn: spawnSpy,
     });
@@ -260,6 +266,38 @@ describe('Angular CLI main', () => {
       expect(coreSpyObj.warning).toHaveBeenCalledWith(
         'Skipping code coverage because spec files were not found.',
       );
+    });
+
+    it('should skip playwright install-deps for speedy', async () => {
+      mockBrowserSet = 'speedy';
+
+      const { executeAngularCliSteps } = getUtil();
+
+      await executeAngularCliSteps();
+
+      expect(spawnSpy).not.toHaveBeenCalledWith('npx', [
+        'playwright',
+        'install-deps',
+      ]);
+    });
+
+    it('should keep going if playwright install-deps fails', async () => {
+      spawnSpy.and.callFake((command: string, args: string[]) => {
+        if (command === 'npx' && args[0] === 'playwright') {
+          return Promise.reject(new Error('something bad happened'));
+        }
+        return Promise.resolve();
+      });
+
+      const { executeAngularCliSteps } = getUtil();
+
+      await executeAngularCliSteps();
+
+      expect(runLifecycleHookSpy.calls.allArgs()).toEqual([
+        ['hook-before-script'],
+        ['hook-after-build-public-library-success'],
+        ['hook-after-code-coverage-success'],
+      ]);
     });
   });
 
