@@ -16,6 +16,10 @@ See the `actions.yml` file for all available inputs.
 
 You may append `[ci skip]` to the commit message (or pull request title when squash-merging) to instruct the action to skip all steps. Git tags will still release, however.
 
+### Using NPM trusted publishers
+
+The `npm-token` input is optional. If not provided, the action will rely on [NPM trusted publishers](https://docs.npmjs.com/trusted-publishers).
+
 ## Build
 
 ```

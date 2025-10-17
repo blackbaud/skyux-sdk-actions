@@ -28,17 +28,22 @@ export async function npmPublish(distPath?: string): Promise<PackageMetadata> {
 
   if (gitTag !== version) {
     core.setFailed(
-      `Aborted publishing to NPM because the version listed in package.json (${version}) does not match the git tag (${gitTag})!`
+      `Aborted publishing to NPM because the version listed in package.json (${version}) does not match the git tag (${gitTag})!`,
     );
     process.exit(1);
   }
 
   core.info(
-    `Preparing to publish ${packageName}@${version} to NPM from ${distPath}...`
+    `Preparing to publish ${packageName}@${version} to NPM from ${distPath}...`,
   );
 
-  await fs.ensureFile(npmFilePath);
-  fs.writeFileSync(npmFilePath, `//registry.npmjs.org/:_authToken=${npmToken}`);
+  if (npmToken) {
+    await fs.ensureFile(npmFilePath);
+    fs.writeFileSync(
+      npmFilePath,
+      `//registry.npmjs.org/:_authToken=${npmToken}`,
+    );
+  }
 
   const npmArgs = ['publish', '--access', 'public', '--tag', npmTag];
 

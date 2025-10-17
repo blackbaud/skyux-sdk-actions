@@ -9,6 +9,7 @@ describe('npmPublish', () => {
   let spawnSpy: jasmine.Spy;
   let getTagSpy: jasmine.Spy;
   let mockNpmDryRun: string;
+  let mockNpmToken: string;
   let mockPackageJson: any;
 
   beforeEach(() => {
@@ -17,6 +18,7 @@ describe('npmPublish', () => {
     spyOn(process, 'exit');
 
     mockNpmDryRun = 'false';
+    mockNpmToken = 'MOCK_TOKEN';
 
     infoSpy = jasmine.createSpy('@actions/core.info');
     failedLogSpy = jasmine.createSpy('@actions/core.setFailed');
@@ -26,7 +28,7 @@ describe('npmPublish', () => {
         if (key === 'working-directory') {
           return 'MOCK_WORKING_DIRECTORY';
         } else if (key === 'npm-token') {
-          return 'MOCK_TOKEN';
+          return mockNpmToken;
         } else if (key === 'npm-dry-run') {
           return mockNpmDryRun;
         }
@@ -89,6 +91,34 @@ describe('npmPublish', () => {
       `${path.join(process.cwd(), 'MOCK_WORKING_DIRECTORY', 'dist', '.npmrc')}`,
       '//registry.npmjs.org/:_authToken=MOCK_TOKEN',
     );
+
+    expect(infoSpy).toHaveBeenCalledWith(
+      'Successfully published `foo-package@1.2.3` to NPM.',
+    );
+
+    expect(slackSpy).toHaveBeenCalledWith(
+      'Successfully published `foo-package@1.2.3` to NPM.\nhttps://github.com/org/repo/blob/1.2.3/CHANGELOG.md',
+    );
+
+    expect(spawnSpy).toHaveBeenCalledWith(
+      'npm',
+      ['publish', '--access', 'public', '--tag', 'latest'],
+      {
+        cwd: path.join(process.cwd(), 'MOCK_WORKING_DIRECTORY', 'dist'),
+        stdio: 'inherit',
+      },
+    );
+  });
+
+  it('should publish to NPM without npm-token', async () => {
+    mockNpmToken = '';
+
+    const { npmPublish } = getUtil();
+
+    await npmPublish();
+
+    expect(fsSpyObj.ensureFile).not.toHaveBeenCalled();
+    expect(fsSpyObj.writeFileSync).not.toHaveBeenCalled();
 
     expect(infoSpy).toHaveBeenCalledWith(
       'Successfully published `foo-package@1.2.3` to NPM.',

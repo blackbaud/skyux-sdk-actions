@@ -1,5 +1,6 @@
 .DS_Store
 .nyc_output
 coverage
+e2e-angular-cli-project
 lib
 node_modules
