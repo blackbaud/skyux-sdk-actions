@@ -60,7 +60,7 @@ describe('npmPublish', () => {
       notifySlack: slackSpy,
     });
 
-    spawnSpy = jasmine.createSpy('spawn');
+    spawnSpy = jasmine.createSpy('spawn').and.returnValue(Promise.resolve(''));
 
     mock('./spawn', {
       spawn: spawnSpy,
@@ -113,7 +113,9 @@ describe('npmPublish', () => {
   it('should publish to NPM without npm-token', async () => {
     mockNpmToken = '';
 
-    const { npmPublish } = getUtil();
+    const { npmPublish, nodeVersionGetter } = getUtil();
+
+    spyOn(nodeVersionGetter, 'getVersion').and.returnValue('v24.0.0');
 
     await npmPublish();
 
@@ -215,5 +217,90 @@ describe('npmPublish', () => {
     expect(failedLogSpy).toHaveBeenCalledWith(
       'Aborted publishing to NPM because the version listed in package.json (1.0.0) does not match the git tag (1.1.0)!',
     );
+  });
+
+  it('should use npm from Node.js 24 when current Node version is below 24 and no token is provided', async () => {
+    mockNpmToken = '';
+
+    const { npmPublish, nodeVersionGetter } = getUtil();
+
+    spyOn(nodeVersionGetter, 'getVersion').and.returnValue('v20.0.0');
+
+    spawnSpy.and.callFake((command: string, _args: string[]) => {
+      if (command === 'sh') {
+        return Promise.resolve('/mock/nvm/versions/node/v24.0.0/bin/npm');
+      }
+      return Promise.resolve();
+    });
+
+    await npmPublish();
+
+    expect(spawnSpy).toHaveBeenCalledWith('sh', [
+      '-c',
+      'ls $NVM_DIR/versions/node/v24.*/bin/npm',
+    ]);
+    expect(spawnSpy).toHaveBeenCalledWith(
+      '/mock/nvm/versions/node/v24.0.0/bin/npm',
+      ['publish', '--access', 'public', '--tag', 'latest'],
+      {
+        cwd: path.join(process.cwd(), 'MOCK_WORKING_DIRECTORY', 'dist'),
+        stdio: 'inherit',
+      },
+    );
+  });
+
+  it('should fail if Node.js 24 is not available when current Node version is below 24 and no token is provided', async () => {
+    mockNpmToken = '';
+
+    const { npmPublish, nodeVersionGetter } = getUtil();
+
+    spyOn(nodeVersionGetter, 'getVersion').and.returnValue('v20.0.0');
+
+    await expectAsync(npmPublish()).toBeRejectedWith(
+      'Aborted publishing to NPM with trusted publishing because NPM from Node.js 24 could not be found!',
+    );
+
+    expect(spawnSpy).toHaveBeenCalledWith('sh', [
+      '-c',
+      'ls $NVM_DIR/versions/node/v24.*/bin/npm',
+    ]);
+  });
+
+  it('should use regular npm when Node version is 24 or above and no token is provided', async () => {
+    mockNpmToken = '';
+
+    const { npmPublish, nodeVersionGetter } = getUtil();
+
+    spyOn(nodeVersionGetter, 'getVersion').and.returnValue('v24.0.0');
+
+    await npmPublish();
+
+    expect(spawnSpy).toHaveBeenCalledWith(
+      'npm',
+      ['publish', '--access', 'public', '--tag', 'latest'],
+      {
+        cwd: path.join(process.cwd(), 'MOCK_WORKING_DIRECTORY', 'dist'),
+        stdio: 'inherit',
+      },
+    );
+    expect(spawnSpy).not.toHaveBeenCalledWith('ls', jasmine.any(Array));
+  });
+
+  it('should use regular npm when token is provided regardless of Node version', async () => {
+    const { npmPublish, nodeVersionGetter } = getUtil();
+
+    spyOn(nodeVersionGetter, 'getVersion').and.returnValue('v20.0.0');
+
+    await npmPublish();
+
+    expect(spawnSpy).toHaveBeenCalledWith(
+      'npm',
+      ['publish', '--access', 'public', '--tag', 'latest'],
+      {
+        cwd: path.join(process.cwd(), 'MOCK_WORKING_DIRECTORY', 'dist'),
+        stdio: 'inherit',
+      },
+    );
+    expect(spawnSpy).not.toHaveBeenCalledWith('ls', jasmine.any(Array));
   });
 });
