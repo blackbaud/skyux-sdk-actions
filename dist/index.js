@@ -373,10 +373,12 @@ async function npmPublish(distPath) {
     }
     else if (semver.lt(exports.nodeVersionGetter.getVersion(), '24.0.0')) {
         // Use npm from Node.js 24 if no token is provided to use NPM 11 and trusted publishing.
-        npmCommand = await (0, spawn_1.spawn)('sh', [
-            '-c',
-            'ls $NVM_DIR/versions/node/v24.*/bin/npm',
-        ]).then((result) => result?.trim().split('\n').shift());
+        await (0, spawn_1.spawn)('n', ['install', '24']).catch((err) => {
+            core.error(err);
+        });
+        npmCommand = await (0, spawn_1.spawn)('n', ['which', '24'])
+            .then((result) => path.join(path.dirname(result?.trim()), 'npm'))
+            .catch(() => undefined);
         if (!npmCommand) {
             core.setFailed('Aborted publishing to NPM with trusted publishing because NPM from Node.js 24 could not be found!');
             return Promise.reject('Aborted publishing to NPM with trusted publishing because NPM from Node.js 24 could not be found!');

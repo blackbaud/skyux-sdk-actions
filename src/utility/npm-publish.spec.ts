@@ -3,6 +3,7 @@ import path from 'path';
 
 describe('npmPublish', () => {
   let infoSpy: jasmine.Spy;
+  let errorSpy: jasmine.Spy;
   let failedLogSpy: jasmine.Spy;
   let fsSpyObj: jasmine.SpyObj<any>;
   let slackSpy: jasmine.Spy;
@@ -21,6 +22,7 @@ describe('npmPublish', () => {
     mockNpmToken = 'MOCK_TOKEN';
 
     infoSpy = jasmine.createSpy('@actions/core.info');
+    errorSpy = jasmine.createSpy('@actions/core.error');
     failedLogSpy = jasmine.createSpy('@actions/core.setFailed');
 
     mock('@actions/core', {
@@ -34,6 +36,7 @@ describe('npmPublish', () => {
         }
         return '';
       },
+      error: errorSpy,
       info: infoSpy,
       setFailed: failedLogSpy,
     });
@@ -227,20 +230,18 @@ describe('npmPublish', () => {
     spyOn(nodeVersionGetter, 'getVersion').and.returnValue('v20.0.0');
 
     spawnSpy.and.callFake((command: string, _args: string[]) => {
-      if (command === 'sh') {
-        return Promise.resolve('/mock/nvm/versions/node/v24.0.0/bin/npm');
+      if (command === 'n' && _args[0] === 'which') {
+        return Promise.resolve('/mock/n/versions/node/v24.0.0/bin/node');
       }
       return Promise.resolve();
     });
 
     await npmPublish();
 
-    expect(spawnSpy).toHaveBeenCalledWith('sh', [
-      '-c',
-      'ls $NVM_DIR/versions/node/v24.*/bin/npm',
-    ]);
+    expect(spawnSpy).toHaveBeenCalledWith('n', ['install', '24']);
+    expect(spawnSpy).toHaveBeenCalledWith('n', ['which', '24']);
     expect(spawnSpy).toHaveBeenCalledWith(
-      '/mock/nvm/versions/node/v24.0.0/bin/npm',
+      '/mock/n/versions/node/v24.0.0/bin/npm',
       ['publish', '--access', 'public', '--tag', 'latest'],
       {
         cwd: path.join(process.cwd(), 'MOCK_WORKING_DIRECTORY', 'dist'),
@@ -254,16 +255,21 @@ describe('npmPublish', () => {
 
     const { npmPublish, nodeVersionGetter } = getUtil();
 
+    spawnSpy.and.callFake((command: string, _args: string[]) => {
+      if (command === 'n') {
+        return Promise.reject();
+      }
+      return Promise.resolve();
+    });
+
     spyOn(nodeVersionGetter, 'getVersion').and.returnValue('v20.0.0');
 
     await expectAsync(npmPublish()).toBeRejectedWith(
       'Aborted publishing to NPM with trusted publishing because NPM from Node.js 24 could not be found!',
     );
 
-    expect(spawnSpy).toHaveBeenCalledWith('sh', [
-      '-c',
-      'ls $NVM_DIR/versions/node/v24.*/bin/npm',
-    ]);
+    expect(spawnSpy).toHaveBeenCalledWith('n', ['install', '24']);
+    expect(spawnSpy).toHaveBeenCalledWith('n', ['which', '24']);
   });
 
   it('should use regular npm when Node version is 24 or above and no token is provided', async () => {
