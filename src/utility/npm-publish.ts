@@ -53,10 +53,14 @@ export async function npmPublish(distPath?: string): Promise<PackageMetadata> {
     );
   } else if (semver.lt(nodeVersionGetter.getVersion(), '24.0.0')) {
     // Use npm from Node.js 24 if no token is provided to use NPM 11 and trusted publishing.
-    await spawn('n', ['install', '24']).catch((err) => {
+    const env = {
+      ...process.env,
+      N_PREFIX: path.join(process.env['RUNNER_TEMP'] ?? process.cwd(), '.n'),
+    };
+    await spawn('n', ['install', '24'], { env }).catch((err) => {
       core.error(err);
     });
-    npmCommand = await spawn('n', ['which', '24'])
+    npmCommand = await spawn('n', ['which', '24'], { env })
       .then((result) => path.join(path.dirname(result?.trim()), 'npm'))
       .catch(() => undefined);
     if (!npmCommand) {

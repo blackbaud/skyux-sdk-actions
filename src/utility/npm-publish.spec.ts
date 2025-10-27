@@ -238,8 +238,16 @@ describe('npmPublish', () => {
 
     await npmPublish();
 
-    expect(spawnSpy).toHaveBeenCalledWith('n', ['install', '24']);
-    expect(spawnSpy).toHaveBeenCalledWith('n', ['which', '24']);
+    expect(spawnSpy).toHaveBeenCalledWith(
+      'n',
+      ['install', '24'],
+      jasmine.any(Object),
+    );
+    expect(spawnSpy).toHaveBeenCalledWith(
+      'n',
+      ['which', '24'],
+      jasmine.any(Object),
+    );
     expect(spawnSpy).toHaveBeenCalledWith(
       '/mock/n/versions/node/v24.0.0/bin/npm',
       ['publish', '--access', 'public', '--tag', 'latest'],
@@ -268,8 +276,16 @@ describe('npmPublish', () => {
       'Aborted publishing to NPM with trusted publishing because NPM from Node.js 24 could not be found!',
     );
 
-    expect(spawnSpy).toHaveBeenCalledWith('n', ['install', '24']);
-    expect(spawnSpy).toHaveBeenCalledWith('n', ['which', '24']);
+    expect(spawnSpy).toHaveBeenCalledWith(
+      'n',
+      ['install', '24'],
+      jasmine.any(Object),
+    );
+    expect(spawnSpy).toHaveBeenCalledWith(
+      'n',
+      ['which', '24'],
+      jasmine.any(Object),
+    );
   });
 
   it('should use regular npm when Node version is 24 or above and no token is provided', async () => {
@@ -289,7 +305,7 @@ describe('npmPublish', () => {
         stdio: 'inherit',
       },
     );
-    expect(spawnSpy).not.toHaveBeenCalledWith('ls', jasmine.any(Array));
+    expect(spawnSpy).not.toHaveBeenCalledWith('n', jasmine.any(Array));
   });
 
   it('should use regular npm when token is provided regardless of Node version', async () => {
@@ -307,6 +323,6 @@ describe('npmPublish', () => {
         stdio: 'inherit',
       },
     );
-    expect(spawnSpy).not.toHaveBeenCalledWith('ls', jasmine.any(Array));
+    expect(spawnSpy).not.toHaveBeenCalledWith('n', jasmine.any(Array));
   });
 });
