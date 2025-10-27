@@ -334,13 +334,19 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.npmPublish = void 0;
+exports.npmPublish = exports.nodeVersionGetter = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const fs = __importStar(__nccwpck_require__(5630));
 const path = __importStar(__nccwpck_require__(1017));
+const semver = __importStar(__nccwpck_require__(1383));
 const context_1 = __nccwpck_require__(102);
 const notify_slack_1 = __nccwpck_require__(1754);
 const spawn_1 = __nccwpck_require__(1060);
+// Export for testing purposes
+/* istanbul ignore next */
+exports.nodeVersionGetter = {
+    getVersion: () => process.version,
+};
 async function npmPublish(distPath) {
     distPath =
         distPath ||
@@ -360,9 +366,21 @@ async function npmPublish(distPath) {
         process.exit(1);
     }
     core.info(`Preparing to publish ${packageName}@${version} to NPM from ${distPath}...`);
+    let npmCommand = 'npm';
     if (npmToken) {
         await fs.ensureFile(npmFilePath);
         fs.writeFileSync(npmFilePath, `//registry.npmjs.org/:_authToken=${npmToken}`);
+    }
+    else if (semver.lt(exports.nodeVersionGetter.getVersion(), '24.0.0')) {
+        // Use npm from Node.js 24 if no token is provided to use NPM 11 and trusted publishing.
+        npmCommand = await (0, spawn_1.spawn)('sh', [
+            '-c',
+            'ls $NVM_DIR/versions/node/v24.*/bin/npm',
+        ]).then((result) => result?.trim().split('\n').shift());
+        if (!npmCommand) {
+            core.setFailed('Aborted publishing to NPM with trusted publishing because NPM from Node.js 24 could not be found!');
+            return Promise.reject('Aborted publishing to NPM with trusted publishing because NPM from Node.js 24 could not be found!');
+        }
     }
     const npmArgs = ['publish', '--access', 'public', '--tag', npmTag];
     const isDryRun = core.getInput('npm-dry-run') === 'true';
@@ -370,7 +388,7 @@ async function npmPublish(distPath) {
         npmArgs.push('--dry-run');
     }
     try {
-        await (0, spawn_1.spawn)('npm', npmArgs, {
+        await (0, spawn_1.spawn)(npmCommand, npmArgs, {
             cwd: distPath,
             stdio: 'inherit',
         });
@@ -9930,7 +9948,7 @@ function setup(env) {
 	createDebug.disable = disable;
 	createDebug.enable = enable;
 	createDebug.enabled = enabled;
-	createDebug.humanize = __nccwpck_require__(900);
+	createDebug.humanize = __nccwpck_require__(9992);
 	createDebug.destroy = destroy;
 
 	Object.keys(env).forEach(key => {
@@ -19604,7 +19622,7 @@ function regExpEscape (s) {
 
 /***/ }),
 
-/***/ 900:
+/***/ 9992:
 /***/ ((module) => {
 
 /**
@@ -21262,7 +21280,7 @@ module.exports = gte
 
 /***/ }),
 
-/***/ 929:
+/***/ 900:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const SemVer = __nccwpck_require__(8088)
@@ -21455,7 +21473,7 @@ const identifiers = __nccwpck_require__(2463)
 const parse = __nccwpck_require__(5925)
 const valid = __nccwpck_require__(9601)
 const clean = __nccwpck_require__(8848)
-const inc = __nccwpck_require__(929)
+const inc = __nccwpck_require__(900)
 const diff = __nccwpck_require__(4297)
 const major = __nccwpck_require__(6688)
 const minor = __nccwpck_require__(8447)
