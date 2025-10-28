@@ -10,17 +10,22 @@ jobs:
   coverage: # make sure build/ci work properly
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: |
           npm ci
           npm run build
           npm test
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "Error: Build output is not clean. Please run the build script and commit the changes.";
+            git status
+            exit 1
+          fi
           bash <(curl -s https://codecov.io/bash)
   e2e-angular-cli: # make sure the action works on a clean machine without building
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version-file: '.nvmrc'
       - name: Create workspace
