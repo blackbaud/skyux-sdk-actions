@@ -4,6 +4,7 @@ import path from 'path';
 describe('npmPublish', () => {
   let infoSpy: jasmine.Spy;
   let errorSpy: jasmine.Spy;
+  let warningSpy: jasmine.Spy;
   let failedLogSpy: jasmine.Spy;
   let fsSpyObj: jasmine.SpyObj<any>;
   let slackSpy: jasmine.Spy;
@@ -11,6 +12,7 @@ describe('npmPublish', () => {
   let getTagSpy: jasmine.Spy;
   let mockNpmDryRun: string;
   let mockNpmToken: string;
+  let mockNpmVersion: string;
   let mockPackageJson: any;
 
   beforeEach(() => {
@@ -20,9 +22,11 @@ describe('npmPublish', () => {
 
     mockNpmDryRun = 'false';
     mockNpmToken = 'MOCK_TOKEN';
+    mockNpmVersion = '11.5.1';
 
     infoSpy = jasmine.createSpy('@actions/core.info');
     errorSpy = jasmine.createSpy('@actions/core.error');
+    warningSpy = jasmine.createSpy('@actions/core.warning');
     failedLogSpy = jasmine.createSpy('@actions/core.setFailed');
 
     mock('@actions/core', {
@@ -39,6 +43,7 @@ describe('npmPublish', () => {
       error: errorSpy,
       info: infoSpy,
       setFailed: failedLogSpy,
+      warning: warningSpy,
     });
 
     fsSpyObj = jasmine.createSpyObj('fs-extra', [
@@ -63,7 +68,14 @@ describe('npmPublish', () => {
       notifySlack: slackSpy,
     });
 
-    spawnSpy = jasmine.createSpy('spawn').and.returnValue(Promise.resolve(''));
+    spawnSpy = jasmine
+      .createSpy('spawn')
+      .and.callFake((command: string, args: string[]) => {
+        if (command === 'npm' && args[0] === '--version') {
+          return Promise.resolve(mockNpmVersion);
+        }
+        return Promise.resolve('');
+      });
 
     mock('./spawn', {
       spawn: spawnSpy,
@@ -116,9 +128,7 @@ describe('npmPublish', () => {
   it('should publish to NPM without npm-token', async () => {
     mockNpmToken = '';
 
-    const { npmPublish, nodeVersionGetter } = getUtil();
-
-    spyOn(nodeVersionGetter, 'getVersion').and.returnValue('v24.0.0');
+    const { npmPublish } = getUtil();
 
     await npmPublish();
 
@@ -222,15 +232,17 @@ describe('npmPublish', () => {
     );
   });
 
-  it('should use npm from Node.js 24 when current Node version is below 24 and no token is provided', async () => {
+  it('should use npm from Node.js 24 when the installed NPM does not support trusted publishing', async () => {
     mockNpmToken = '';
+    mockNpmVersion = '10.9.3';
 
-    const { npmPublish, nodeVersionGetter } = getUtil();
+    const { npmPublish } = getUtil();
 
-    spyOn(nodeVersionGetter, 'getVersion').and.returnValue('v20.0.0');
-
-    spawnSpy.and.callFake((command: string, _args: string[]) => {
-      if (command === 'n' && _args[0] === 'which') {
+    spawnSpy.and.callFake((command: string, args: string[]) => {
+      if (command === 'npm' && args[0] === '--version') {
+        return Promise.resolve(mockNpmVersion);
+      }
+      if (command === 'n' && args[0] === 'which') {
         return Promise.resolve('/mock/n/versions/node/v24.0.0/bin/node');
       }
       return Promise.resolve();
@@ -258,19 +270,51 @@ describe('npmPublish', () => {
     );
   });
 
-  it('should fail if Node.js 24 is not available when current Node version is below 24 and no token is provided', async () => {
+  it('should use npm from Node.js 24 when the installed NPM version cannot be determined', async () => {
     mockNpmToken = '';
 
-    const { npmPublish, nodeVersionGetter } = getUtil();
+    const { npmPublish } = getUtil();
 
-    spawnSpy.and.callFake((command: string, _args: string[]) => {
+    spawnSpy.and.callFake((command: string, args: string[]) => {
+      if (command === 'npm' && args[0] === '--version') {
+        return Promise.reject();
+      }
+      if (command === 'n' && args[0] === 'which') {
+        return Promise.resolve('/mock/n/versions/node/v24.0.0/bin/node');
+      }
+      return Promise.resolve();
+    });
+
+    await npmPublish();
+
+    expect(warningSpy).toHaveBeenCalledWith(
+      'Could not determine the version of NPM installed.',
+    );
+    expect(spawnSpy).toHaveBeenCalledWith(
+      '/mock/n/versions/node/v24.0.0/bin/npm',
+      ['publish', '--access', 'public', '--tag', 'latest'],
+      {
+        cwd: path.join(process.cwd(), 'MOCK_WORKING_DIRECTORY', 'dist'),
+        stdio: 'inherit',
+      },
+    );
+  });
+
+  it('should fail if Node.js 24 is not available when the installed NPM does not support trusted publishing', async () => {
+    mockNpmToken = '';
+    mockNpmVersion = '10.9.3';
+
+    const { npmPublish } = getUtil();
+
+    spawnSpy.and.callFake((command: string, args: string[]) => {
+      if (command === 'npm' && args[0] === '--version') {
+        return Promise.resolve(mockNpmVersion);
+      }
       if (command === 'n') {
         return Promise.reject();
       }
       return Promise.resolve();
     });
-
-    spyOn(nodeVersionGetter, 'getVersion').and.returnValue('v20.0.0');
 
     await expectAsync(npmPublish()).toBeRejectedWith(
       'Aborted publishing to NPM with trusted publishing because NPM from Node.js 24 could not be found!',
@@ -288,15 +332,15 @@ describe('npmPublish', () => {
     );
   });
 
-  it('should use regular npm when Node version is 24 or above and no token is provided', async () => {
+  it('should use the installed npm when it supports trusted publishing and no token is provided', async () => {
     mockNpmToken = '';
+    mockNpmVersion = '11.6.2';
 
-    const { npmPublish, nodeVersionGetter } = getUtil();
-
-    spyOn(nodeVersionGetter, 'getVersion').and.returnValue('v24.0.0');
+    const { npmPublish } = getUtil();
 
     await npmPublish();
 
+    expect(infoSpy).toHaveBeenCalledWith('Found NPM version 11.6.2.');
     expect(spawnSpy).toHaveBeenCalledWith(
       'npm',
       ['publish', '--access', 'public', '--tag', 'latest'],
@@ -308,13 +352,14 @@ describe('npmPublish', () => {
     expect(spawnSpy).not.toHaveBeenCalledWith('n', jasmine.any(Array));
   });
 
-  it('should use regular npm when token is provided regardless of Node version', async () => {
-    const { npmPublish, nodeVersionGetter } = getUtil();
+  it('should use the installed npm when a token is provided, regardless of its version', async () => {
+    mockNpmVersion = '10.9.3';
 
-    spyOn(nodeVersionGetter, 'getVersion').and.returnValue('v20.0.0');
+    const { npmPublish } = getUtil();
 
     await npmPublish();
 
+    expect(spawnSpy).not.toHaveBeenCalledWith('npm', ['--version']);
     expect(spawnSpy).toHaveBeenCalledWith(
       'npm',
       ['publish', '--access', 'public', '--tag', 'latest'],

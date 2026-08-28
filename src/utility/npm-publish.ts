@@ -9,11 +9,23 @@ import { notifySlack } from './notify-slack';
 import { PackageMetadata } from './package-metadata';
 import { spawn } from './spawn';
 
-// Export for testing purposes
-/* istanbul ignore next */
-export const nodeVersionGetter = {
-  getVersion: () => process.version,
-};
+// The first version of NPM that supports trusted publishing.
+const MIN_TRUSTED_PUBLISHING_NPM_VERSION = '11.5.1';
+
+async function isTrustedPublishingSupported(): Promise<boolean> {
+  const version = await spawn('npm', ['--version'])
+    .then((result) => semver.coerce(result?.trim()))
+    .catch(() => undefined);
+
+  if (!version) {
+    core.warning('Could not determine the version of NPM installed.');
+    return false;
+  }
+
+  core.info(`Found NPM version ${version.version}.`);
+
+  return semver.gte(version, MIN_TRUSTED_PUBLISHING_NPM_VERSION);
+}
 
 export async function npmPublish(distPath?: string): Promise<PackageMetadata> {
   distPath =
@@ -51,7 +63,7 @@ export async function npmPublish(distPath?: string): Promise<PackageMetadata> {
       npmFilePath,
       `//registry.npmjs.org/:_authToken=${npmToken}`,
     );
-  } else if (semver.lt(nodeVersionGetter.getVersion(), '24.0.0')) {
+  } else if (!(await isTrustedPublishingSupported())) {
     // Use npm from Node.js 24 if no token is provided to use NPM 11 and trusted publishing.
     const env = {
       ...process.env,
