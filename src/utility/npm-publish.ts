@@ -9,22 +9,40 @@ import { notifySlack } from './notify-slack';
 import { PackageMetadata } from './package-metadata';
 import { spawn } from './spawn';
 
-// The first version of NPM that supports trusted publishing.
+// The first versions of NPM and Node.js that support trusted publishing.
 const MIN_TRUSTED_PUBLISHING_NPM_VERSION = '11.5.1';
+const MIN_TRUSTED_PUBLISHING_NODE_VERSION = '22.14.0';
 
-async function isTrustedPublishingSupported(): Promise<boolean> {
-  const version = await spawn('npm', ['--version'])
+async function getInstalledVersion(
+  command: string,
+  displayName: string,
+): Promise<semver.SemVer | undefined> {
+  const version = await spawn(command, ['--version'])
     .then((result) => semver.coerce(result?.trim()))
     .catch(() => undefined);
 
   if (!version) {
-    core.warning('Could not determine the version of NPM installed.');
-    return false;
+    core.warning(
+      `Could not determine the version of ${displayName} installed.`,
+    );
+    return undefined;
   }
 
-  core.info(`Found NPM version ${version.version}.`);
+  core.info(`Found ${displayName} version ${version.version}.`);
 
-  return semver.gte(version, MIN_TRUSTED_PUBLISHING_NPM_VERSION);
+  return version;
+}
+
+async function isTrustedPublishingSupported(): Promise<boolean> {
+  const npmVersion = await getInstalledVersion('npm', 'NPM');
+  const nodeVersion = await getInstalledVersion('node', 'Node.js');
+
+  return (
+    !!npmVersion &&
+    !!nodeVersion &&
+    semver.gte(npmVersion, MIN_TRUSTED_PUBLISHING_NPM_VERSION) &&
+    semver.gte(nodeVersion, MIN_TRUSTED_PUBLISHING_NODE_VERSION)
+  );
 }
 
 export async function npmPublish(distPath?: string): Promise<PackageMetadata> {
