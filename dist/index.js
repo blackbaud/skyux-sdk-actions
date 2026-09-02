@@ -342,18 +342,27 @@ const semver = __importStar(__nccwpck_require__(1383));
 const context_1 = __nccwpck_require__(102);
 const notify_slack_1 = __nccwpck_require__(1754);
 const spawn_1 = __nccwpck_require__(1060);
-// The first version of NPM that supports trusted publishing.
+// The first versions of NPM and Node.js that support trusted publishing.
 const MIN_TRUSTED_PUBLISHING_NPM_VERSION = '11.5.1';
-async function isTrustedPublishingSupported() {
-    const version = await (0, spawn_1.spawn)('npm', ['--version'])
+const MIN_TRUSTED_PUBLISHING_NODE_VERSION = '22.14.0';
+async function getInstalledVersion(command, displayName) {
+    const version = await (0, spawn_1.spawn)(command, ['--version'])
         .then((result) => semver.coerce(result?.trim()))
         .catch(() => undefined);
     if (!version) {
-        core.warning('Could not determine the version of NPM installed.');
-        return false;
+        core.warning(`Could not determine the version of ${displayName} installed.`);
+        return undefined;
     }
-    core.info(`Found NPM version ${version.version}.`);
-    return semver.gte(version, MIN_TRUSTED_PUBLISHING_NPM_VERSION);
+    core.info(`Found ${displayName} version ${version.version}.`);
+    return version;
+}
+async function isTrustedPublishingSupported() {
+    const npmVersion = await getInstalledVersion('npm', 'NPM');
+    const nodeVersion = await getInstalledVersion('node', 'Node.js');
+    return (!!npmVersion &&
+        !!nodeVersion &&
+        semver.gte(npmVersion, MIN_TRUSTED_PUBLISHING_NPM_VERSION) &&
+        semver.gte(nodeVersion, MIN_TRUSTED_PUBLISHING_NODE_VERSION));
 }
 async function npmPublish(distPath) {
     distPath =
