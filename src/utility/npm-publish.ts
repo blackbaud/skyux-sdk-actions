@@ -9,11 +9,41 @@ import { notifySlack } from './notify-slack';
 import { PackageMetadata } from './package-metadata';
 import { spawn } from './spawn';
 
-// Export for testing purposes
-/* istanbul ignore next */
-export const nodeVersionGetter = {
-  getVersion: () => process.version,
-};
+// The first versions of NPM and Node.js that support trusted publishing.
+const MIN_TRUSTED_PUBLISHING_NPM_VERSION = '11.5.1';
+const MIN_TRUSTED_PUBLISHING_NODE_VERSION = '22.14.0';
+
+async function getInstalledVersion(
+  command: string,
+  displayName: string,
+): Promise<semver.SemVer | undefined> {
+  const version = await spawn(command, ['--version'])
+    .then((result) => semver.coerce(result?.trim()))
+    .catch(() => undefined);
+
+  if (!version) {
+    core.warning(
+      `Could not determine the version of ${displayName} installed.`,
+    );
+    return undefined;
+  }
+
+  core.info(`Found ${displayName} version ${version.version}.`);
+
+  return version;
+}
+
+async function isTrustedPublishingSupported(): Promise<boolean> {
+  const npmVersion = await getInstalledVersion('npm', 'NPM');
+  const nodeVersion = await getInstalledVersion('node', 'Node.js');
+
+  return (
+    !!npmVersion &&
+    !!nodeVersion &&
+    semver.gte(npmVersion, MIN_TRUSTED_PUBLISHING_NPM_VERSION) &&
+    semver.gte(nodeVersion, MIN_TRUSTED_PUBLISHING_NODE_VERSION)
+  );
+}
 
 export async function npmPublish(distPath?: string): Promise<PackageMetadata> {
   distPath =
@@ -51,7 +81,7 @@ export async function npmPublish(distPath?: string): Promise<PackageMetadata> {
       npmFilePath,
       `//registry.npmjs.org/:_authToken=${npmToken}`,
     );
-  } else if (semver.lt(nodeVersionGetter.getVersion(), '24.0.0')) {
+  } else if (!(await isTrustedPublishingSupported())) {
     // Use npm from Node.js 24 if no token is provided to use NPM 11 and trusted publishing.
     const env = {
       ...process.env,

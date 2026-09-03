@@ -334,7 +334,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.npmPublish = exports.nodeVersionGetter = void 0;
+exports.npmPublish = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const fs = __importStar(__nccwpck_require__(5630));
 const path = __importStar(__nccwpck_require__(1017));
@@ -342,11 +342,28 @@ const semver = __importStar(__nccwpck_require__(1383));
 const context_1 = __nccwpck_require__(102);
 const notify_slack_1 = __nccwpck_require__(1754);
 const spawn_1 = __nccwpck_require__(1060);
-// Export for testing purposes
-/* istanbul ignore next */
-exports.nodeVersionGetter = {
-    getVersion: () => process.version,
-};
+// The first versions of NPM and Node.js that support trusted publishing.
+const MIN_TRUSTED_PUBLISHING_NPM_VERSION = '11.5.1';
+const MIN_TRUSTED_PUBLISHING_NODE_VERSION = '22.14.0';
+async function getInstalledVersion(command, displayName) {
+    const version = await (0, spawn_1.spawn)(command, ['--version'])
+        .then((result) => semver.coerce(result?.trim()))
+        .catch(() => undefined);
+    if (!version) {
+        core.warning(`Could not determine the version of ${displayName} installed.`);
+        return undefined;
+    }
+    core.info(`Found ${displayName} version ${version.version}.`);
+    return version;
+}
+async function isTrustedPublishingSupported() {
+    const npmVersion = await getInstalledVersion('npm', 'NPM');
+    const nodeVersion = await getInstalledVersion('node', 'Node.js');
+    return (!!npmVersion &&
+        !!nodeVersion &&
+        semver.gte(npmVersion, MIN_TRUSTED_PUBLISHING_NPM_VERSION) &&
+        semver.gte(nodeVersion, MIN_TRUSTED_PUBLISHING_NODE_VERSION));
+}
 async function npmPublish(distPath) {
     distPath =
         distPath ||
@@ -371,7 +388,7 @@ async function npmPublish(distPath) {
         await fs.ensureFile(npmFilePath);
         fs.writeFileSync(npmFilePath, `//registry.npmjs.org/:_authToken=${npmToken}`);
     }
-    else if (semver.lt(exports.nodeVersionGetter.getVersion(), '24.0.0')) {
+    else if (!(await isTrustedPublishingSupported())) {
         // Use npm from Node.js 24 if no token is provided to use NPM 11 and trusted publishing.
         const env = {
             ...process.env,
